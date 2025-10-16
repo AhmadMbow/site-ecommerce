@@ -1,0 +1,888 @@
+{% extends 'adminpanel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Paramètres | Admin{% endblock %}
+
+{% block header %}
+  <div class="d-flex align-items-center gap-3">
+    <i class="fa-solid fa-gear text-primary"></i>
+    <span>Paramètres</span>
+  </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --card-hover: 0 8px 30px rgba(102, 126, 234, 0.15);
+  }
+
+  .settings-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Onglets de navigation */
+  .settings-tabs {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+  }
+
+  .settings-tabs .nav-pills {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .settings-tabs .nav-link {
+    border-radius: 8px;
+    padding: 0.8rem 1.5rem;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border: 2px solid transparent;
+  }
+
+  .settings-tabs .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-blue);
+  }
+
+  .settings-tabs .nav-link.active {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .settings-tabs .nav-link i {
+    margin-right: 0.5rem;
+  }
+
+  /* Carte de paramètre */
+  .setting-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .setting-card:hover {
+    box-shadow: var(--card-hover);
+    transform: translateY(-2px);
+  }
+
+  .setting-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  .setting-card-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+
+  .setting-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .setting-description {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Formulaire */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .input-group-text {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px 0 0 8px;
+    font-weight: 600;
+  }
+
+  /* Toggle Switch */
+  .form-switch {
+    padding-left: 3rem;
+  }
+
+  .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+    border-radius: 2rem;
+    border: 2px solid #dee2e6;
+    background-color: #dee2e6;
+  }
+
+  .form-check-input:checked {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    background-image: none;
+  }
+
+  .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .form-check-label {
+    font-weight: 500;
+    color: #495057;
+  }
+
+  /* Boutons */
+  .btn-save {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-save:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-reset {
+    background: #6c757d;
+    border: none;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-reset:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+  }
+
+  /* Statistiques système */
+  .system-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-box {
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .stat-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    color: #6c757d;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+
+  /* Badge de statut */
+  .status-badge {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .status-badge.active {
+    background: #d1f2eb;
+    color: #27ae60;
+  }
+
+  .status-badge.inactive {
+    background: #fadbd8;
+    color: #e74c3c;
+  }
+
+  /* Info box */
+  .info-box {
+    background: #e7f3ff;
+    border-left: 4px solid #3498db;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .info-box i {
+    color: #3498db;
+    margin-right: 0.5rem;
+  }
+
+  .warning-box {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .warning-box i {
+    color: #ffc107;
+    margin-right: 0.5rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .setting-card {
+      padding: 1.5rem;
+    }
+
+    .settings-tabs .nav-link {
+      font-size: 0.85rem;
+      padding: 0.6rem 1rem;
+    }
+
+    .system-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+  <!-- Statistiques système -->
+  <div class="system-stats">
+    <div class="stat-box">
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-label"><i class="fa-solid fa-users me-1"></i>Utilisateurs</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ total_products }}</div>
+      <div class="stat-label"><i class="fa-solid fa-box me-1"></i>Produits</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ total_orders }}</div>
+      <div class="stat-label"><i class="fa-solid fa-shopping-cart me-1"></i>Commandes</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value">{{ total_revenue|floatformat:0 }}</div>
+      <div class="stat-label"><i class="fa-solid fa-money-bill me-1"></i>Revenus (FCFA)</div>
+    </div>
+  </div>
+
+  <!-- Onglets de navigation -->
+  <div class="settings-tabs">
+    <ul class="nav nav-pills" id="settingsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="general-tab" data-bs-toggle="pill" data-bs-target="#general" type="button">
+          <i class="fa-solid fa-globe"></i>Général
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ecommerce-tab" data-bs-toggle="pill" data-bs-target="#ecommerce" type="button">
+          <i class="fa-solid fa-shopping-bag"></i>E-commerce
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="notifications-tab" data-bs-toggle="pill" data-bs-target="#notifications" type="button">
+          <i class="fa-solid fa-bell"></i>Notifications
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security" type="button">
+          <i class="fa-solid fa-shield-halved"></i>Sécurité
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="appearance-tab" data-bs-toggle="pill" data-bs-target="#appearance" type="button">
+          <i class="fa-solid fa-palette"></i>Apparence
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="integrations-tab" data-bs-toggle="pill" data-bs-target="#integrations" type="button">
+          <i class="fa-solid fa-plug"></i>Intégrations
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Contenu des onglets -->
+  <div class="tab-content" id="settingsTabContent">
+    <!-- Onglet Général -->
+    <div class="tab-pane fade show active" id="general" role="tabpanel">
+      <div class="setting-card">
+        <div class="setting-card-header">
+          <div class="setting-card-title">
+            <div class="setting-icon">
+              <i class="fa-solid fa-globe"></i>
+            </div>
+            <div>
+              <div>Paramètres du Site</div>
+              <small class="text-muted" style="font-size: 0.85rem; font-weight: 400;">Configuration générale de votre boutique</small>
+            </div>
+          </div>
+          <span class="status-badge active">Actif</span>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="setting_type" value="site">
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-store"></i>Nom du site
+                </label>
+                <input type="text" class="form-control" value="{{ site_name }}" name="site_name" placeholder="InnovaTech">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-envelope"></i>Email de contact
+                </label>
+                <input type="email" class="form-control" value="contact@innovatech.sn" name="contact_email" placeholder="contact@example.com">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-align-left"></i>Description du site
+            </label>
+            <textarea class="form-control" rows="3" name="site_description" placeholder="Décrivez votre boutique...">Votre boutique en ligne de produits technologiques au Sénégal</textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-phone"></i>Téléphone
+                </label>
+                <input type="tel" class="form-control" value="+221 77 123 45 67" name="phone" placeholder="+221 XX XXX XX XX">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-map-marker-alt"></i>Adresse
+                </label>
+                <input type="text" class="form-control" value="Dakar, Sénégal" name="address" placeholder="Adresse complète">
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <i class="fa-solid fa-info-circle"></i>
+            <strong>Info:</strong> Ces informations apparaîtront sur votre site et dans les emails envoyés aux clients.
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-save">
+              <i class="fa-solid fa-save me-2"></i>Enregistrer les modifications
+            </button>
+            <button type="reset" class="btn btn-reset">
+              <i class="fa-solid fa-undo me-2"></i>Réinitialiser
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Onglet E-commerce -->
+    <div class="tab-pane fade" id="ecommerce" role="tabpanel">
+      <div class="setting-card">
+        <div class="setting-card-header">
+          <div class="setting-card-title">
+            <div class="setting-icon">
+              <i class="fa-solid fa-shopping-bag"></i>
+            </div>
+            <div>
+              <div>Paramètres E-commerce</div>
+              <small class="text-muted" style="font-size: 0.85rem; font-weight: 400;">Configuration des ventes et livraisons</small>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="setting_type" value="ecommerce">
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-money-bill"></i>Devise
+                </label>
+                <select class="form-select" name="currency">
+                  <option value="FCFA" selected>FCFA (Franc CFA)</option>
+                  <option value="EUR">EUR (Euro)</option>
+                  <option value="USD">USD (Dollar)</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-truck"></i>Frais de livraison par défaut
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">FCFA</span>
+                  <input type="number" class="form-control" value="{{ default_shipping }}" name="default_shipping" min="0">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-percentage"></i>Taux de TVA (%)
+                </label>
+                <input type="number" class="form-control" value="18" name="tax_rate" min="0" max="100" step="0.1">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fa-solid fa-box"></i>Stock minimum pour alerte
+                </label>
+                <input type="number" class="form-control" value="5" name="low_stock_threshold" min="1">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-clock"></i>Délai de livraison estimé
+            </label>
+            <input type="text" class="form-control" value="24-48 heures" name="delivery_time" placeholder="Ex: 2-3 jours ouvrés">
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="autoStockUpdate" checked>
+            <label class="form-check-label" for="autoStockUpdate">
+              Mise à jour automatique du stock après commande
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="freeShippingThreshold">
+            <label class="form-check-label" for="freeShippingThreshold">
+              Activer la livraison gratuite à partir d'un montant
+            </label>
+          </div>
+
+          <div class="warning-box">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <strong>Attention:</strong> Modifier les frais de livraison n'affectera pas les commandes en cours.
+          </div>
+
+          <button type="submit" class="btn btn-save">
+            <i class="fa-solid fa-save me-2"></i>Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Onglet Notifications -->
+    <div class="tab-pane fade" id="notifications" role="tabpanel">
+      <div class="setting-card">
+        <div class="setting-card-header">
+          <div class="setting-card-title">
+            <div class="setting-icon">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+              <div>Notifications</div>
+              <small class="text-muted" style="font-size: 0.85rem; font-weight: 400;">Gérer les alertes et notifications</small>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="setting_type" value="notifications">
+
+          <h6 class="mb-3 fw-bold">📧 Notifications par email</h6>
+          
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="emailNewOrder" checked>
+            <label class="form-check-label" for="emailNewOrder">
+              Nouvelle commande reçue
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="emailLowStock" checked>
+            <label class="form-check-label" for="emailLowStock">
+              Stock faible
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="emailNewReview" checked>
+            <label class="form-check-label" for="emailNewReview">
+              Nouvel avis client
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="emailNewUser">
+            <label class="form-check-label" for="emailNewUser">
+              Nouvel utilisateur inscrit
+            </label>
+          </div>
+
+          <h6 class="mb-3 fw-bold">📱 Notifications SMS</h6>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="smsOrderStatus">
+            <label class="form-check-label" for="smsOrderStatus">
+              Statut de commande au client
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="smsDeliveryAlert">
+            <label class="form-check-label" for="smsDeliveryAlert">
+              Alerte de livraison au livreur
+            </label>
+          </div>
+
+          <div class="info-box">
+            <i class="fa-solid fa-info-circle"></i>
+            <strong>Info:</strong> Les notifications SMS nécessitent une configuration API SMS (Orange Money, Free, etc.).
+          </div>
+
+          <button type="submit" class="btn btn-save">
+            <i class="fa-solid fa-save me-2"></i>Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Onglet Sécurité -->
+    <div class="tab-pane fade" id="security" role="tabpanel">
+      <div class="setting-card">
+        <div class="setting-card-header">
+          <div class="setting-card-title">
+            <div class="setting-icon">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <div>Sécurité</div>
+              <small class="text-muted" style="font-size: 0.85rem; font-weight: 400;">Protection et confidentialité</small>
+            </div>
+          </div>
+          <span class="status-badge {% if debug_mode %}inactive{% else %}active{% endif %}">
+            {% if debug_mode %}Mode Debug{% else %}Sécurisé{% endif %}
+          </span>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="setting_type" value="security">
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+            <label class="form-check-label" for="twoFactorAuth">
+              <strong>Authentification à deux facteurs (2FA)</strong><br>
+              <small class="text-muted">Ajouter une couche de sécurité supplémentaire</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="forceStrongPassword" checked>
+            <label class="form-check-label" for="forceStrongPassword">
+              <strong>Mots de passe forts obligatoires</strong><br>
+              <small class="text-muted">8+ caractères, majuscules, chiffres et symboles</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="sessionTimeout" checked>
+            <label class="form-check-label" for="sessionTimeout">
+              <strong>Expiration automatique des sessions</strong><br>
+              <small class="text-muted">Déconnexion après 30 minutes d'inactivité</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="loginAttempts" checked>
+            <label class="form-check-label" for="loginAttempts">
+              <strong>Limiter les tentatives de connexion</strong><br>
+              <small class="text-muted">Bloquer après 5 tentatives échouées</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="activityLog" checked>
+            <label class="form-check-label" for="activityLog">
+              <strong>Journal d'activité</strong><br>
+              <small class="text-muted">Enregistrer les actions importantes</small>
+            </label>
+          </div>
+
+          <div class="warning-box">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <strong>Mode Debug Actif!</strong> Désactivez le mode debug en production pour plus de sécurité.
+          </div>
+
+          <button type="submit" class="btn btn-save">
+            <i class="fa-solid fa-save me-2"></i>Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Onglet Apparence -->
+    <div class="tab-pane fade" id="appearance" role="tabpanel">
+      <div class="setting-card">
+        <div class="setting-card-header">
+          <div class="setting-card-title">
+            <div class="setting-icon">
+              <i class="fa-solid fa-palette"></i>
+            </div>
+            <div>
+              <div>Apparence</div>
+              <small class="text-muted" style="font-size: 0.85rem; font-weight: 400;">Personnalisation visuelle</small>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="setting_type" value="appearance">
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-paint-brush"></i>Couleur principale
+            </label>
+            <div class="d-flex gap-2 align-items-center">
+              <input type="color" class="form-control" value="#667eea" name="primary_color" style="width: 80px; height: 50px;">
+              <input type="text" class="form-control" value="#667eea" readonly>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-image"></i>Logo du site
+            </label>
+            <input type="file" class="form-control" name="site_logo" accept="image/*">
+            <small class="text-muted">Format recommandé: PNG transparent, 200x60px</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-icons"></i>Favicon
+            </label>
+            <input type="file" class="form-control" name="favicon" accept="image/*">
+            <small class="text-muted">Format: ICO ou PNG, 32x32px</small>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="darkMode">
+            <label class="form-check-label" for="darkMode">
+              Mode sombre
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="animations" checked>
+            <label class="form-check-label" for="animations">
+              Animations et transitions
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-save">
+            <i class="fa-solid fa-save me-2"></i>Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Onglet Intégrations -->
+    <div class="tab-pane fade" id="integrations" role="tabpanel">
+      <div class="setting-card">
+        <div class="setting-card-header">
+          <div class="setting-card-title">
+            <div class="setting-icon">
+              <i class="fa-solid fa-plug"></i>
+            </div>
+            <div>
+              <div>Intégrations</div>
+              <small class="text-muted" style="font-size: 0.85rem; font-weight: 400;">Connexions et API tierces</small>
+            </div>
+          </div>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="setting_type" value="integrations">
+
+          <h6 class="mb-3 fw-bold">💳 Paiement</h6>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="orangeMoney">
+            <label class="form-check-label" for="orangeMoney">
+              <strong>Orange Money</strong><br>
+              <small class="text-muted">Paiement mobile Orange</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="waveSenegal">
+            <label class="form-check-label" for="waveSenegal">
+              <strong>Wave Sénégal</strong><br>
+              <small class="text-muted">Transferts d'argent Wave</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="paypal">
+            <label class="form-check-label" for="paypal">
+              <strong>PayPal</strong><br>
+              <small class="text-muted">Paiements internationaux</small>
+            </label>
+          </div>
+
+          <h6 class="mb-3 fw-bold">🗺️ Services</h6>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="googleMaps" checked>
+            <label class="form-check-label" for="googleMaps">
+              <strong>Google Maps API</strong><br>
+              <small class="text-muted">Géolocalisation et itinéraires</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="smsAPI">
+            <label class="form-check-label" for="smsAPI">
+              <strong>API SMS</strong><br>
+              <small class="text-muted">Notifications par SMS</small>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="emailService" checked>
+            <label class="form-check-label" for="emailService">
+              <strong>Service Email</strong><br>
+              <small class="text-muted">SMTP pour l'envoi d'emails</small>
+            </label>
+          </div>
+
+          <div class="info-box">
+            <i class="fa-solid fa-info-circle"></i>
+            <strong>Info:</strong> Chaque intégration nécessite des clés API que vous devez configurer dans les variables d'environnement.
+          </div>
+
+          <button type="submit" class="btn btn-save">
+            <i class="fa-solid fa-save me-2"></i>Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Sauvegarder l'onglet actif dans localStorage
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="pill"]');
+    
+    // Restaurer l'onglet actif
+    const activeTab = localStorage.getItem('activeSettingsTab');
+    if (activeTab) {
+      const tab = document.querySelector(`[data-bs-target="${activeTab}"]`);
+      if (tab) {
+        const bsTab = new bootstrap.Tab(tab);
+        bsTab.show();
+      }
+    }
+    
+    // Sauvegarder l'onglet actif au clic
+    tabButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        localStorage.setItem('activeSettingsTab', this.getAttribute('data-bs-target'));
+      });
+    });
+
+    // Animation de confirmation lors de la sauvegarde
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('.btn-save');
+        if (submitBtn) {
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Enregistrement...';
+          submitBtn.disabled = true;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

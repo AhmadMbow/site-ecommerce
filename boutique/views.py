@@ -1911,3 +1911,408 @@ def admin_avis_delete(request, avis_id):
     avis.delete()
     
     return redirect(f"{reverse('admin_avis')}?type={type_avis}")
+
+@admin_required
+def admin_avis_marquer_examine(request, avis_id):
+    """Marquer un avis comme examiné"""
+    type_avis = request.GET.get('type', 'produits')
+    
+    if type_avis == 'livreurs':
+        avis = get_object_or_404(AvisLivreur, id=avis_id)
+        avis.examine = not avis.examine  # Toggle
+        avis.save()
+        if avis.examine:
+            messages.success(request, f"L'avis a été marqué comme examiné.")
+        else:
+            messages.info(request, f"L'avis a été marqué comme non examiné.")
+    else:
+        avis = get_object_or_404(AvisProduit, id=avis_id)
+        avis.examine = not avis.examine  # Toggle
+        avis.save()
+        if avis.examine:
+            messages.success(request, f"L'avis a été marqué comme examiné.")
+        else:
+            messages.info(request, f"L'avis a été marqué comme non examiné.")
+    
+    return redirect(f"{reverse('admin_avis')}?type={type_avis}")
+
+@admin_required
+def admin_avis_marquer_tous_examines(request):
+    """Marquer tous les avis comme examinés"""
+    type_avis = request.GET.get('type', 'produits')
+    
+    if type_avis == 'livreurs':
+        count = AvisLivreur.objects.filter(examine=False).update(examine=True)
+        messages.success(request, f"{count} avis de livreurs ont été marqués comme examinés.")
+    else:
+        count = AvisProduit.objects.filter(examine=False).update(examine=True)
+        messages.success(request, f"{count} avis de produits ont été marqués comme examinés.")
+    
+    return redirect(f"{reverse('admin_avis')}?type={type_avis}")
+
+# ========================================================================
+# VUES - MESSAGERIE SUPPORT CLIENT
+# ========================================================================
+
+@login_required
+def contact_support(request):
+    """Formulaire de contact pour les clients"""
+    if request.method == 'POST':
+        sujet = request.POST.get('sujet')
+        message_texte = request.POST.get('message')
+        priorite = request.POST.get('priorite', 'NORMALE')
+        email_contact = request.POST.get('email_contact', request.user.email)
+        telephone_contact = request.POST.get('telephone_contact', '')
+        
+        if not sujet or not message_texte:
+            messages.error(request, "Veuillez remplir tous les champs obligatoires.")
+            return redirect('contact_support')
+        
+        # Créer le message
+        from boutique.models import MessageSupport
+        message_support = MessageSupport.objects.create(
+            client=request.user,
+            sujet=sujet,
+            message=message_texte,
+            priorite=priorite,
+            email_contact=email_contact,
+            telephone_contact=telephone_contact
+        )
+        
+        # Envoyer un email de confirmation au client
+        try:
+            from django.core.mail import send_mail
+            
+            html_message = f"""
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                    .message-box {{ background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 5px; }}
+                    .info-box {{ background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+                    .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>✅ Votre demande a été reçue</h1>
+                    </div>
+                    <div class="content">
+                        <p>Bonjour <strong>{request.user.get_full_name() or request.user.username}</strong>,</p>
+                        
+                        <p>Nous avons bien reçu votre demande de support. Notre équipe va l'examiner et vous répondra dans les plus brefs délais.</p>
+                        
+                        <div class="message-box">
+                            <h3 style="color: #667eea; margin-top: 0;">📋 Récapitulatif de votre demande :</h3>
+                            <p><strong>Numéro de ticket :</strong> #{message_support.id}</p>
+                            <p><strong>Sujet :</strong> {sujet}</p>
+                            <p><strong>Priorité :</strong> {message_support.get_priorite_display()}</p>
+                            <p><strong>Votre message :</strong></p>
+                            <p style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px;">{message_texte}</p>
+                        </div>
+                        
+                        <div class="info-box">
+                            <p style="margin: 0;"><strong>⏱️ Temps de réponse moyen :</strong> Moins de 2 heures pendant les heures ouvrables</p>
+                        </div>
+                        
+                        <p>Vous recevrez un email dès que notre équipe aura répondu à votre demande.</p>
+                        
+                        <p style="margin-top: 30px;">
+                            Cordialement,<br>
+                            <strong>L'équipe Support</strong>
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>Référence du ticket : #{message_support.id}</p>
+                        <p>Cet email a été envoyé automatiquement suite à votre demande de support.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            text_message = f"""
+Bonjour {request.user.get_full_name() or request.user.username},
+
+Nous avons bien reçu votre demande de support. Notre équipe va l'examiner et vous répondra dans les plus brefs délais.
+
+RÉCAPITULATIF DE VOTRE DEMANDE :
+- Numéro de ticket : #{message_support.id}
+- Sujet : {sujet}
+- Priorité : {message_support.get_priorite_display()}
+
+VOTRE MESSAGE :
+{message_texte}
+
+Temps de réponse moyen : Moins de 2 heures pendant les heures ouvrables
+
+Vous recevrez un email dès que notre équipe aura répondu à votre demande.
+
+Cordialement,
+L'équipe Support
+
+Référence du ticket : #{message_support.id}
+            """
+            
+            send_mail(
+                subject=f"Confirmation de votre demande de support - Ticket #{message_support.id}",
+                message=text_message,
+                from_email='support@innovatech.sn',
+                recipient_list=[email_contact],
+                html_message=html_message,
+                fail_silently=True,
+            )
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email de confirmation : {e}")
+        
+        messages.success(request, "Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.")
+        return redirect('mes_commandes')
+    
+    return render(request, 'boutique/contact_support.html')
+
+@admin_required
+def admin_messagerie(request):
+    """Page admin pour gérer les messages de support"""
+    from boutique.models import MessageSupport
+    from django.db.models import Q, Count
+    
+    # Filtres
+    statut_filter = request.GET.get('statut')
+    priorite_filter = request.GET.get('priorite')
+    search = request.GET.get('search')
+    
+    # Récupérer les messages
+    messages_query = MessageSupport.objects.select_related('client').annotate(
+        nb_reponses=Count('reponses')
+    ).order_by('-date_creation')
+    
+    # Appliquer les filtres
+    if statut_filter:
+        messages_query = messages_query.filter(statut=statut_filter)
+    if priorite_filter:
+        messages_query = messages_query.filter(priorite=priorite_filter)
+    if search:
+        messages_query = messages_query.filter(
+            Q(sujet__icontains=search) |
+            Q(message__icontains=search) |
+            Q(client__username__icontains=search) |
+            Q(client__email__icontains=search)
+        )
+    
+    # Pagination
+    paginator = Paginator(messages_query, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    
+    # Statistiques
+    total_messages = MessageSupport.objects.count()
+    messages_nouveaux = MessageSupport.objects.filter(statut='NOUVEAU').count()
+    messages_en_cours = MessageSupport.objects.filter(statut='EN_COURS').count()
+    messages_resolus = MessageSupport.objects.filter(statut='RESOLU').count()
+    messages_fermes = MessageSupport.objects.filter(statut='FERME').count()
+    messages_non_lus = MessageSupport.objects.filter(lu=False).count()
+    
+    context = {
+        'messages_list': page_obj.object_list,
+        'page_obj': page_obj,
+        'statut_filter': statut_filter,
+        'priorite_filter': priorite_filter,
+        'search': search or '',
+        'total_messages': total_messages,
+        'stats': {
+            'nouveau': messages_nouveaux,
+            'en_cours': messages_en_cours,
+            'resolu': messages_resolus,
+            'ferme': messages_fermes,
+            'non_lus': messages_non_lus,
+        },
+        'statuts': MessageSupport.STATUT_CHOICES,
+        'priorites': MessageSupport.PRIORITE_CHOICES,
+    }
+    
+    return render(request, 'adminpanel/messagerie.html', context)
+
+@admin_required
+def admin_message_detail(request, message_id):
+    """Voir les détails d'un message et répondre"""
+    from boutique.models import MessageSupport, ReponseSupport
+    
+    message_support = get_object_or_404(
+        MessageSupport.objects.select_related('client').prefetch_related('reponses__auteur'),
+        id=message_id
+    )
+    
+    # Marquer comme lu
+    if not message_support.lu:
+        message_support.lu = True
+        message_support.save(update_fields=['lu'])
+    
+    # Traiter la soumission
+    if request.method == 'POST':
+        # Répondre au message
+        contenu = request.POST.get('contenu')
+        if contenu:
+            ReponseSupport.objects.create(
+                message=message_support,
+                auteur=request.user,
+                contenu=contenu,
+                est_admin=True
+            )
+            
+            # Envoyer un email au client
+            try:
+                from django.core.mail import send_mail
+                from django.template.loader import render_to_string
+                from django.utils.html import strip_tags
+                
+                email_destinataire = message_support.email_contact or message_support.client.email
+                
+                if email_destinataire:
+                    # Contexte pour le template email
+                    context_email = {
+                        'client_nom': message_support.client.get_full_name() or message_support.client.username,
+                        'sujet': message_support.sujet,
+                        'reponse': contenu,
+                        'message_original': message_support.message,
+                        'message_id': message_support.id,
+                        'site_url': request.build_absolute_uri('/'),
+                    }
+                    
+                    # Créer le contenu HTML de l'email
+                    html_message = f"""
+                    <html>
+                    <head>
+                        <style>
+                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                            .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                            .response-box {{ background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 5px; }}
+                            .original-message {{ background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 5px; font-size: 14px; }}
+                            .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }}
+                            .button {{ display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>📧 Nouvelle réponse à votre demande de support</h1>
+                            </div>
+                            <div class="content">
+                                <p>Bonjour <strong>{context_email['client_nom']}</strong>,</p>
+                                
+                                <p>Notre équipe support vient de répondre à votre demande concernant : <strong>{context_email['sujet']}</strong></p>
+                                
+                                <div class="response-box">
+                                    <h3 style="color: #667eea; margin-top: 0;">💬 Réponse de notre équipe :</h3>
+                                    <p style="white-space: pre-wrap;">{context_email['reponse']}</p>
+                                </div>
+                                
+                                <div class="original-message">
+                                    <strong>Votre message initial :</strong>
+                                    <p style="white-space: pre-wrap; margin-top: 10px;">{context_email['message_original']}</p>
+                                </div>
+                                
+                                <div style="text-align: center;">
+                                    <a href="{context_email['site_url']}contact-support/" class="button">
+                                        Répondre ou consulter la conversation
+                                    </a>
+                                </div>
+                                
+                                <p style="margin-top: 30px;">Si vous avez d'autres questions, n'hésitez pas à nous répondre via votre espace client.</p>
+                                
+                                <p style="margin-top: 20px;">
+                                    Cordialement,<br>
+                                    <strong>L'équipe Support</strong>
+                                </p>
+                            </div>
+                            <div class="footer">
+                                <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.</p>
+                                <p>Pour toute question, contactez-nous via votre espace client.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    # Version texte simple
+                    text_message = f"""
+Bonjour {context_email['client_nom']},
+
+Notre équipe support vient de répondre à votre demande concernant : {context_email['sujet']}
+
+RÉPONSE DE NOTRE ÉQUIPE :
+{context_email['reponse']}
+
+VOTRE MESSAGE INITIAL :
+{context_email['message_original']}
+
+Vous pouvez consulter la conversation complète et répondre via votre espace client : {context_email['site_url']}contact-support/
+
+Cordialement,
+L'équipe Support
+                    """
+                    
+                    send_mail(
+                        subject=f"Réponse à votre demande : {message_support.sujet}",
+                        message=text_message,
+                        from_email='support@innovatech.sn',
+                        recipient_list=[email_destinataire],
+                        html_message=html_message,
+                        fail_silently=True,
+                    )
+                    
+                    messages.success(request, "Votre réponse a été envoyée et un email a été envoyé au client.")
+                else:
+                    messages.success(request, "Votre réponse a été envoyée (aucun email configuré pour ce client).")
+                    
+            except Exception as e:
+                messages.warning(request, f"Votre réponse a été envoyée mais l'email n'a pas pu être envoyé : {str(e)}")
+            
+            return redirect('admin_message_detail', message_id=message_id)
+        
+        # Changer le statut
+        nouveau_statut = request.POST.get('statut')
+        if nouveau_statut and nouveau_statut != message_support.statut:
+            message_support.statut = nouveau_statut
+            message_support.save(update_fields=['statut'])
+            messages.success(request, f"Statut changé en : {message_support.get_statut_display()}")
+            return redirect('admin_message_detail', message_id=message_id)
+        
+        # Changer la priorité
+        nouvelle_priorite = request.POST.get('priorite')
+        if nouvelle_priorite and nouvelle_priorite != message_support.priorite:
+            message_support.priorite = nouvelle_priorite
+            message_support.save(update_fields=['priorite'])
+            messages.success(request, f"Priorité changée en : {message_support.get_priorite_display()}")
+            return redirect('admin_message_detail', message_id=message_id)
+    
+    context = {
+        'message': message_support,
+        'reponses': message_support.reponses.all(),
+        'statuts': MessageSupport.STATUT_CHOICES,
+        'priorites': MessageSupport.PRIORITE_CHOICES,
+    }
+    
+    return render(request, 'adminpanel/message_detail.html', context)
+
+@admin_required
+def admin_message_delete(request, message_id):
+    """Supprimer un message"""
+    from boutique.models import MessageSupport
+    message_support = get_object_or_404(MessageSupport, id=message_id)
+    message_support.delete()
+    messages.success(request, "Le message a été supprimé.")
+    return redirect('admin_messagerie')
+
+@admin_required
+def admin_messages_marquer_tous_lus(request):
+    """Marquer tous les messages comme lus"""
+    from boutique.models import MessageSupport
+    if request.method == 'POST':
+        nb_messages = MessageSupport.objects.filter(lu=False).update(lu=True)
+        messages.success(request, f"{nb_messages} message(s) marqué(s) comme lu(s).")
+    return redirect('admin_messagerie')

@@ -269,6 +269,65 @@
       transform: scale(1.1);
     }
 
+    /* ========== BADGES DE NOTIFICATION ========== */
+    .notification-badge {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+      min-width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+      z-index: 2;
+      animation: pulse-badge 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% {
+        transform: translateY(-50%) scale(1);
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+      }
+      50% {
+        transform: translateY(-50%) scale(1.05);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.6);
+      }
+    }
+
+    .admin-sidebar .nav-link:hover .notification-badge {
+      animation: none;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .admin-sidebar .nav-link.active .notification-badge {
+      background: rgba(255, 255, 255, 0.9);
+      color: #667eea;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+    }
+
+    /* Badge pour commandes urgentes */
+    .notification-badge.urgent {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      animation: pulse-urgent 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-urgent {
+      0%, 100% {
+        transform: translateY(-50%) scale(1);
+      }
+      50% {
+        transform: translateY(-50%) scale(1.15);
+      }
+    }
+
     /* ========== HEADER PREMIUM ========== */
     .admin-header {
       height: var(--header-height);
@@ -630,12 +689,18 @@
              href="{% url 'admin_orders' %}">
             <i class="fa-solid fa-basket-shopping me-2"></i>
             <span class="link-text">Commandes</span>
+            {% if admin_badges.commandes > 0 %}
+            <span class="notification-badge {% if admin_badges.commandes > 5 %}urgent{% endif %}">{{ admin_badges.commandes }}</span>
+            {% endif %}
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'admin_clients_list' %}">
             <i class="fa-solid fa-users me-2"></i>
             <span class="link-text">Clients</span>
+            {% if admin_badges.clients > 0 %}
+            <span class="notification-badge">{{ admin_badges.clients }}</span>
+            {% endif %}
           </a>
         </li>
 
@@ -649,15 +714,30 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'admin_avis' %}active{% endif %}" href="{% url 'admin_avis' %}">
+          <a class="nav-link {% if request.resolver_match.url_name == 'admin_avis' and request.GET.type == 'produits' %}active{% endif %}" href="{% url 'admin_avis' %}?type=produits">
             <i class="fa-solid fa-star me-2"></i>
-            <span class="link-text">Avis</span>
+            <span class="link-text">Avis Produits</span>
+            {% if admin_badges.avis_produit > 0 %}
+            <span class="notification-badge">{{ admin_badges.avis_produit }}</span>
+            {% endif %}
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">
-            <i class="fa-solid fa-gear me-2"></i>
-            <span class="link-text">Paramètres</span>
+          <a class="nav-link {% if request.resolver_match.url_name == 'admin_avis' and request.GET.type == 'livreurs' %}active{% endif %}" href="{% url 'admin_avis' %}?type=livreurs">
+            <i class="fa-solid fa-truck me-2"></i>
+            <span class="link-text">Avis Livreurs</span>
+            {% if admin_badges.avis_livreur > 0 %}
+            <span class="notification-badge">{{ admin_badges.avis_livreur }}</span>
+            {% endif %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'admin_messagerie' or request.resolver_match.url_name == 'admin_message_detail' %}active{% endif %}" href="{% url 'admin_messagerie' %}">
+            <i class="fa-solid fa-envelope me-2"></i>
+            <span class="link-text">Messagerie</span>
+            {% if admin_badges.messages > 0 %}
+            <span class="notification-badge">{{ admin_badges.messages }}</span>
+            {% endif %}
           </a>
         </li>
 
@@ -691,6 +771,82 @@
             <form method="get" class="d-none d-md-block">
               <input class="form-control form-control-sm" name="q" placeholder="🔍 Rechercher...">
             </form>
+
+            <!-- Notifications rapides -->
+            {% with total_notif=admin_badges.commandes|add:admin_badges.messages|add:admin_badges.avis|add:admin_badges.clients|add:admin_badges.rupture_stock %}
+            {% if total_notif > 0 %}
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-primary position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-bell"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                  {{ total_notif }}
+                  <span class="visually-hidden">notifications non lues</span>
+                </span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationsDropdown" style="min-width: 300px;">
+                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                  <strong>🔔 Notifications</strong>
+                  <span class="badge bg-primary">{{ total_notif }}</span>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                
+                {% if admin_badges.commandes > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_orders' %}">
+                    <span><i class="fa-solid fa-basket-shopping text-warning me-2"></i> Nouvelles commandes</span>
+                    <span class="badge bg-warning text-dark">{{ admin_badges.commandes }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.messages > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_messagerie' %}">
+                    <span><i class="fa-solid fa-envelope text-primary me-2"></i> Nouveaux messages</span>
+                    <span class="badge bg-primary">{{ admin_badges.messages }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.rupture_stock > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_products' %}?stock=0">
+                    <span><i class="fa-solid fa-box-open text-danger me-2"></i> Rupture de stock</span>
+                    <span class="badge bg-danger">{{ admin_badges.rupture_stock }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.avis_produit > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_avis' %}?type=produits">
+                    <span><i class="fa-solid fa-star text-info me-2"></i> Avis produits</span>
+                    <span class="badge bg-info">{{ admin_badges.avis_produit }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.avis_livreur > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_avis' %}?type=livreurs">
+                    <span><i class="fa-solid fa-truck text-secondary me-2"></i> Avis livreurs</span>
+                    <span class="badge bg-secondary">{{ admin_badges.avis_livreur }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.clients > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_clients_list' %}">
+                    <span><i class="fa-solid fa-users text-success me-2"></i> Nouveaux clients</span>
+                    <span class="badge bg-success">{{ admin_badges.clients }}</span>
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+            {% endif %}
+            {% endwith %}
 
             <!-- User dropdown -->
             <div class="dropdown">

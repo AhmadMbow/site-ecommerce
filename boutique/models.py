@@ -195,6 +195,7 @@ class AvisLivreur(models.Model):
     note = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     commentaire = models.TextField(blank=True)
     date_avis = models.DateTimeField(default=timezone.now)
+    examine = models.BooleanField(default=False, help_text="Marqué comme examiné par l'administrateur")
 
     class Meta:
         unique_together = ('livreur', 'client')
@@ -209,6 +210,63 @@ class AvisProduit(models.Model):
     note = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     commentaire = models.TextField(blank=True)
     date_avis = models.DateTimeField(default=timezone.now)
+    examine = models.BooleanField(default=False, help_text="Marqué comme examiné par l'administrateur")
 
     def __str__(self):
         return f"Avis de {self.client.username} sur {self.produit.nom} ({self.note}★)"
+
+# ---------------------------
+# Messagerie Support Client
+# ---------------------------
+
+class MessageSupport(models.Model):
+    STATUT_CHOICES = [
+        ('NOUVEAU', 'Nouveau'),
+        ('EN_COURS', 'En cours'),
+        ('RESOLU', 'Résolu'),
+        ('FERME', 'Fermé'),
+    ]
+    
+    PRIORITE_CHOICES = [
+        ('BASSE', 'Basse'),
+        ('NORMALE', 'Normale'),
+        ('HAUTE', 'Haute'),
+        ('URGENTE', 'Urgente'),
+    ]
+    
+    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages_support")
+    sujet = models.CharField(max_length=200)
+    message = models.TextField()
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='NOUVEAU')
+    priorite = models.CharField(max_length=20, choices=PRIORITE_CHOICES, default='NORMALE')
+    date_creation = models.DateTimeField(default=timezone.now)
+    date_modification = models.DateTimeField(auto_now=True)
+    lu = models.BooleanField(default=False)
+    
+    # Informations de contact
+    email_contact = models.EmailField(blank=True, null=True)
+    telephone_contact = models.CharField(max_length=20, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_creation']
+        verbose_name = "Message Support"
+        verbose_name_plural = "Messages Support"
+    
+    def __str__(self):
+        return f"{self.sujet} - {self.client.username} ({self.statut})"
+
+class ReponseSupport(models.Model):
+    message = models.ForeignKey(MessageSupport, on_delete=models.CASCADE, related_name="reponses")
+    auteur = models.ForeignKey(User, on_delete=models.CASCADE)
+    contenu = models.TextField()
+    date_reponse = models.DateTimeField(default=timezone.now)
+    est_admin = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['date_reponse']
+        verbose_name = "Réponse Support"
+        verbose_name_plural = "Réponses Support"
+    
+    def __str__(self):
+        return f"Réponse de {self.auteur.username} le {self.date_reponse.strftime('%d/%m/%Y')}"
+

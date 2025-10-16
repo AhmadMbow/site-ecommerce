@@ -1,0 +1,622 @@
+{% extends 'adminpanel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Messagerie - Support Client{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 2rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+  }
+
+  .stat-icon.new { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .stat-icon.progress { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .stat-icon.resolved { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+  .stat-icon.closed { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+  .stat-info h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2d3748;
+  }
+
+  .stat-info p {
+    margin: 0;
+    color: #718096;
+    font-size: 0.9rem;
+  }
+
+  .filters-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+  }
+
+  .filters-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: end;
+  }
+
+  .filter-group {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .filter-group label {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.9rem;
+  }
+
+  .form-select, .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.6rem;
+    transition: all 0.3s ease;
+  }
+
+  .form-select:focus, .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .btn-filter {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-reset {
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-reset:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+  }
+
+  .btn-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    color: white;
+    padding: 0.7rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+  }
+
+  .btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
+  }
+
+  .message-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border-left: 4px solid #e2e8f0;
+    cursor: pointer;
+  }
+
+  .message-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  }
+
+  .message-card.unread {
+    background: linear-gradient(to right, #fff5f5, #fffafa, #ffffff);
+    border-left-color: #f5576c;
+    border-left-width: 5px;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.15);
+    position: relative;
+  }
+
+  .message-card.unread::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: linear-gradient(180deg, #f5576c 0%, #ff6b6b 100%);
+    border-radius: 12px 0 0 12px;
+    box-shadow: 0 0 10px rgba(245, 87, 108, 0.5);
+  }
+
+  .message-card.unread:hover {
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.25);
+  }
+
+  .message-card.unread .message-subject {
+    font-weight: 700;
+    color: #2c3e50;
+  }
+
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+  }
+
+  .message-subject {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+
+  .message-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #718096;
+    align-items: center;
+  }
+
+  .message-meta i {
+    margin-right: 0.3rem;
+  }
+
+  .message-preview {
+    color: #4a5568;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .message-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .message-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .badge-nouveau { background: #fed7d7; color: #c53030; }
+  .badge-en_cours { background: #bee3f8; color: #2c5282; }
+  .badge-resolu { background: #c6f6d5; color: #22543d; }
+  .badge-ferme { background: #e2e8f0; color: #4a5568; }
+
+  .badge-urgente { background: #fc8181; color: white; }
+  .badge-haute { background: #f6ad55; color: white; }
+  .badge-normale { background: #4299e1; color: white; }
+  .badge-basse { background: #9ae6b4; color: white; }
+
+  .btn-view {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+
+  .btn-view:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+
+  .page-link {
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    border: 2px solid #e2e8f0;
+    color: #667eea;
+    font-weight: 600;
+  }
+
+  .page-link:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+
+  .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: #cbd5e0;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h3 {
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    color: #718096;
+  }
+
+  .badge-nouveau-message {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    animation: pulse-badge-message 2s ease-in-out infinite;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+    letter-spacing: 0.5px;
+  }
+
+  @keyframes pulse-badge-message {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.6);
+    }
+  }
+
+  .message-card.unread .badge-nouveau-message {
+    animation: pulse-badge-urgent 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-badge-urgent {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  .unread-badge {
+    width: 12px;
+    height: 12px;
+    background: #f5576c;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 0.5rem;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fa-solid fa-inbox me-2"></i>Messagerie Support Client</h1>
+  <p class="mb-0">Gérez les demandes de support de vos clients</p>
+</div>
+
+<!-- Statistiques -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">
+      <i class="fa-solid fa-envelope-open"></i>
+    </div>
+    <div class="stat-info">
+      <h3>{{ stats.non_lus }}</h3>
+      <p>Messages non lus</p>
+    </div>
+  </div>
+  
+  <div class="stat-card">
+    <div class="stat-icon new">
+      <i class="fa-solid fa-envelope"></i>
+    </div>
+    <div class="stat-info">
+      <h3>{{ stats.nouveau }}</h3>
+      <p>Nouveaux messages</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon progress">
+      <i class="fa-solid fa-clock"></i>
+    </div>
+    <div class="stat-info">
+      <h3>{{ stats.en_cours }}</h3>
+      <p>En cours</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon resolved">
+      <i class="fa-solid fa-check-circle"></i>
+    </div>
+    <div class="stat-info">
+      <h3>{{ stats.resolu }}</h3>
+      <p>Résolus</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon closed">
+      <i class="fa-solid fa-folder"></i>
+    </div>
+    <div class="stat-info">
+      <h3>{{ stats.ferme }}</h3>
+      <p>Fermés</p>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres -->
+<div class="filters-card">
+  <form method="GET" class="filters-row">
+    <div class="filter-group">
+      <label>Statut</label>
+      <select name="statut" class="form-select">
+        <option value="">Tous les statuts</option>
+        <option value="NOUVEAU" {% if request.GET.statut == 'NOUVEAU' %}selected{% endif %}>Nouveau</option>
+        <option value="EN_COURS" {% if request.GET.statut == 'EN_COURS' %}selected{% endif %}>En cours</option>
+        <option value="RESOLU" {% if request.GET.statut == 'RESOLU' %}selected{% endif %}>Résolu</option>
+        <option value="FERME" {% if request.GET.statut == 'FERME' %}selected{% endif %}>Fermé</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Priorité</label>
+      <select name="priorite" class="form-select">
+        <option value="">Toutes les priorités</option>
+        <option value="URGENTE" {% if request.GET.priorite == 'URGENTE' %}selected{% endif %}>Urgente</option>
+        <option value="HAUTE" {% if request.GET.priorite == 'HAUTE' %}selected{% endif %}>Haute</option>
+        <option value="NORMALE" {% if request.GET.priorite == 'NORMALE' %}selected{% endif %}>Normale</option>
+        <option value="BASSE" {% if request.GET.priorite == 'BASSE' %}selected{% endif %}>Basse</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Recherche</label>
+      <input type="text" name="q" class="form-control" placeholder="Sujet ou client..." value="{{ request.GET.q }}">
+    </div>
+
+    <div class="filter-group" style="flex: 0;">
+      <button type="submit" class="btn btn-filter">
+        <i class="fa-solid fa-filter me-1"></i>Filtrer
+      </button>
+    </div>
+
+    <div class="filter-group" style="flex: 0;">
+      <a href="{% url 'admin_messagerie' %}" class="btn btn-reset">
+        <i class="fa-solid fa-rotate-right me-1"></i>Réinitialiser
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Actions en masse -->
+{% if stats.non_lus > 0 %}
+<div class="mb-3">
+  <form method="POST" action="{% url 'admin_messages_marquer_tous_lus' %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-warning" onclick="return confirm('Êtes-vous sûr de vouloir marquer tous les messages comme lus ?')">
+      <i class="fa-solid fa-check-double me-1"></i>
+      Marquer tous comme lus ({{ stats.non_lus }})
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Liste des messages -->
+{% if messages_list %}
+  {% for message in messages_list %}
+  <div class="message-card {% if not message.lu %}unread{% endif %}" onclick="window.location.href='{% url 'admin_message_detail' message.id %}'">
+    <div class="message-header">
+      <div>
+        <div class="message-subject">
+          {{ message.sujet }}
+          {% if not message.lu %}
+          <span class="badge-nouveau-message">
+            <i class="fa-solid fa-envelope-open me-1"></i>NON LU
+          </span>
+          {% endif %}
+        </div>
+        <div class="message-meta">
+          <span><i class="fa-solid fa-user"></i>{{ message.client.get_full_name|default:message.client.username }}</span>
+          <span><i class="fa-solid fa-calendar"></i>{{ message.date_creation|date:"d M Y à H:i" }}</span>
+          {% if message.email_contact %}
+          <span><i class="fa-solid fa-envelope"></i>{{ message.email_contact }}</span>
+          {% endif %}
+          {% if message.telephone_contact %}
+          <span><i class="fa-solid fa-phone"></i>{{ message.telephone_contact }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="message-preview">
+      {{ message.message|truncatewords:30 }}
+    </div>
+
+    <div class="message-footer">
+      <div class="message-badges">
+        <span class="badge badge-{{ message.statut|lower }}">
+          {% if message.statut == 'NOUVEAU' %}
+            <i class="fa-solid fa-envelope"></i> Nouveau
+          {% elif message.statut == 'EN_COURS' %}
+            <i class="fa-solid fa-clock"></i> En cours
+          {% elif message.statut == 'RESOLU' %}
+            <i class="fa-solid fa-check"></i> Résolu
+          {% else %}
+            <i class="fa-solid fa-folder"></i> Fermé
+          {% endif %}
+        </span>
+        <span class="badge badge-{{ message.priorite|lower }}">
+          {% if message.priorite == 'URGENTE' %}
+            <i class="fa-solid fa-exclamation-triangle"></i> Urgente
+          {% elif message.priorite == 'HAUTE' %}
+            <i class="fa-solid fa-arrow-up"></i> Haute
+          {% elif message.priorite == 'NORMALE' %}
+            <i class="fa-solid fa-minus"></i> Normale
+          {% else %}
+            <i class="fa-solid fa-arrow-down"></i> Basse
+          {% endif %}
+        </span>
+        {% if message.reponses.count > 0 %}
+        <span class="badge" style="background: #e9d8fd; color: #553c9a;">
+          <i class="fa-solid fa-comments"></i> {{ message.reponses.count }} réponse{{ message.reponses.count|pluralize }}
+        </span>
+        {% endif %}
+      </div>
+
+      <button class="btn btn-view" onclick="event.stopPropagation(); window.location.href='{% url 'admin_message_detail' message.id %}'">
+        <i class="fa-solid fa-eye me-1"></i>Voir
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <nav>
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.priorite %}&priorite={{ request.GET.priorite }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+          <i class="fa-solid fa-angles-left"></i>
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.priorite %}&priorite={{ request.GET.priorite }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+          <i class="fa-solid fa-angle-left"></i>
+        </a>
+      </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <li class="page-item active">
+          <span class="page-link">{{ num }}</span>
+        </li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ num }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.priorite %}&priorite={{ request.GET.priorite }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.priorite %}&priorite={{ request.GET.priorite }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+          <i class="fa-solid fa-angle-right"></i>
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.priorite %}&priorite={{ request.GET.priorite }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+          <i class="fa-solid fa-angles-right"></i>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+{% else %}
+  <div class="empty-state">
+    <i class="fa-solid fa-inbox"></i>
+    <h3>Aucun message trouvé</h3>
+    <p>{% if request.GET.statut or request.GET.priorite or request.GET.q %}Aucun message ne correspond à vos critères de recherche.{% else %}Vous n'avez aucun message de support pour le moment.{% endif %}</p>
+  </div>
+{% endif %}
+{% endblock %}

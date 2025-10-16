@@ -77,6 +77,16 @@ urlpatterns = [
     path('admin-panel/clients/<int:user_id>/toggle-active/', views.admin_client_toggle_active, name='admin_client_toggle_active'),
     path('admin-panel/avis/', views.admin_avis, name='admin_avis'),
     path('admin-panel/avis/<int:avis_id>/supprimer/', views.admin_avis_delete, name='admin_avis_delete'),
+    path('admin-panel/avis/<int:avis_id>/examiner/', views.admin_avis_marquer_examine, name='admin_avis_marquer_examine'),
+    path('admin-panel/avis/tous-examines/', views.admin_avis_marquer_tous_examines, name='admin_avis_marquer_tous_examines'),
+    
+    # Messagerie Support
+    path('contact-support/', views.contact_support, name='contact_support'),
+    path('admin-panel/messagerie/', views.admin_messagerie, name='admin_messagerie'),
+    path('admin-panel/messagerie/<int:message_id>/', views.admin_message_detail, name='admin_message_detail'),
+    path('admin-panel/messagerie/<int:message_id>/supprimer/', views.admin_message_delete, name='admin_message_delete'),
+    path('admin-panel/messagerie/marquer-tous-lus/', views.admin_messages_marquer_tous_lus, name='admin_messages_marquer_tous_lus'),
+    
     path('admin-logout/', views.admin_logout, name='admin_logout'),
 
     # AJAX

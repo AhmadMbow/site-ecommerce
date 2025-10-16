@@ -286,6 +286,12 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'about' %}">À propos</a>
           </li>
+          
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'contact_support' %}">
+              <i class="fas fa-headset me-1"></i>Support
+            </a>
+          </li>
         </ul>
 
         <!-- Zone droite -->
@@ -360,6 +366,11 @@
                 {% endwith %}
 
                 <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'contact_support' %}">
+                    <i class="fas fa-headset fa-fw me-2"></i> Contacter le support
+                  </a>
+                </li>
                 <li>
                   <a class="dropdown-item" href="{% url 'change_password' %}">
                     <i class="fas fa-key fa-fw me-2"></i> Changer le mot de passe
