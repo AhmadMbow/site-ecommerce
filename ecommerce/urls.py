@@ -9,14 +9,14 @@ urlpatterns = [
     # Django admin
     path('admin/', admin.site.urls),
 
-    # Django-allauth
-    path('accounts/', include('allauth.urls')),
-
     # Favicon
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
 
-    # Site
+    # Site (doit être AVANT allauth pour capturer les URLs personnalisées)
     path('', include('boutique.urls')),
+
+    # Django-allauth (en dernier pour ne pas interférer)
+    path('accounts/', include('allauth.urls')),
 
     # Redirection si quelqu'un tape /admin/orders/
     path('admin/orders/', RedirectView.as_view(url='/admin-panel/orders/', permanent=False)),

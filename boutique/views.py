@@ -487,15 +487,18 @@ def post_login_redirect(request):
     if request.user.is_authenticated:
         # Si admin/staff -> panneau admin
         if request.user.is_staff:
+            messages.success(request, f"Bienvenue {request.user.username} !")
             return redirect('admin_dashboard')
         
         # Si livreur -> dashboard livreur
         profile = getattr(request.user, 'userprofile', None)
         if profile and getattr(profile, 'role', '').upper() == 'LIVREUR':
+            messages.success(request, f"Bienvenue {request.user.username} !")
             return redirect('livreur_dashboard')
         
-        # Sinon -> dashboard client
-        return redirect('dashboard')
+        # Sinon -> boutique (page principale pour les clients)
+        messages.success(request, f"Bienvenue {request.user.username} !")
+        return redirect('boutique')
     
     # Si non authentifié (sécurité)
     return redirect('login_short')

@@ -18,7 +18,7 @@ urlpatterns = [
     path('login/', views.custom_login, name='login_short'),  # Alias pour /login/
     path('accounts/register/', views.register, name='register'),
     path('register/', views.register, name='register_short'),  # Alias pour /register/
-    path('accounts/logout/', LogoutView.as_view(next_page='login_short'), name='logout'),
+    path('accounts/logout/', LogoutView.as_view(next_page='home'), name='logout'),
 
     # Redirections rôle
     path('dashboard/', views.dashboard, name='dashboard'),

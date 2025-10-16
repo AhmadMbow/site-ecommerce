@@ -166,8 +166,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Authentication settings
-LOGIN_REDIRECT_URL = '/post-login/'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'post_login_redirect'  # Redirection intelligente selon le rôle
+LOGOUT_REDIRECT_URL = 'home'  # Page d'accueil après déconnexion
 LOGIN_URL = 'login_short'  # URL courte : /login/ au lieu de /accounts/login/
 
 # Django-allauth settings
