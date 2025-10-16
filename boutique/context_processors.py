@@ -8,7 +8,7 @@ def admin_notifications(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return {}
     
-    from boutique.models import Commande, MessageSupport, AvisLivreur, AvisProduit, Produit
+    from boutique.models import Commande, MessageSupport, AvisLivreur, AvisProduit, Produit, NotificationAdminVue
     from django.contrib.auth.models import User
     
     # Date limite pour "nouveau" (dernières 24h)
@@ -35,12 +35,18 @@ def admin_notifications(request):
     
     nouveaux_avis = nouveaux_avis_livreur + nouveaux_avis_produit
     
-    # Compter les nouveaux clients (inscrits dans les dernières 24h)
+    # Récupérer les IDs des clients déjà vus par cet admin
+    clients_vus_ids = NotificationAdminVue.objects.filter(
+        admin=request.user,
+        type_notification='NOUVEAU_CLIENT'
+    ).values_list('objet_id', flat=True)
+    
+    # Compter les nouveaux clients (inscrits dans les dernières 24h) NON VUS
     nouveaux_clients = User.objects.filter(
         date_joined__gte=date_limite,
         is_staff=False,
         is_superuser=False
-    ).count()
+    ).exclude(id__in=clients_vus_ids).count()
     
     # Compter les produits en rupture de stock
     produits_rupture_stock = Produit.objects.filter(stock=0).count()

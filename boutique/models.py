@@ -270,3 +270,34 @@ class ReponseSupport(models.Model):
     def __str__(self):
         return f"Réponse de {self.auteur.username} le {self.date_reponse.strftime('%d/%m/%Y')}"
 
+
+# ---------------------------
+# Notifications Admin Vues
+# ---------------------------
+
+class NotificationAdminVue(models.Model):
+    """
+    Modèle pour tracker les notifications vues par les administrateurs
+    """
+    TYPE_CHOICES = [
+        ('NOUVEAU_CLIENT', 'Nouveau Client'),
+        ('NOUVELLE_COMMANDE', 'Nouvelle Commande'),
+        ('NOUVEAU_MESSAGE', 'Nouveau Message'),
+        ('NOUVEL_AVIS', 'Nouvel Avis'),
+        ('RUPTURE_STOCK', 'Rupture de Stock'),
+    ]
+    
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications_vues')
+    type_notification = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    objet_id = models.IntegerField(help_text="ID de l'objet concerné (User, Commande, etc.)")
+    date_vue = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['admin', 'type_notification', 'objet_id']
+        ordering = ['-date_vue']
+        verbose_name = "Notification Admin Vue"
+        verbose_name_plural = "Notifications Admin Vues"
+    
+    def __str__(self):
+        return f"{self.admin.username} - {self.type_notification} #{self.objet_id}"
+

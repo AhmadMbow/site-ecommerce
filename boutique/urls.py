@@ -87,6 +87,9 @@ urlpatterns = [
     path('admin-panel/messagerie/<int:message_id>/supprimer/', views.admin_message_delete, name='admin_message_delete'),
     path('admin-panel/messagerie/marquer-tous-lus/', views.admin_messages_marquer_tous_lus, name='admin_messages_marquer_tous_lus'),
     
+    # Notifications Admin
+    path('api/admin/notification/marquer-vue/', views.admin_marquer_notification_vue, name='admin_marquer_notification_vue'),
+    
     path('admin-logout/', views.admin_logout, name='admin_logout'),
 
     # AJAX

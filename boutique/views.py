@@ -1580,7 +1580,10 @@ def admin_livreurs_toggle_active(request, user_id):
 # Gestion des clients
 @admin_required
 def admin_clients_list(request):
-    """Liste des clients"""
+    """Liste des clients avec marquage automatique des notifications"""
+    from boutique.models import NotificationAdminVue
+    from datetime import timedelta
+    
     clients_list = User.objects.filter(is_staff=False).select_related('userprofile').order_by('-date_joined')
     
     search = request.GET.get('q')
@@ -1592,6 +1595,20 @@ def admin_clients_list(request):
             Q(email__icontains=search)
         )
     
+    # Date limite pour "nouveau" (dernières 24h)
+    date_limite = timezone.now() - timedelta(hours=24)
+    
+    # Récupérer les nouveaux clients
+    nouveaux_clients = clients_list.filter(date_joined__gte=date_limite)
+    
+    # Marquer automatiquement tous les nouveaux clients comme vus par cet admin
+    for client in nouveaux_clients:
+        NotificationAdminVue.objects.get_or_create(
+            admin=request.user,
+            type_notification='NOUVEAU_CLIENT',
+            objet_id=client.id
+        )
+    
     paginator = Paginator(clients_list, 20)
     page_number = request.GET.get('page')
     clients = paginator.get_page(page_number)
@@ -1600,6 +1617,7 @@ def admin_clients_list(request):
         'clients': clients,
         'search': search,
         'total_clients': clients_list.count(),
+        'nouveaux_clients_count': nouveaux_clients.count(),
     }
     return render(request, 'adminpanel/clients_list.html', context)
 
@@ -2396,3 +2414,44 @@ def admin_messages_marquer_tous_lus(request):
         nb_messages = MessageSupport.objects.filter(lu=False).update(lu=True)
         messages.success(request, f"{nb_messages} message(s) marqué(s) comme lu(s).")
     return redirect('admin_messagerie')
+
+
+# ===================================================================
+# VUES NOTIFICATIONS ADMIN
+# ===================================================================
+
+@login_required
+@require_POST
+def admin_marquer_notification_vue(request):
+    """
+    Marquer une notification comme vue (AJAX)
+    """
+    from boutique.models import NotificationAdminVue
+    import json
+    
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Non autorisé'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        type_notification = data.get('type')
+        objet_id = data.get('id')
+        
+        if not type_notification or not objet_id:
+            return JsonResponse({'success': False, 'error': 'Paramètres manquants'}, status=400)
+        
+        # Créer ou récupérer la notification vue
+        notification, created = NotificationAdminVue.objects.get_or_create(
+            admin=request.user,
+            type_notification=type_notification,
+            objet_id=objet_id
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'created': created,
+            'message': 'Notification marquée comme vue'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
