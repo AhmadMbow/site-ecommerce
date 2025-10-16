@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commande Livrée</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background-color: #ffc107;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #374151;
+        }
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 600;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #4b5563;
+        }
+        .order-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        .order-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #232526;
+            margin: 0 0 10px 0;
+        }
+        .order-detail {
+            font-size: 14px;
+            color: #4b5563;
+            margin: 5px 0;
+        }
+        .order-detail strong {
+            color: #111827;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .items-table th {
+            background-color: #232526;
+            color: #ffffff;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #374151;
+        }
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+        .items-table tr:hover {
+            background-color: #f9fafb;
+        }
+        .total-row {
+            background-color: #fef3c7;
+            font-weight: 700;
+        }
+        .total-row td {
+            padding: 15px 12px;
+            font-size: 18px;
+            color: #111827;
+        }
+        .attachment-notice {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .attachment-notice p {
+            margin: 0;
+            color: #1e40af;
+            font-size: 14px;
+        }
+        .attachment-notice strong {
+            color: #1e3a8a;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: #000000;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 13px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .social-links {
+            margin: 15px 0;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="success-icon">✓</div>
+            <h1>Commande Livrée avec Succès !</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">Bonjour {{ client.get_full_name|default:client.username }},</p>
+            
+            <p class="message">
+                Nous avons le plaisir de vous informer que votre commande a été <strong>livrée avec succès</strong> ! 
+                Nous espérons que vos articles vous plaisent et répondent à vos attentes.
+            </p>
+
+            <!-- Order Details -->
+            <div class="order-box">
+                <p class="order-number">Commande #{{ commande.id }}</p>
+                <p class="order-detail"><strong>Date de commande :</strong> {{ commande.date_commande|date:"d/m/Y à H:i" }}</p>
+                <p class="order-detail"><strong>Statut :</strong> <span style="color: #059669;">✓ LIVRÉE</span></p>
+                {% if commande.livreur %}
+                <p class="order-detail"><strong>Livreur :</strong> {{ commande.livreur.get_full_name|default:commande.livreur.username }}</p>
+                {% endif %}
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Items Table -->
+            <h2 style="color: #111827; font-size: 20px; margin-bottom: 15px;">📦 Détails de votre commande</h2>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th style="text-align: center;">Qté</th>
+                        <th style="text-align: right;">Prix unit.</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.produit.nom }}</td>
+                        <td style="text-align: center;">{{ item.quantite }}</td>
+                        <td style="text-align: right;">{{ item.prix_unitaire|floatformat:0 }} F CFA</td>
+                        <td style="text-align: right;"><strong>{{ item.prix_total|floatformat:0 }} F CFA</strong></td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right;">TOTAL</td>
+                        <td style="text-align: right;">{{ commande.total|floatformat:0 }} F CFA</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Attachment Notice -->
+            <div class="attachment-notice">
+                <p>
+                    📎 <strong>Reçu en pièce jointe</strong><br>
+                    Votre reçu officiel est joint à cet email au format PDF. Vous pouvez l'imprimer ou le conserver pour vos dossiers.
+                </p>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- CTA -->
+            <div style="text-align: center;">
+                <p class="message">Envie de découvrir d'autres produits ?</p>
+                <a href="http://127.0.0.1:8000/boutique/" class="cta-button">
+                    🛍️ Continuer vos Achats
+                </a>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Support Info -->
+            <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 30px;">
+                <h3 style="margin-top: 0; color: #111827; font-size: 16px;">💬 Besoin d'aide ?</h3>
+                <p style="font-size: 14px; color: #4b5563; margin: 10px 0;">
+                    Notre équipe est là pour vous ! N'hésitez pas à nous contacter si vous avez des questions ou des remarques sur votre commande.
+                </p>
+                <p style="font-size: 14px; color: #4b5563; margin: 10px 0;">
+                    📧 Email : {{ DEFAULT_FROM_EMAIL }}<br>
+                    📞 Téléphone : +221 XX XXX XX XX
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Merci pour votre confiance !</strong></p>
+            <p>Maryama Shop - Boutique E-commerce</p>
+            
+            <div class="social-links">
+                <a href="#">Facebook</a> | 
+                <a href="#">Instagram</a> | 
+                <a href="#">Twitter</a>
+            </div>
+            
+            <div class="divider" style="margin: 20px auto; width: 80%;"></div>
+            
+            <p style="font-size: 12px; color: #9ca3af;">
+                Vous recevez cet email car vous avez passé une commande sur notre site.<br>
+                Ceci est un email automatique, merci de ne pas y répondre directement.
+            </p>
+            <p style="font-size: 12px; color: #9ca3af; margin-top: 15px;">
+                © {{ "now"|date:"Y" }} Maryama Shop. Tous droits réservés.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

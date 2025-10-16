@@ -1250,6 +1250,8 @@ def livreur_order_accept(request, pk):
 @require_POST
 def livreur_order_update_status(request, pk):
     """Mettre à jour le statut d'une commande"""
+    from .utils import send_delivery_email_with_receipt
+    
     order = get_object_or_404(Commande, pk=pk)
     action = request.POST.get('action', '')
     
@@ -1280,6 +1282,19 @@ def livreur_order_update_status(request, pk):
         
         order.save(update_fields=update_fields)
         messages.success(request, f"Commande #{order.id} marquée comme livrée.")
+        
+        # ✨ NOUVEAU : Envoyer l'email avec le reçu PDF au client
+        try:
+            email_sent = send_delivery_email_with_receipt(order)
+            if email_sent:
+                messages.success(request, f"📧 Email de confirmation envoyé au client avec le reçu PDF.")
+            else:
+                messages.warning(request, f"⚠️ Commande livrée mais l'email n'a pas pu être envoyé.")
+        except Exception as e:
+            messages.warning(request, f"⚠️ Commande livrée mais erreur lors de l'envoi de l'email: {str(e)}")
+            print(f"Erreur envoi email: {e}")
+            import traceback
+            traceback.print_exc()
         
     else:
         messages.warning(request, f"Action '{action}' non autorisée pour la commande #{order.id} (statut: {current_status})")
