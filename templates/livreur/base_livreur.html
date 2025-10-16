@@ -348,6 +348,29 @@
       white-space: nowrap;
     }
     
+    /* Badge pour menu navigation */
+    .nav-badge {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: var(--gradient-warning);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      min-width: 18px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+      animation: notification-pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 10;
+    }
+    
+    .nav-link.active .nav-badge {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+    
     /* Sidebar Footer */
     .sidebar-footer {
       padding: var(--space-lg);
@@ -675,6 +698,11 @@
     .notification-item:hover {
       transform: translateX(-5px);
       box-shadow: var(--shadow-md);
+      background: var(--bg-secondary);
+    }
+    
+    .notification-item:hover .notification-icon {
+      transform: scale(1.1);
     }
     
     .notification-icon {
@@ -688,6 +716,7 @@
       justify-content: center;
       font-size: 1.1rem;
       flex-shrink: 0;
+      transition: transform var(--transition-fast);
     }
     
     .notification-text {
@@ -958,6 +987,9 @@
             <a href="{{ URL_ORDERS|default:'#' }}" class="nav-link {% block sb_active_orders %}{% endblock %}" aria-current="{% block sb_aria_orders %}false{% endblock %}">
               <i class="fas fa-box"></i>
               <span>Commandes</span>
+              {% if livreur_badges.nouvelles_commandes > 0 %}
+                <span class="nav-badge">{{ livreur_badges.nouvelles_commandes }}</span>
+              {% endif %}
             </a>
           </li>
           <li>
@@ -1050,15 +1082,18 @@
     <div class="panel-body">
       {% if notifications %}
         {% for n in notifications %}
-          <div class="notification-item" role="article">
-            <div class="notification-icon">
+          <a href="{% url 'livreur_order_detail' n.order_id %}" class="notification-item" role="article" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); border-bottom: 1px solid var(--border-color); transition: background var(--transition-fast); cursor: pointer;">
+            <div class="notification-icon" style="width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--gradient-warning); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               <i class="fas {{ n.icon|default:'fa-info-circle' }}"></i>
             </div>
-            <div class="notification-text">
-              <div>{{ n.text }}</div>
-              <div class="muted">{{ n.time }}</div>
+            <div class="notification-text" style="flex: 1; min-width: 0;">
+              <div style="font-weight: 500; margin-bottom: 4px;">{{ n.text }}</div>
+              <div class="muted" style="font-size: 0.85rem; color: var(--text-muted);">{{ n.time }}</div>
             </div>
-          </div>
+            <div style="color: var(--primary); flex-shrink: 0;">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </a>
         {% endfor %}
       {% else %}
         <div class="text-muted empty" style="text-align: center; padding: var(--space-2xl); color: var(--text-muted);">

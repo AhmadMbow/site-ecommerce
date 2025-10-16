@@ -56,3 +56,55 @@ def admin_notifications(request):
             'rupture_stock': produits_rupture_stock,
         }
     }
+
+def livreur_notifications(request):
+    """
+    Context processor pour les notifications et badges du livreur
+    """
+    if not request.user.is_authenticated:
+        return {}
+    
+    # Vérifier si l'utilisateur est livreur
+    try:
+        profile = request.user.userprofile
+        if profile.role != 'LIVREUR':
+            return {}
+    except:
+        return {}
+    
+    from boutique.models import Commande
+    from django.db.models import Q
+    
+    # Nouvelles commandes EN_ATTENTE (non encore acceptées)
+    nouvelles_commandes = Commande.objects.filter(
+        statut='EN_ATTENTE'
+    ).select_related('user').order_by('-date_commande')[:10]
+    
+    # Commandes EN_COURS assignées à ce livreur
+    mes_commandes_en_cours = Commande.objects.filter(
+        statut='EN_COURS',
+        livreur=request.user
+    ).count()
+    
+    # Créer les notifications pour la cloche
+    notifications_list = []
+    
+    # Ajouter les nouvelles commandes comme notifications
+    for cmd in nouvelles_commandes:
+        notifications_list.append({
+            'icon': 'fa-box',
+            'text': f"Nouvelle commande #{cmd.id} - {cmd.user.get_full_name() or cmd.user.username}",
+            'time': cmd.date_commande.strftime('%H:%M'),
+            'url': f'/livreur/orders/{cmd.id}/',
+            'type': 'new_order',
+            'order_id': cmd.id
+        })
+    
+    return {
+        'livreur_badges': {
+            'nouvelles_commandes': nouvelles_commandes.count(),
+            'commandes_en_cours': mes_commandes_en_cours,
+        },
+        'notifications': notifications_list,
+        'nouvelles_commandes_count': nouvelles_commandes.count()
+    }

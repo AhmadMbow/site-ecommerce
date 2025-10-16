@@ -85,6 +85,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'boutique.context_processors.admin_notifications',
+                'boutique.context_processors.livreur_notifications',
             ],
         },
     },
