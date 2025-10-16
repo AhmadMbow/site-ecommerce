@@ -1,0 +1,574 @@
+{% extends 'adminpanel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Gestion des Avis | Admin{% endblock %}
+
+{% block header %}
+  <div class="d-flex align-items-center gap-3">
+    <i class="fa-solid fa-star text-warning"></i>
+    <span>Gestion des Avis</span>
+  </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --success-light: #d1f2eb;
+    --success-dark: #27ae60;
+    --warning-light: #fef9e7;
+    --warning-dark: #f39c12;
+    --danger-light: #fadbd8;
+    --danger-dark: #e74c3c;
+    --info-light: #d6eaf8;
+    --info-dark: #3498db;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-left: 4px solid var(--primary-blue);
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+
+  .stat-card.success { border-left-color: var(--success-dark); }
+  .stat-card.warning { border-left-color: var(--warning-dark); }
+  .stat-card.danger { border-left-color: var(--danger-dark); }
+  .stat-card.info { border-left-color: var(--info-dark); }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-card.success .stat-value { color: var(--success-dark); }
+  .stat-card.warning .stat-value { color: var(--warning-dark); }
+  .stat-card.danger .stat-value { color: var(--danger-dark); }
+  .stat-card.info .stat-value { color: var(--info-dark); }
+
+  .stat-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .filters-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+  }
+
+  .toggle-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .toggle-btn {
+    padding: 0.7rem 1.5rem;
+    border: 2px solid var(--primary-blue);
+    border-radius: 8px;
+    background: white;
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-btn.active,
+  .toggle-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+  }
+
+  .filter-form {
+    display: grid;
+    grid-template-columns: 1fr 150px 120px auto;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .btn-filter {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-filter:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-1px);
+  }
+
+  .btn-clear {
+    background: #6c757d;
+    border: none;
+    color: white;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-clear:hover {
+    background: #5a6268;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .avis-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .avis-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+
+  .avis-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .avis-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e9ecef;
+  }
+
+  .user-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .user-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .user-details small {
+    color: #6c757d;
+  }
+
+  .rating-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stars {
+    color: #ffc107;
+    font-size: 1.1rem;
+  }
+
+  .rating-value {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .avis-content {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .avis-content.empty {
+    color: #6c757d;
+    font-style: italic;
+  }
+
+  .avis-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .avis-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .btn-delete {
+    background: #e74c3c;
+    border: none;
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .btn-delete:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .filter-form {
+      grid-template-columns: 1fr;
+    }
+    
+    .toggle-buttons {
+      flex-wrap: wrap;
+    }
+    
+    .avis-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .avis-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques générales -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="position-relative">
+      <div class="stat-value">{{ total_avis_produits }}</div>
+      <div class="stat-label">Total avis produits</div>
+      <i class="fa-solid fa-box-open stat-icon"></i>
+    </div>
+  </div>
+  
+  <div class="stat-card success">
+    <div class="position-relative">
+      <div class="stat-value">{{ total_avis_livreurs }}</div>
+      <div class="stat-label">Total avis livreurs</div>
+      <i class="fa-solid fa-truck stat-icon"></i>
+    </div>
+  </div>
+  
+  <div class="stat-card warning">
+    <div class="position-relative">
+      <div class="stat-value">{{ note_moyenne }}</div>
+      <div class="stat-label">Note moyenne</div>
+      <i class="fa-solid fa-star stat-icon"></i>
+    </div>
+  </div>
+  
+  <div class="stat-card info">
+    <div class="position-relative">
+      <div class="stat-value">{{ avis_positifs }}</div>
+      <div class="stat-label">Avis positifs (4-5★)</div>
+      <i class="fa-solid fa-thumbs-up stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres et navigation -->
+<div class="filters-card">
+  <!-- Toggle entre avis produits et livreurs -->
+  <div class="toggle-buttons">
+    <a href="?type=produits{% if search %}&search={{ search }}{% endif %}{% if note_filter %}&note={{ note_filter }}{% endif %}" 
+       class="toggle-btn {% if type_avis == 'produits' %}active{% endif %}">
+      <i class="fa-solid fa-box-open me-2"></i>Avis Produits
+    </a>
+    <a href="?type=livreurs{% if search %}&search={{ search }}{% endif %}{% if note_filter %}&note={{ note_filter }}{% endif %}" 
+       class="toggle-btn {% if type_avis == 'livreurs' %}active{% endif %}">
+      <i class="fa-solid fa-truck me-2"></i>Avis Livreurs
+    </a>
+  </div>
+
+  <!-- Formulaire de filtres -->
+  <form method="get" class="filter-form">
+    <input type="hidden" name="type" value="{{ type_avis }}">
+    
+    <div class="form-group">
+      <label for="search">Rechercher</label>
+      <input type="text" 
+             id="search" 
+             name="search" 
+             class="form-control" 
+             value="{{ search }}"
+             placeholder="{% if type_avis == 'livreurs' %}Nom du livreur ou client...{% else %}Nom du produit ou client...{% endif %}">
+    </div>
+    
+    <div class="form-group">
+      <label for="note">Filtrer par note</label>
+      <select id="note" name="note" class="form-control">
+        <option value="">Toutes les notes</option>
+        {% for i in notes_choices %}
+          <option value="{{ i }}" {% if note_filter == i|stringformat:"s" %}selected{% endif %}>
+            {{ i }} étoile{{ i|pluralize }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <button type="submit" class="btn-filter">
+      <i class="fa-solid fa-filter me-1"></i>Filtrer
+    </button>
+    
+    <a href="?type={{ type_avis }}" class="btn-clear">
+      <i class="fa-solid fa-times me-1"></i>Clear
+    </a>
+  </form>
+</div>
+
+<!-- Liste des avis -->
+<div class="mb-4">
+  <h5 class="mb-3">
+    {% if type_avis == 'livreurs' %}
+      <i class="fa-solid fa-truck me-2"></i>Avis sur les livreurs
+    {% else %}
+      <i class="fa-solid fa-box-open me-2"></i>Avis sur les produits
+    {% endif %}
+    <span class="text-muted">({{ total_avis }} avis)</span>
+  </h5>
+
+  {% if avis %}
+    {% for avis in avis %}
+      <div class="avis-card">
+        <div class="avis-header">
+          <div class="avis-meta">
+            <!-- Informations de l'utilisateur qui a donné l'avis -->
+            <div class="user-info">
+              {% if avis.client.userprofile.photo %}
+                <img src="{{ avis.client.userprofile.photo.url }}" 
+                     alt="{{ avis.client.get_full_name }}" 
+                     class="user-avatar">
+              {% else %}
+                <div class="user-placeholder">
+                  {{ avis.client.first_name.0|default:avis.client.username.0|upper }}
+                </div>
+              {% endif %}
+              <div class="user-details">
+                <h6>{{ avis.client.get_full_name|default:avis.client.username }}</h6>
+                <small>Client</small>
+              </div>
+            </div>
+
+            <!-- Informations sur le produit ou livreur évalué -->
+            <div class="d-flex align-items-center gap-3">
+              <i class="fa-solid fa-arrow-right text-muted"></i>
+              {% if type_avis == 'livreurs' %}
+                <div class="user-info">
+                  {% if avis.livreur.userprofile.avatar %}
+                    <img src="{{ avis.livreur.userprofile.avatar.url }}" 
+                         alt="{{ avis.livreur.get_full_name }}" 
+                         class="user-avatar">
+                  {% else %}
+                    <div class="user-placeholder">
+                      {{ avis.livreur.first_name.0|default:avis.livreur.username.0|upper }}
+                    </div>
+                  {% endif %}
+                  <div class="user-details">
+                    <h6>{{ avis.livreur.get_full_name|default:avis.livreur.username }}</h6>
+                    <small>Livreur</small>
+                  </div>
+                </div>
+              {% else %}
+                <div class="d-flex align-items-center gap-2">
+                  {% if avis.produit.image %}
+                    <img src="{{ avis.produit.image.url }}" 
+                         alt="{{ avis.produit.nom }}" 
+                         class="user-avatar">
+                  {% else %}
+                    <div class="user-placeholder">
+                      <i class="fa-solid fa-box"></i>
+                    </div>
+                  {% endif %}
+                  <div class="user-details">
+                    <h6>{{ avis.produit.nom }}</h6>
+                    <small>Produit</small>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Note -->
+          <div class="rating-display">
+            <div class="stars">
+              {% for i in "12345" %}
+                {% if forloop.counter <= avis.note %}
+                  <i class="fa-solid fa-star"></i>
+                {% else %}
+                  <i class="fa-regular fa-star"></i>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <span class="rating-value">{{ avis.note }}/5</span>
+          </div>
+        </div>
+
+        <!-- Commentaire -->
+        {% if avis.commentaire %}
+          <div class="avis-content">
+            {{ avis.commentaire|linebreaks }}
+          </div>
+        {% else %}
+          <div class="avis-content empty">
+            Aucun commentaire laissé
+          </div>
+        {% endif %}
+
+        <!-- Footer avec date et actions -->
+        <div class="avis-footer">
+          <div class="avis-date">
+            <i class="fa-solid fa-calendar me-1"></i>
+            {{ avis.date_avis|date:"d/m/Y à H:i" }}
+          </div>
+          
+          <a href="{% url 'admin_avis_delete' avis.id %}?type={{ type_avis }}" 
+             class="btn-delete"
+             onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')">
+            <i class="fa-solid fa-trash me-1"></i>Supprimer
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <nav aria-label="Pagination des avis">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?type={{ type_avis }}{% if search %}&search={{ search }}{% endif %}{% if note_filter %}&note={{ note_filter }}{% endif %}&page={{ page_obj.previous_page_number }}">
+                <i class="fa-solid fa-chevron-left"></i>
+              </a>
+            </li>
+          {% endif %}
+          
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?type={{ type_avis }}{% if search %}&search={{ search }}{% endif %}{% if note_filter %}&note={{ note_filter }}{% endif %}&page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?type={{ type_avis }}{% if search %}&search={{ search }}{% endif %}{% if note_filter %}&note={{ note_filter }}{% endif %}&page={{ page_obj.next_page_number }}">
+                <i class="fa-solid fa-chevron-right"></i>
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-star"></i>
+      <h4>Aucun avis trouvé</h4>
+      <p>
+        {% if type_avis == 'livreurs' %}
+          Aucun avis de livreur ne correspond à vos critères.
+        {% else %}
+          Aucun avis de produit ne correspond à vos critères.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

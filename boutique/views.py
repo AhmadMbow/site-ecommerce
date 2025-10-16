@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.core.paginator import Paginator
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import logout, update_session_auth_hash, login, authenticate
 from django.contrib.auth.forms import PasswordChangeForm
@@ -1803,3 +1804,110 @@ def donner_avis_produit(request, item_id):
         return redirect('mes_commandes')
 
     return render(request, 'boutique/donner_avis_produit.html', {'item': item})
+
+# ========================================================================
+# VUES ADMIN - GESTION DES AVIS
+# ========================================================================
+
+@admin_required
+def admin_avis(request):
+    """Gestion des avis des produits et livreurs"""
+    from django.db.models import Q
+    from django.core.paginator import Paginator
+    
+    # Type d'avis à afficher (produits ou livreurs)
+    type_avis = request.GET.get('type', 'produits')
+    
+    if type_avis == 'livreurs':
+        # Avis des livreurs
+        avis_query = AvisLivreur.objects.select_related('client', 'livreur').order_by('-date_avis')
+        
+        # Filtrage par note
+        note_filter = request.GET.get('note')
+        if note_filter and note_filter.isdigit():
+            avis_query = avis_query.filter(note=int(note_filter))
+        
+        # Recherche par nom du livreur ou client
+        search = request.GET.get('search')
+        if search:
+            avis_query = avis_query.filter(
+                Q(livreur__username__icontains=search) |
+                Q(livreur__first_name__icontains=search) |
+                Q(livreur__last_name__icontains=search) |
+                Q(client__username__icontains=search) |
+                Q(client__first_name__icontains=search) |
+                Q(client__last_name__icontains=search)
+            )
+        
+        # Statistiques pour les livreurs
+        total_avis = avis_query.count()
+        note_moyenne = avis_query.aggregate(Avg('note'))['note__avg'] or 0
+        avis_positifs = avis_query.filter(note__gte=4).count()
+        avis_negatifs = avis_query.filter(note__lt=3).count()
+        
+    else:
+        # Avis des produits (par défaut)
+        avis_query = AvisProduit.objects.select_related('client', 'produit').order_by('-date_avis')
+        
+        # Filtrage par note
+        note_filter = request.GET.get('note')
+        if note_filter and note_filter.isdigit():
+            avis_query = avis_query.filter(note=int(note_filter))
+        
+        # Recherche par nom du produit ou client
+        search = request.GET.get('search')
+        if search:
+            avis_query = avis_query.filter(
+                Q(produit__nom__icontains=search) |
+                Q(client__username__icontains=search) |
+                Q(client__first_name__icontains=search) |
+                Q(client__last_name__icontains=search) |
+                Q(commentaire__icontains=search)
+            )
+        
+        # Statistiques pour les produits
+        total_avis = avis_query.count()
+        note_moyenne = avis_query.aggregate(Avg('note'))['note__avg'] or 0
+        avis_positifs = avis_query.filter(note__gte=4).count()
+        avis_negatifs = avis_query.filter(note__lt=3).count()
+    
+    # Pagination
+    paginator = Paginator(avis_query, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    
+    # Statistiques générales
+    total_avis_produits = AvisProduit.objects.count()
+    total_avis_livreurs = AvisLivreur.objects.count()
+    
+    context = {
+        'avis': page_obj.object_list,
+        'page_obj': page_obj,
+        'type_avis': type_avis,
+        'note_filter': note_filter,
+        'search': search or '',
+        'total_avis': total_avis,
+        'note_moyenne': round(note_moyenne, 1),
+        'avis_positifs': avis_positifs,
+        'avis_negatifs': avis_negatifs,
+        'total_avis_produits': total_avis_produits,
+        'total_avis_livreurs': total_avis_livreurs,
+        'notes_choices': range(1, 6),
+    }
+    
+    return render(request, 'adminpanel/avis_list.html', context)
+
+@admin_required
+def admin_avis_delete(request, avis_id):
+    """Supprimer un avis (produit ou livreur)"""
+    type_avis = request.GET.get('type', 'produits')
+    
+    if type_avis == 'livreurs':
+        avis = get_object_or_404(AvisLivreur, id=avis_id)
+        messages.success(request, f"L'avis sur le livreur {avis.livreur.get_full_name() or avis.livreur.username} a été supprimé.")
+    else:
+        avis = get_object_or_404(AvisProduit, id=avis_id)
+        messages.success(request, f"L'avis sur le produit {avis.produit.nom} a été supprimé.")
+    
+    avis.delete()
+    
+    return redirect(f"{reverse('admin_avis')}?type={type_avis}")

@@ -75,6 +75,8 @@ urlpatterns = [
     path('admin-panel/clients/', views.admin_clients_list, name='admin_clients_list'),
     path('admin-panel/clients/<int:user_id>/', views.admin_client_detail, name='admin_client_detail'),
     path('admin-panel/clients/<int:user_id>/toggle-active/', views.admin_client_toggle_active, name='admin_client_toggle_active'),
+    path('admin-panel/avis/', views.admin_avis, name='admin_avis'),
+    path('admin-panel/avis/<int:avis_id>/supprimer/', views.admin_avis_delete, name='admin_avis_delete'),
     path('admin-logout/', views.admin_logout, name='admin_logout'),
 
     # AJAX

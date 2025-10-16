@@ -649,7 +649,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">
+          <a class="nav-link {% if request.resolver_match.url_name == 'admin_avis' %}active{% endif %}" href="{% url 'admin_avis' %}">
             <i class="fa-solid fa-star me-2"></i>
             <span class="link-text">Avis</span>
           </a>
