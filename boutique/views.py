@@ -1450,12 +1450,77 @@ def admin_category_delete(request, pk):
 # Gestion des livreurs
 @admin_required
 def admin_livreurs_list(request):
-    """Liste des livreurs"""
+    """Liste des livreurs avec leurs statistiques réelles"""
+    from django.db.models import Count, Q, Avg
+    from datetime import datetime, timedelta
+    
     q = request.GET.get('q', '')
     qs = UserProfile.objects.select_related('user').filter(role=RoleChoices.LIVREUR)
     if q:
         qs = qs.filter(Q(user__username__icontains=q) | Q(user__first_name__icontains=q) | Q(user__last_name__icontains=q) | Q(phone__icontains=q))
-    return render(request, 'adminpanel/deliverers.html', {'deliverers': qs, 'q': q})
+    
+    # Enrichir chaque livreur avec ses statistiques
+    deliverers_with_stats = []
+    now = timezone.now()
+    month_ago = now - timedelta(days=30)
+    
+    for profile in qs:
+        livreur_user = profile.user
+        
+        # Nombre total de commandes livrées
+        total_deliveries = Commande.objects.filter(
+            livreur=livreur_user,
+            statut__in=['LIVREE', 'TERMINEE']
+        ).count()
+        
+        # Commandes en cours
+        ongoing_deliveries = Commande.objects.filter(
+            livreur=livreur_user,
+            statut__in=['EN_LIVRAISON', 'ASSIGNEE']
+        ).count()
+        
+        # Livraisons ce mois
+        monthly_deliveries = Commande.objects.filter(
+            livreur=livreur_user,
+            statut__in=['LIVREE', 'TERMINEE'],
+            date_commande__gte=month_ago
+        ).count()
+        
+        # Note moyenne du livreur (avis clients)
+        avg_rating = AvisLivreur.objects.filter(
+            livreur=livreur_user
+        ).aggregate(avg=Avg('note'))['avg'] or 0
+        
+        # Nombre d'avis reçus
+        total_reviews = AvisLivreur.objects.filter(livreur=livreur_user).count()
+        
+        deliverers_with_stats.append({
+            'profile': profile,
+            'total_deliveries': total_deliveries,
+            'ongoing_deliveries': ongoing_deliveries,
+            'monthly_deliveries': monthly_deliveries,
+            'avg_rating': round(avg_rating, 2) if avg_rating else 0,
+            'total_reviews': total_reviews,
+        })
+    
+    # Statistiques globales
+    total_livreurs = len(deliverers_with_stats)
+    active_livreurs = sum(1 for d in deliverers_with_stats if d['profile'].user.is_active)
+    total_all_deliveries = sum(d['total_deliveries'] for d in deliverers_with_stats)
+    total_monthly_deliveries = sum(d['monthly_deliveries'] for d in deliverers_with_stats)
+    
+    context = {
+        'deliverers': deliverers_with_stats,
+        'q': q,
+        'stats': {
+            'total_livreurs': total_livreurs,
+            'active_livreurs': active_livreurs,
+            'total_deliveries': total_all_deliveries,
+            'monthly_deliveries': total_monthly_deliveries,
+        }
+    }
+    
+    return render(request, 'adminpanel/deliverers.html', context)
 
 @admin_required
 def admin_livreurs_create(request):

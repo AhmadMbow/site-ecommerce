@@ -721,10 +721,10 @@
         <i class="bi bi-truck"></i>
       </div>
       <div class="stat-label">Total Livreurs</div>
-      <div class="stat-value" id="totalDeliverers">{{ deliverers|length }}</div>
+      <div class="stat-value" id="totalDeliverers">{{ stats.total_livreurs }}</div>
       <div class="stat-change positive">
-        <i class="bi bi-arrow-up-short"></i>
-        +5% ce mois
+        <i class="bi bi-people-fill"></i>
+        Livreurs inscrits
       </div>
     </div>
 
@@ -733,11 +733,9 @@
         <i class="bi bi-check-circle-fill"></i>
       </div>
       <div class="stat-label">Livreurs Actifs</div>
-      <div class="stat-value" id="activeDeliverers">
-        {% for d in deliverers %}{% if d.user.is_active %}{{ forloop.counter }}{% endif %}{% endfor %}
-      </div>
+      <div class="stat-value" id="activeDeliverers">{{ stats.active_livreurs }}</div>
       <div class="stat-change positive">
-        <i class="bi bi-arrow-up-short"></i>
+        <i class="bi bi-check-circle"></i>
         Disponibles
       </div>
     </div>
@@ -747,12 +745,10 @@
         <i class="bi bi-box-seam"></i>
       </div>
       <div class="stat-label">Livraisons Mois</div>
-      <div class="stat-value" id="monthDeliveries">
-        {{ deliverers|length|add:"25" }}
-      </div>
+      <div class="stat-value" id="monthDeliveries">{{ stats.monthly_deliveries }}</div>
       <div class="stat-change positive">
-        <i class="bi bi-arrow-up-short"></i>
-        +12% vs dernier
+        <i class="bi bi-calendar-month"></i>
+        30 derniers jours
       </div>
     </div>
 
@@ -825,43 +821,43 @@
               <tr>
                 <td>
                   <span style="font-weight: 700; color: #667eea; font-size: 1.1rem;">
-                    #{{ d.user.id }}
+                    #{{ d.profile.user.id }}
                   </span>
                 </td>
                 
                 <td>
                   <div class="deliverer-info">
-                    {% if d.user.userprofile and d.user.userprofile.photo %}
-                      <img src="{{ d.user.userprofile.photo.url }}" 
-                           alt="{{ d.user.username }}" 
+                    {% if d.profile.photo %}
+                      <img src="{{ d.profile.photo.url }}" 
+                           alt="{{ d.profile.user.username }}" 
                            class="deliverer-avatar">
                     {% else %}
-                      <img src="https://ui-avatars.com/api/?name={{ d.user.get_full_name|default:d.user.username|urlencode }}&background=667eea&color=fff&size=128&font-size=0.4&bold=true" 
-                           alt="{{ d.user.username }}" 
+                      <img src="https://ui-avatars.com/api/?name={{ d.profile.user.get_full_name|default:d.profile.user.username|urlencode }}&background=667eea&color=fff&size=128&font-size=0.4&bold=true" 
+                           alt="{{ d.profile.user.username }}" 
                            class="deliverer-avatar">
                     {% endif %}
                     <div class="deliverer-details">
-                      <span class="deliverer-name">{{ d.user.get_full_name|default:d.user.username }}</span>
-                      <span class="deliverer-username">@{{ d.user.username }}</span>
+                      <span class="deliverer-name">{{ d.profile.user.get_full_name|default:d.profile.user.username }}</span>
+                      <span class="deliverer-username">@{{ d.profile.user.username }}</span>
                     </div>
                   </div>
                 </td>
                 
                 <td>
                   <div class="contact-info">
-                    {% if d.phone %}
-                      <a href="tel:{{ d.phone }}" class="contact-badge phone">
+                    {% if d.profile.phone %}
+                      <a href="tel:{{ d.profile.phone }}" class="contact-badge phone">
                         <i class="bi bi-telephone-fill"></i>
-                        {{ d.phone }}
+                        {{ d.profile.phone }}
                       </a>
                     {% else %}
                       <span style="color: #94a3b8; font-size: 0.875rem;">Aucun téléphone</span>
                     {% endif %}
                     
-                    {% if d.user.email %}
-                      <a href="mailto:{{ d.user.email }}" class="contact-badge">
+                    {% if d.profile.user.email %}
+                      <a href="mailto:{{ d.profile.user.email }}" class="contact-badge">
                         <i class="bi bi-envelope-fill"></i>
-                        {{ d.user.email }}
+                        {{ d.profile.user.email }}
                       </a>
                     {% else %}
                       <span style="color: #94a3b8; font-size: 0.875rem;">Aucun email</span>
@@ -870,7 +866,7 @@
                 </td>
                 
                 <td>
-                  {% if d.user.is_active %}
+                  {% if d.profile.user.is_active %}
                     <span class="status-badge-ultra active">
                       <i class="bi bi-check-circle-fill"></i>
                       Actif
@@ -886,12 +882,18 @@
                 <td>
                   <div class="performance-badge">
                     <i class="bi bi-star-fill"></i>
-                    {% widthratio forloop.counter 2 5 %}.{{ forloop.counter|stringformat:"01d" }}/5
+                    {{ d.avg_rating|floatformat:1|default:"0.0" }}/5
                   </div>
                   <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem;">
                     <i class="bi bi-box-seam me-1"></i>
-                    {{ forloop.counter|add:"15" }} livraisons
+                    {{ d.total_deliveries }} livraison{{ d.total_deliveries|pluralize }}
                   </div>
+                  {% if d.ongoing_deliveries > 0 %}
+                  <div style="color: #f59e0b; font-size: 0.75rem; margin-top: 0.25rem;">
+                    <i class="bi bi-truck me-1"></i>
+                    {{ d.ongoing_deliveries }} en cours
+                  </div>
+                  {% endif %}
                 </td>
                 
                 <td>
@@ -899,21 +901,21 @@
                     <a href="#" 
                        class="btn-action view" 
                        title="Voir les détails"
-                       onclick="viewDeliverer({{ d.user.id }}); return false;">
+                       onclick="viewDeliverer({{ d.profile.user.id }}); return false;">
                       <i class="bi bi-eye-fill"></i>
                     </a>
                     
-                    <a href="{% url 'admin_livreurs_edit' d.user.id %}" 
+                    <a href="{% url 'admin_livreurs_edit' d.profile.user.id %}" 
                        class="btn-action edit" 
                        title="Modifier">
                       <i class="bi bi-pencil-fill"></i>
                     </a>
                     
-                    <a href="{% url 'admin_livreurs_toggle_active' d.user.id %}" 
+                    <a href="{% url 'admin_livreurs_toggle_active' d.profile.user.id %}" 
                        class="btn-action toggle" 
-                       title="{% if d.user.is_active %}Désactiver{% else %}Activer{% endif %}"
-                       onclick="return confirm('Voulez-vous {% if d.user.is_active %}désactiver{% else %}activer{% endif %} ce livreur ?')">
-                      <i class="bi bi-{% if d.user.is_active %}ban{% else %}check-circle{% endif %}"></i>
+                       title="{% if d.profile.user.is_active %}Désactiver{% else %}Activer{% endif %}"
+                       onclick="return confirm('Voulez-vous {% if d.profile.user.is_active %}désactiver{% else %}activer{% endif %} ce livreur ?')">
+                      <i class="bi bi-{% if d.profile.user.is_active %}ban{% else %}check-circle{% endif %}"></i>
                     </a>
                   </div>
                 </td>
