@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mon profil{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;6              <div class="mb-3 mt-3">
+                <label class="form-label">Localisation sur la carte</label>
+                <div id="adresseMap" style="height: 250px; width: 100%;"></div>
+                <input type="hidden" id="adresse_latitude" name="latitude">
+                <input type="hidden" id="adresse_longitude" name="longitude">
+                <button type="button" class="btn btn-outline-primary mt-2 w-100" id="btnLocateAdresse">
+                  <i class="fas fa-crosshairs"></i> Ma position actuelle
+                </button>
+              </div>
+              <button class="btn btn-dark mt-3 w-100" type="submit">Enregistrer l'adresse</button>play=swap');
+
+  /* Palette */
+  :root{
+    --gold:#ffc107;
+    --dark:#232526;
+    --light:#f8f9fa;
+
+    --radius:14px;
+    --shadow-sm:0 6px 16px rgba(0,0,0,.06);
+    --shadow:0 14px 30px rgba(0,0,0,.10);
+  }
+
+  body{ font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
+
+  /* Container air and headings */
+  .container.py-4{ padding-top:1.25rem !important; padding-bottom:1.25rem !important; }
+  h3{ font-weight:700; letter-spacing:.2px; }
+
+  /* Tabs polish */
+  .nav-tabs{ border-bottom:1px solid rgba(0,0,0,.08); }
+  .nav-tabs .nav-link{
+    border:0;
+    color: var(--dark);
+    font-weight:600;
+    border-radius: 999px;
+    margin-right:.25rem;
+    transition: all .25s ease;
+  }
+  .nav-tabs .nav-link:hover{ background: rgba(255,193,7,.12); }
+  .nav-tabs .nav-link.active{
+    background: var(--dark);
+    color:#fff;
+  }
+
+  /* Cards with light glass feel */
+  .card{
+    border: 1px solid rgba(0,0,0,.06) !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .card:hover{ transform: translateY(-3px); box-shadow: var(--shadow); }
+  .card-title{ font-weight:700; }
+
+  /* Buttons */
+  .btn{ border-radius: 10px; transition: all .25s ease; font-weight:600; }
+  .btn:hover{ transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.10); }
+  .btn-dark{ background: var(--dark); border-color: var(--dark); }
+  .btn-dark:hover{ filter: brightness(.95); }
+  .btn-outline-dark:hover{ border-color: var(--dark); color:#fff; background: var(--dark); }
+  .btn-outline-primary{ border-width:2px; }
+
+  /* Badges */
+  .badge.bg-dark{ background: var(--dark) !important; }
+
+  /* Avatar previews */
+  .js-avatar-preview{
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  }
+
+  /* Lists hover (orders) */
+  .list-group-item{
+    border: 1px solid rgba(0,0,0,.06);
+  }
+  .list-group-item:hover{ background: rgba(0,0,0,.02); }
+
+  /* Map containers */
+  #miniMap, #adresseMap{
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,.1) !important;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Form fields */
+  .form-control, .form-select{
+    border-radius: 10px;
+    border:1px solid rgba(0,0,0,.12);
+  }
+  .form-control:focus, .form-select:focus{
+    border-color: var(--gold);
+    box-shadow: 0 0 0 .2rem rgba(255,193,7,.25);
+  }
+
+  /* Responsive refinements */
+  @media (max-width: 576px){
+    .btn{ width: 100%; margin-bottom: 0.5rem; }
+    .d-flex.flex-wrap.gap-3 .btn{ width:auto; }
+    
+    /* Stack buttons in card footer */
+    .card-footer.d-flex{ flex-direction: column !important; }
+    .card-footer .btn{ width: 100% !important; margin-bottom: 0.5rem; }
+    
+    /* Ensure maps are responsive */
+    #miniMap, #adresseMap{ 
+      height: 200px !important; 
+      width: 100% !important;
+    }
+    
+    /* Avatar section on mobile */
+    .d-flex.align-items-center.gap-3{ 
+      flex-direction: column !important; 
+      align-items: flex-start !important;
+    }
+    
+    /* Form fields full width */
+    .form-control, .form-select{ 
+      width: 100% !important; 
+    }
+    
+    /* Tabs responsive */
+    .nav-tabs{ 
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .nav-tabs .nav-link{ 
+      font-size: 0.9rem; 
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    /* Container padding */
+    .container.py-4{ 
+      padding-left: 0.5rem !important; 
+      padding-right: 0.5rem !important; 
+    }
+    
+    /* Card body padding */
+    .card-body{ 
+      padding: 1rem !important; 
+    }
+    
+    /* Row spacing */
+    .row.g-3, .row.g-4{ 
+      margin-left: -0.5rem !important; 
+      margin-right: -0.5rem !important; 
+    }
+    .row.g-3 > [class*='col'], .row.g-4 > [class*='col']{ 
+      padding-left: 0.5rem !important; 
+      padding-right: 0.5rem !important; 
+    }
+  }
+  
+  @media (max-width: 768px){
+    /* Ensure columns stack properly on tablets */
+    .col-md-4, .col-md-6{ 
+      width: 100% !important; 
+    }
+    
+    /* Better spacing for form rows */
+    .row.g-3{ 
+      row-gap: 0.75rem !important; 
+    }
+  }
+
+  /* Dark mode (optional) */
+  @media (prefers-color-scheme: dark){
+    .nav-tabs .nav-link{ color:#e9ecef; }
+    .nav-tabs .nav-link:hover{ background: rgba(255,193,7,.18); }
+    .card{ background:#1a1d20; border-color: rgba(255,255,255,.08) !important; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+    .list-group-item{ background:#1a1d20; color:#e9ecef; border-color: rgba(255,255,255,.08); }
+    #miniMap, #adresseMap{ border-color: rgba(255,255,255,.12) !important; }
+    .btn-outline-dark:hover{ background:#0f1113; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">Mon profil</h3>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-compte" type="button">Compte</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-adresses" type="button">Adresses</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-commandes" type="button">Commandes</button></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-compte">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Informations du compte</h5>
+              <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ user_form.as_p }}
+                {{ profile_form.as_p }}
+
+                <div class="mb-3">
+                  <label class="form-label">Photo de profil</label>
+                  <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <img
+                      class="rounded-circle border js-avatar-preview js-open-avatar-picker"
+                      src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+                      alt="Avatar" width="96" height="96"
+                      onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=eeeeee&color=111111&size=96';"
+                      style="cursor:pointer" role="button" aria-label="Choisir une photo">
+                    <div class="d-flex align-items-center gap-2">
+                      <button type="button" class="btn btn-dark js-pick-avatar">Choisir une photo</button>
+                      <small class="text-muted d-block">Sur mobile, touchez l’image ou le bouton.</small>
+                    </div>
+                    <input id="id_avatar_file" type="file" name="avatar" accept="image/*" capture class="visually-hidden">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Localisation sur la carte</label>
+                  <div id="miniMap" style="height: 250px; width: 100%;"></div>
+                  <input type="hidden" id="profile_latitude" name="profile_latitude" value="{{ profile.latitude|default:'' }}">
+                  <input type="hidden" id="profile_longitude" name="profile_longitude" value="{{ profile.longitude|default:'' }}">
+                  <button type="button" class="btn btn-outline-primary mt-2 w-100" id="btnLocateMe">
+                    <i class="fas fa-crosshairs"></i> Ma position actuelle
+                  </button>
+                </div>
+
+                <button class="btn btn-dark w-100" type="submit">Enregistrer</button>
+              </form>
+              <a class="btn btn-outline-dark mt-2 w-100" href="{% url 'change_password' %}">Changer le mot de passe</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Aperçu avatar</h5>
+              <div class="d-flex align-items-center gap-3">
+                <img
+                  class="rounded-circle border js-avatar-preview"
+                  src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+                  alt="Avatar" width="96" height="96"
+                  onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=eeeeee&color=111111&size=96';">
+                <div class="small text-muted">Choisissez une image dans le formulaire pour prévisualiser ici.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Adresses -->
+    <div class="tab-pane fade" id="tab-adresses">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Mes adresses</h5>
+        <button class="btn btn-dark" data-bs-toggle="collapse" data-bs-target="#adresse-form">Ajouter une adresse</button>
+      </div>
+
+      <div id="adresse-form" class="collapse">
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="_section" value="adresse_create">
+              <div class="row g-3">
+                <div class="col-12">{{ address_form.ligne1.label_tag }} {{ address_form.ligne1 }}</div>
+                <div class="col-12">{{ address_form.ligne2.label_tag }} {{ address_form.ligne2 }}</div>
+                <div class="col-md-4">{{ address_form.ville.label_tag }} {{ address_form.ville }}</div>
+                <div class="col-md-4">{{ address_form.region.label_tag }} {{ address_form.region }}</div>
+                <div class="col-md-4">{{ address_form.code_postal.label_tag }} {{ address_form.code_postal }}</div>
+                <div class="col-md-6">{{ address_form.pays.label_tag }} {{ address_form.pays }}</div>
+                <div class="col-md-6">{{ address_form.telephone.label_tag }} {{ address_form.telephone }}</div>
+              </div>
+              <div class="mb-3 mt-3">
+                <label class="form-label">Localisation sur la carte</label>
+                <div id="adresseMap" style="height: 250px;"></div>
+                <input type="hidden" id="adresse_latitude" name="latitude">
+                <input type="hidden" id="adresse_longitude" name="longitude">
+                <button type="button" class="btn btn-outline-primary mt-2" id="btnLocateAdresse">
+                  <i class="fas fa-crosshairs"></i> Ma position actuelle
+                </button>
+              </div>
+              <button class="btn btn-dark mt-3" type="submit">Enregistrer l’adresse</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {% if adresses %}
+        <div class="row g-3">
+          {% for adr in adresses %}
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <h6 class="mb-2">{{ adr.nom|default:"Adresse" }}</h6>
+                  {% if adr.is_default %}
+                    <span class="badge bg-dark">Par défaut</span>
+                  {% endif %}
+                </div>
+                <div class="small text-muted">
+                  <div>{{ adr.destinataire }}</div>
+                  <div>{{ adr.ligne1 }}{% if adr.ligne2 %}, {{ adr.ligne2 }}{% endif %}</div>
+                  <div>{{ adr.ville }}{% if adr.region %}, {{ adr.region }}{% endif %}{% if adr.code_postal %}, {{ adr.code_postal }}{% endif %}</div>
+                  <div>{{ adr.pays }}</div>
+                  {% if adr.telephone %}<div>Tél: {{ adr.telephone }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="card-footer bg-transparent d-flex gap-2">
+                {% if not adr.is_default %}
+                <form method="post" action="{% url 'adresse_defaut' adr.id %}">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-dark btn-sm" type="submit">Définir par défaut</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url 'adresse_supprimer' adr.id %}" onsubmit="return confirm('Supprimer cette adresse ?');">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger btn-sm" type="submit">Supprimer</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">Aucune adresse enregistrée.</p>
+      {% endif %}
+    </div>
+
+    <!-- Commandes -->
+    <div class="tab-pane fade" id="tab-commandes">
+      <h5 class="mb-3">Mes dernières commandes</h5>
+      {% if recent_orders %}
+        <ul class="list-group shadow-sm">
+          {% for c in recent_orders %}
+            <li class="list-group-item d-flex justify-content-between">
+              <span>#{{ c.id }} — 
+                {% if c.date_commande %}{{ c.date_commande|date:"d/m/Y" }}
+                {% elif c.created_at %}{{ c.created_at|date:"d/m/Y" }}
+                {% elif c.created %}{{ c.created|date:"d/m/Y" }}
+                {% else %}{{ c.pk|date:"d/m/Y" }}{% endif %}
+              </span>
+              <span class="badge bg-secondary">
+                {% if c.get_statut_display %}{{ c.get_statut_display }}
+                {% elif c.get_status_display %}{{ c.get_status_display }}
+                {% elif c.statut %}{{ c.statut }}
+                {% elif c.status %}{{ c.status }}
+                {% else %}En attente{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+        <a class="btn btn-outline-dark mt-3" href="{% url 'mes_commandes' %}">Voir toutes mes commandes</a>
+      {% else %}
+        <p class="text-muted">Aucune commande récente.</p>
+        <a class="btn btn-outline-dark" href="{% url 'boutique' %}">Commencer mes achats</a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Ensure Leaflet marker icons resolve (prevents /profile/marker-*.png 404)
+  if (window.L && L.Icon && L.Icon.Default) {
+    L.Icon.Default.mergeOptions({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
+    });
+  }
+
+  // Mini map (profil)
+  (function() {
+    var latEl = document.getElementById('profile_latitude');
+    var lngEl = document.getElementById('profile_longitude');
+    if (!latEl || !lngEl || !document.getElementById('miniMap')) return;
+
+    var lat = parseFloat(latEl.value) || 14.6928;
+    var lng = parseFloat(lngEl.value) || -17.4467;
+    var map = L.map('miniMap').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    var marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+
+    function updateFields(la, ln) { latEl.value = la; lngEl.value = ln; }
+
+    marker.on('dragend', function() {
+      var pos = marker.getLatLng();
+      updateFields(pos.lat, pos.lng);
+    });
+    map.on('click', function(e) {
+      marker.setLatLng(e.latlng);
+      updateFields(e.latlng.lat, e.latlng.lng);
+    });
+
+    var btnLocateMe = document.getElementById('btnLocateMe');
+    btnLocateMe && btnLocateMe.addEventListener('click', function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          var la = position.coords.latitude;
+          var ln = position.coords.longitude;
+          marker.setLatLng([la, ln]);
+          map.setView([la, ln], 15);
+          updateFields(la, ln);
+        });
+      }
+    });
+  })();
+
+  // Adresse map (lazy init on collapse open) + reverse geocoding autofill
+  (function() {
+    var collapse = document.getElementById('adresse-form');
+    if (!collapse) return;
+    var init = false;
+
+    // Helpers to find inputs by id or name
+    function byIdOrName(id, name){
+      return document.getElementById(id) || document.querySelector('[name="'+name+'"]');
+    }
+    const elVille = () => byIdOrName('id_ville','ville');
+    const elRegion = () => byIdOrName('id_region','region');
+    const elCP = () => byIdOrName('id_code_postal','code_postal');
+    const elPays = () => byIdOrName('id_pays','pays');
+    const elLigne1 = () => byIdOrName('id_ligne1','ligne1');
+
+    function fillIfEmpty(el, val){
+      if (!el || !val) return;
+      if (!el.value || !el.value.trim()){
+        el.value = val;
+        el.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+    }
+
+    async function reverseGeocode(lat, lng){
+      try{
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=fr&addressdetails=1`;
+        const res = await fetch(url, { headers: { 'Accept':'application/json' }});
+        if (!res.ok) return;
+        const data = await res.json();
+        const a = (data && data.address) || {};
+
+        const ville = a.city || a.town || a.village || a.municipality || a.hamlet || a.locality || a.county || '';
+        const region = a.state || a.region || a.province || a.state_district || '';
+        const codePostal = a.postcode || '';
+        const pays = a.country || '';
+        const ligne1 = [a.house_number, a.road].filter(Boolean).join(' ') || a.neighbourhood || a.suburb || '';
+
+        fillIfEmpty(elVille(), ville);
+        fillIfEmpty(elRegion(), region);
+        fillIfEmpty(elCP(), codePostal);
+        fillIfEmpty(elPays(), pays);
+        fillIfEmpty(elLigne1(), ligne1);
+      }catch(e){
+        console.warn('Reverse geocode failed', e);
+      }
+    }
+
+    collapse.addEventListener('shown.bs.collapse', function () {
+      if (init) return;
+      init = true;
+
+      var latInput = document.getElementById('adresse_latitude');
+      var lngInput = document.getElementById('adresse_longitude');
+      var lat = (latInput && latInput.value) ? parseFloat(latInput.value) : 14.6928;
+      var lng = (lngInput && lngInput.value) ? parseFloat(lngInput.value) : -17.4467;
+
+      var map = L.map('adresseMap').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+
+      function update(la, ln) {
+        if (latInput) latInput.value = la;
+        if (lngInput) lngInput.value = ln;
+      }
+
+      marker.on('dragend', function() {
+        var pos = marker.getLatLng();
+        update(pos.lat, pos.lng);
+        reverseGeocode(pos.lat, pos.lng);
+      });
+      map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        update(e.latlng.lat, e.latlng.lng);
+        reverseGeocode(e.latlng.lat, e.latlng.lng);
+      });
+
+      // Initial autofill on first open (based on initial marker position)
+      reverseGeocode(lat, lng);
+
+      var btn = document.getElementById('btnLocateAdresse');
+      btn && btn.addEventListener('click', function() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var la = position.coords.latitude;
+            var ln = position.coords.longitude;
+            marker.setLatLng([la, ln]);
+            map.setView([la, ln], 15);
+            update(la, ln);
+            reverseGeocode(la, ln);
+          });
+        }
+      });
+    });
+  })();
+
+  // Avatar picker and live preview
+  (function() {
+    document.addEventListener('click', function(e) {
+      const pickBtn = e.target.closest('.js-pick-avatar, .js-open-avatar-picker');
+      if (!pickBtn) return;
+      const input = document.getElementById('id_avatar_file');
+      if (input) input.click();
+    });
+
+    document.addEventListener('change', function(e) {
+      const input = e.target.closest('input[type="file"][name="avatar"]');
+      if (!input || !input.files || !input.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        document.querySelectorAll('.js-avatar-preview').forEach(img => img.src = ev.target.result);
+      };
+      reader.readAsDataURL(input.files[0]);
+    });
+  })();
+});
+</script>
+{% endblock %}  

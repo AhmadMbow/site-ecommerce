@@ -1,0 +1,834 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mon profil{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+  :root {
+    --primary: #667eea;
+    --primary-dark: #5568d3;
+    --secondary: #f093fb;
+    --gold: #fbbf24;
+    --dark: #1a1d29;
+    --dark-light: #2d3142;
+    --light: #f8f9fa;
+    --success: #10b981;
+    --info: #3b82f6;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius: 16px;
+    --radius-sm: 12px;
+    --radius-lg: 24px;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+    --shadow: 0 8px 24px rgba(0,0,0,.12);
+    --shadow-lg: 0 16px 48px rgba(0,0,0,.18);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+
+  .container.py-4 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+
+  .page-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .page-header h3 {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-tabs {
+    border: 0;
+    background: white;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .nav-tabs .nav-link {
+    border: 0;
+    color: var(--dark);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-tabs .nav-link:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
+    transform: translateY(-2px);
+  }
+
+  .nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: #fff;
+    box-shadow: var(--shadow);
+  }
+
+  .nav-tabs .nav-link i { margin-right: 0.5rem; }
+
+  .card {
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.9);
+    transition: var(--transition);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--gold));
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+  .card:hover::before { opacity: 1; }
+
+  .card-title {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card-title i { color: var(--primary); }
+  .card-body { padding: 1.5rem; }
+
+  .btn {
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .btn:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .btn-dark { background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%); color: white; }
+  .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; }
+  
+  .btn-outline-primary { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
+  .btn-outline-primary:hover { background: var(--primary); color: white; }
+  
+  .btn-outline-dark { border: 2px solid var(--dark); color: var(--dark); background: transparent; }
+  .btn-outline-dark:hover { background: var(--dark); color: white; }
+  
+  .btn-outline-danger { border: 2px solid var(--danger); color: var(--danger); background: transparent; }
+  .btn-outline-danger:hover { background: var(--danger); color: white; }
+
+  .badge {
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .badge.bg-dark { background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%) !important; }
+  .badge.bg-secondary { background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important; }
+  .badge.bg-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%) !important; }
+
+  .avatar-container { position: relative; display: inline-block; }
+
+  .js-avatar-preview {
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    object-fit: cover;
+  }
+
+  .js-avatar-preview:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+  }
+
+  #miniMap, #adresseMap {
+    border-radius: var(--radius);
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .form-control, .form-select {
+    border-radius: var(--radius-sm);
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+    background: white;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-label i { color: var(--primary); }
+
+  .list-group-item {
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-sm) !important;
+    margin-bottom: 0.5rem;
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .list-group-item:hover {
+    background: rgba(102, 126, 234, 0.05);
+    transform: translateX(5px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    transition: var(--transition);
+  }
+
+  .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+
+  .stat-card .stat-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-card .stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .spinner-overlay.active { display: flex; }
+
+  .spinner {
+    width: 64px;
+    height: 64px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .drop-zone {
+    border: 3px dashed rgba(102, 126, 234, 0.3);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    background: rgba(102, 126, 234, 0.05);
+  }
+
+  .drop-zone.dragover {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.02);
+  }
+
+  .drop-zone i.fa-cloud-upload-alt {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .page-header { padding: 1.5rem; }
+    .nav-tabs { flex-direction: column; }
+    .nav-tabs .nav-link { width: 100%; margin-bottom: 0.5rem; }
+    .btn { width: 100%; margin-bottom: 0.5rem; }
+    .card-footer .d-flex { flex-direction: column !important; }
+    .card-footer .btn { width: 100% !important; }
+    #miniMap, #adresseMap { height: 200px !important; }
+    .stat-card { margin-bottom: 1rem; }
+  }
+
+  @media (max-width: 576px) {
+    .container.py-4 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    .card-body { padding: 1rem !important; }
+    .page-header h3 { font-size: 1.5rem; }
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade-in { animation: fadeIn 0.5s ease; }
+  .animate-slide-up { animation: slideInUp 0.5s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="spinner-overlay" id="loadingSpinner">
+  <div class="spinner"></div>
+</div>
+
+<div class="container py-4 animate-fade-in">
+  <div class="page-header">
+    <h3><i class="fas fa-user-circle"></i> Mon Profil Personnel</h3>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+        <div class="stat-value">{{ recent_orders|length }}</div>
+        <div class="stat-label">Commandes récentes</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <div class="stat-value">{{ adresses|length }}</div>
+        <div class="stat-label">Adresses enregistrées</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value">{{ user.date_joined|timesince }}</div>
+        <div class="stat-label">Membre depuis</div>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-compte" type="button">
+        <i class="fas fa-user"></i> Compte
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-adresses" type="button">
+        <i class="fas fa-map-marked-alt"></i> Adresses
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-commandes" type="button">
+        <i class="fas fa-box"></i> Commandes
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active animate-slide-up" id="tab-compte">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-user-cog"></i> Informations du compte</h5>
+              <form method="post" enctype="multipart/form-data" id="profileForm">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                  <label class="form-label"><i class="fas fa-user"></i> Nom d'utilisateur</label>
+                  {{ user_form.username }}
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                  {{ user_form.email }}
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-id-card"></i> Prénom</label>
+                    {{ user_form.first_name }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-id-card"></i> Nom</label>
+                    {{ user_form.last_name }}
+                  </div>
+                </div>
+
+                {% for field in profile_form %}
+                  {% if field.name != 'avatar' and field.name != 'latitude' and field.name != 'longitude' %}
+                    <div class="mb-3">
+                      {{ field.label_tag }}
+                      {{ field }}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+
+                <div class="mb-3">
+                  <label class="form-label"><i class="fas fa-camera"></i> Photo de profil</label>
+                  <div class="drop-zone" id="avatarDropZone">
+                    <div class="avatar-container">
+                      <img class="js-avatar-preview" src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" alt="Avatar" width="120" height="120" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=667eea&color=ffffff&size=120&bold=true';">
+                    </div>
+                    <div class="mt-3">
+                      <i class="fas fa-cloud-upload-alt"></i>
+                      <p class="mb-0 fw-bold">Cliquez ou glissez-déposez une image</p>
+                      <small class="text-muted">PNG, JPG jusqu'à 5MB</small>
+                    </div>
+                    <input id="id_avatar_file" type="file" name="avatar" accept="image/*" class="visually-hidden">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label"><i class="fas fa-map-pin"></i> Localisation sur la carte</label>
+                  <div id="miniMap" style="height: 300px; width: 100%;"></div>
+                  <input type="hidden" id="profile_latitude" name="profile_latitude" value="{{ profile.latitude|default:'' }}">
+                  <input type="hidden" id="profile_longitude" name="profile_longitude" value="{{ profile.longitude|default:'' }}">
+                  <button type="button" class="btn btn-outline-primary mt-2 w-100" id="btnLocateMe">
+                    <i class="fas fa-crosshairs"></i> Utiliser ma position actuelle
+                  </button>
+                </div>
+
+                <button class="btn btn-primary w-100 mb-2" type="submit">
+                  <i class="fas fa-save"></i> Enregistrer les modifications
+                </button>
+                <a class="btn btn-outline-dark w-100" href="{% url 'change_password' %}">
+                  <i class="fas fa-key"></i> Changer le mot de passe
+                </a>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-eye"></i> Aperçu du profil</h5>
+              <div class="text-center p-4">
+                <div class="avatar-container d-inline-block">
+                  <img class="js-avatar-preview" src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" alt="Avatar" width="150" height="150" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=667eea&color=ffffff&size=150&bold=true';">
+                </div>
+                <h4 class="mt-3 mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                <p class="text-muted mb-3">{{ user.email }}</p>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                  <span class="badge bg-dark">
+                    <i class="fas fa-calendar-alt"></i> Membre depuis {{ user.date_joined|date:"M Y" }}
+                  </span>
+                </div>
+                <div class="small text-muted">
+                  <p><i class="fas fa-info-circle"></i> Cette prévisualisation montre comment votre profil apparaît.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-shield-alt"></i> Sécurité du compte</h5>
+              <div class="list-group list-group-flush">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <span><i class="fas fa-check-circle text-success"></i> Email vérifié</span>
+                  <span class="badge bg-success">Actif</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <span><i class="fas fa-lock"></i> Mot de passe</span>
+                  <a href="{% url 'change_password' %}" class="btn btn-sm btn-outline-dark">Modifier</a>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <span><i class="fas fa-sign-out-alt"></i> Déconnexion</span>
+                  <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">Se déconnecter</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade animate-slide-up" id="tab-adresses">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-map-marked-alt"></i> Mes adresses de livraison</h5>
+        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#adresse-form">
+          <i class="fas fa-plus-circle"></i> Nouvelle adresse
+        </button>
+      </div>
+
+      <div id="adresse-form" class="collapse">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-map-marker-alt"></i> Ajouter une adresse</h5>
+            <form method="post" id="addressForm">
+              {% csrf_token %}
+              <input type="hidden" name="_section" value="adresse_create">
+              
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label"><i class="fas fa-home"></i> {{ address_form.ligne1.label }}</label>
+                  {{ address_form.ligne1 }}
+                </div>
+                <div class="col-12">
+                  <label class="form-label"><i class="fas fa-building"></i> {{ address_form.ligne2.label }}</label>
+                  {{ address_form.ligne2 }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fas fa-city"></i> {{ address_form.ville.label }}</label>
+                  {{ address_form.ville }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fas fa-map"></i> {{ address_form.region.label }}</label>
+                  {{ address_form.region }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fas fa-mail-bulk"></i> {{ address_form.code_postal.label }}</label>
+                  {{ address_form.code_postal }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label"><i class="fas fa-flag"></i> {{ address_form.pays.label }}</label>
+                  {{ address_form.pays }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label"><i class="fas fa-phone"></i> {{ address_form.telephone.label }}</label>
+                  {{ address_form.telephone }}
+                </div>
+              </div>
+
+              <div class="mb-3 mt-3">
+                <label class="form-label"><i class="fas fa-map-pin"></i> Localisation sur la carte</label>
+                <div id="adresseMap" style="height: 300px;"></div>
+                <input type="hidden" id="adresse_latitude" name="latitude">
+                <input type="hidden" id="adresse_longitude" name="longitude">
+                <button type="button" class="btn btn-outline-primary mt-2 w-100" id="btnLocateAdresse">
+                  <i class="fas fa-crosshairs"></i> Utiliser ma position actuelle
+                </button>
+              </div>
+
+              <button class="btn btn-primary w-100" type="submit">
+                <i class="fas fa-save"></i> Enregistrer l'adresse
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {% if adresses %}
+        <div class="row g-3">
+          {% for adr in adresses %}
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <h6 class="mb-0"><i class="fas fa-location-dot text-primary"></i> {{ adr.nom|default:"Adresse" }}</h6>
+                  {% if adr.is_default %}
+                    <span class="badge bg-dark"><i class="fas fa-star"></i> Par défaut</span>
+                  {% endif %}
+                </div>
+                <div class="small">
+                  <div class="mb-2"><i class="fas fa-user text-muted"></i> {{ adr.destinataire }}</div>
+                  <div class="mb-2"><i class="fas fa-home text-muted"></i> {{ adr.ligne1 }}{% if adr.ligne2 %}, {{ adr.ligne2 }}{% endif %}</div>
+                  <div class="mb-2"><i class="fas fa-city text-muted"></i> {{ adr.ville }}{% if adr.region %}, {{ adr.region }}{% endif %}{% if adr.code_postal %}, {{ adr.code_postal }}{% endif %}</div>
+                  <div class="mb-2"><i class="fas fa-flag text-muted"></i> {{ adr.pays }}</div>
+                  {% if adr.telephone %}<div><i class="fas fa-phone text-muted"></i> {{ adr.telephone }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="card-footer bg-transparent d-flex gap-2">
+                {% if not adr.is_default %}
+                <form method="post" action="{% url 'adresse_defaut' adr.id %}" class="flex-grow-1">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-dark btn-sm w-100" type="submit">
+                    <i class="fas fa-star"></i> Définir par défaut
+                  </button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url 'adresse_supprimer' adr.id %}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette adresse ?');">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger btn-sm" type="submit"><i class="fas fa-trash"></i></button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+            <h5>Aucune adresse enregistrée</h5>
+            <p class="text-muted">Ajoutez votre première adresse de livraison pour faciliter vos commandes.</p>
+            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#adresse-form">
+              <i class="fas fa-plus-circle"></i> Ajouter une adresse
+            </button>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="tab-pane fade animate-slide-up" id="tab-commandes">
+      <h5 class="mb-3"><i class="fas fa-shopping-bag"></i> Mes dernières commandes</h5>
+      {% if recent_orders %}
+        <div class="card">
+          <ul class="list-group list-group-flush">
+            {% for c in recent_orders %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1"><i class="fas fa-receipt text-primary"></i> Commande #{{ c.id }}</h6>
+                  <small class="text-muted">
+                    <i class="fas fa-calendar"></i>
+                    {% if c.date_commande %}{{ c.date_commande|date:"d/m/Y à H:i" }}
+                    {% elif c.created_at %}{{ c.created_at|date:"d/m/Y à H:i" }}
+                    {% elif c.created %}{{ c.created|date:"d/m/Y à H:i" }}
+                    {% else %}{{ c.pk|date:"d/m/Y" }}{% endif %}
+                  </small>
+                </div>
+                <span class="badge bg-secondary">
+                  {% if c.get_statut_display %}{{ c.get_statut_display }}
+                  {% elif c.get_status_display %}{{ c.get_status_display }}
+                  {% elif c.statut %}{{ c.statut }}
+                  {% elif c.status %}{{ c.status }}
+                  {% else %}En attente{% endif %}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="text-center mt-3">
+          <a class="btn btn-outline-dark" href="{% url 'mes_commandes' %}">
+            <i class="fas fa-list"></i> Voir toutes mes commandes
+          </a>
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+            <h5>Aucune commande récente</h5>
+            <p class="text-muted">Vous n'avez pas encore passé de commande.</p>
+            <a class="btn btn-primary" href="{% url 'boutique' %}">
+              <i class="fas fa-shopping-bag"></i> Découvrir la boutique
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.L && L.Icon && L.Icon.Default) {
+    L.Icon.Default.mergeOptions({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
+    });
+  }
+
+  const spinner = document.getElementById('loadingSpinner');
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => { form.addEventListener('submit', () => spinner.classList.add('active')); });
+
+  (function() {
+    var latEl = document.getElementById('profile_latitude');
+    var lngEl = document.getElementById('profile_longitude');
+    if (!latEl || !lngEl || !document.getElementById('miniMap')) return;
+    var lat = parseFloat(latEl.value) || 14.6928, lng = parseFloat(lngEl.value) || -17.4467;
+    var map = L.map('miniMap').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
+    var marker = L.marker([lat, lng], {draggable: true}).addTo(map).bindPopup("<b>Votre position</b>").openPopup();
+    function updateFields(la, ln) { latEl.value = la.toFixed(6); lngEl.value = ln.toFixed(6); }
+    marker.on('dragend', function() { var pos = marker.getLatLng(); updateFields(pos.lat, pos.lng); marker.bindPopup("<b>Position</b><br>Lat: " + pos.lat.toFixed(4)).openPopup(); });
+    map.on('click', function(e) { marker.setLatLng(e.latlng); updateFields(e.latlng.lat, e.latlng.lng); });
+    var btnLocateMe = document.getElementById('btnLocateMe');
+    if (btnLocateMe) {
+      btnLocateMe.addEventListener('click', function() {
+        if (navigator.geolocation) {
+          btnLocateMe.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation...';
+          btnLocateMe.disabled = true;
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var la = position.coords.latitude, ln = position.coords.longitude;
+            marker.setLatLng([la, ln]); map.setView([la, ln], 15); updateFields(la, ln);
+            btnLocateMe.innerHTML = '<i class="fas fa-check"></i> Position trouvée !';
+            setTimeout(() => { btnLocateMe.innerHTML = '<i class="fas fa-crosshairs"></i> Utiliser ma position actuelle'; btnLocateMe.disabled = false; }, 2000);
+          });
+        }
+      });
+    }
+  })();
+
+  (function() {
+    var collapse = document.getElementById('adresse-form');
+    if (!collapse) return;
+    var init = false;
+    function byIdOrName(id, name){ return document.getElementById(id) || document.querySelector('[name="'+name+'"]'); }
+    const elVille = () => byIdOrName('id_ville','ville');
+    const elRegion = () => byIdOrName('id_region','region');
+    const elCP = () => byIdOrName('id_code_postal','code_postal');
+    const elPays = () => byIdOrName('id_pays','pays');
+    const elLigne1 = () => byIdOrName('id_ligne1','ligne1');
+    function fillIfEmpty(el, val){ if (!el || !val) return; if (!el.value || !el.value.trim()){ el.value = val; el.dispatchEvent(new Event('change', { bubbles:true })); el.classList.add('animate-fade-in'); } }
+    async function reverseGeocode(lat, lng){
+      try{
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=fr&addressdetails=1`;
+        const res = await fetch(url, { headers: { 'Accept':'application/json' }});
+        if (!res.ok) return;
+        const data = await res.json();
+        const a = (data && data.address) || {};
+        fillIfEmpty(elVille(), a.city || a.town || a.village || '');
+        fillIfEmpty(elRegion(), a.state || a.region || '');
+        fillIfEmpty(elCP(), a.postcode || '');
+        fillIfEmpty(elPays(), a.country || '');
+        fillIfEmpty(elLigne1(), [a.house_number, a.road].filter(Boolean).join(' ') || '');
+      }catch(e){ console.warn('Reverse geocode échoué', e); }
+    }
+    collapse.addEventListener('shown.bs.collapse', function () {
+      if (init) return; init = true;
+      var latInput = document.getElementById('adresse_latitude');
+      var lngInput = document.getElementById('adresse_longitude');
+      var lat = (latInput && latInput.value) ? parseFloat(latInput.value) : 14.6928;
+      var lng = (lngInput && lngInput.value) ? parseFloat(lngInput.value) : -17.4467;
+      var map = L.map('adresseMap').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
+      var marker = L.marker([lat, lng], {draggable:true}).addTo(map).bindPopup("<b>Adresse</b>").openPopup();
+      function update(la, ln) { if (latInput) latInput.value = la.toFixed(6); if (lngInput) lngInput.value = ln.toFixed(6); }
+      marker.on('dragend', function() { var pos = marker.getLatLng(); update(pos.lat, pos.lng); reverseGeocode(pos.lat, pos.lng); });
+      map.on('click', function(e) { marker.setLatLng(e.latlng); update(e.latlng.lat, e.latlng.lng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
+      reverseGeocode(lat, lng);
+      var btn = document.getElementById('btnLocateAdresse');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          if (navigator.geolocation) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation...';
+            btn.disabled = true;
+            navigator.geolocation.getCurrentPosition(function(position) {
+              var la = position.coords.latitude, ln = position.coords.longitude;
+              marker.setLatLng([la, ln]); map.setView([la, ln], 15); update(la, ln); reverseGeocode(la, ln);
+              btn.innerHTML = '<i class="fas fa-check"></i> Position trouvée !';
+              setTimeout(() => { btn.innerHTML = '<i class="fas fa-crosshairs"></i> Utiliser ma position actuelle'; btn.disabled = false; }, 2000);
+            });
+          }
+        });
+      }
+    });
+  })();
+
+  (function() {
+    const dropZone = document.getElementById('avatarDropZone');
+    const input = document.getElementById('id_avatar_file');
+    if (!dropZone || !input) return;
+    dropZone.addEventListener('click', function(e) { if (!e.target.closest('img')) { input.click(); } });
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false); });
+    ['dragenter', 'dragover'].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.add('dragover'); }, false); });
+    ['dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.remove('dragover'); }, false); });
+    dropZone.addEventListener('drop', function(e) { const dt = e.dataTransfer; const files = dt.files; if (files.length) { input.files = files; handleFiles(files); } });
+    input.addEventListener('change', function(e) { if (this.files && this.files[0]) { handleFiles(this.files); } });
+    function handleFiles(files) {
+      const file = files[0];
+      if (!file.type.startsWith('image/')) { alert('Veuillez sélectionner une image valide.'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('L\'image ne doit pas dépasser 5MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = function(ev) { document.querySelectorAll('.js-avatar-preview').forEach(img => { img.src = ev.target.result; img.classList.add('animate-fade-in'); }); };
+      reader.readAsDataURL(file);
+    }
+    document.querySelectorAll('.js-avatar-preview').forEach(img => { img.addEventListener('click', () => { input.click(); }); img.style.cursor = 'pointer'; });
+  })();
+
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+  const observer = new IntersectionObserver(function(entries) { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('animate-slide-up'); observer.unobserve(entry.target); } }); }, observerOptions);
+  document.querySelectorAll('.card, .stat-card').forEach(el => { observer.observe(el); });
+
+  if (window.location.search.includes('success')) {
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = '<i class="fas fa-check-circle"></i> Opération réussie !';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+});
+</script>
+{% endblock %}

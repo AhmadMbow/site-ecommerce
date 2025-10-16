@@ -1,0 +1,504 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <meta name="description" content="DashLivr - Dashboard moderne pour livreurs" />
+  <title>{% block title %}DashLivr | Tableau de bord livreur{% endblock %}</title>
+
+  <!-- Preconnect for Performance -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="{% static 'css/livraison-v2.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard-components.css' %}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+  
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <a href="#main" class="skip-link">Aller au contenu</a>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fas fa-shipping-fast"></i><span class="brand">DashLivr</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle" title="Basculer la barre" aria-label="Basculer la barre">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+
+      {# Résolution robuste des URLs #}
+      {% url 'livreur_dashboard' as URL_DASH %}
+      {% if not URL_DASH %}{% url 'dashboard_livreur' as URL_DASH %}{% endif %}
+      {% url 'livreur_orders' as URL_ORDERS %}
+      {% url 'livreur_map' as URL_MAP %}
+      {% url 'livreur_stats' as URL_STATS %}
+
+      <nav class="sidebar-nav" aria-label="Navigation principale">
+        <ul>
+          <li>
+            <a href="{{ URL_DASH|default:'#' }}" class="nav-link {% block sb_active_dashboard %}active{% endblock %}">
+              <i class="fas fa-home"></i><span>Tableau de bord</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ URL_ORDERS|default:'#' }}" class="nav-link">
+              <i class="fas fa-box"></i><span>Commandes</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ URL_MAP|default:'#' }}" class="nav-link">
+              <i class="fas fa-map"></i><span>Carte</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ URL_STATS|default:'#' }}" class="nav-link">
+              <i class="fas fa-chart-bar"></i><span>Statistiques</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'livreur_profile' %}" class="nav-link">
+              <i class="fas fa-user"></i><span>Profil</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="driver-info">
+          {% if profile and profile.photo %}
+            <img src="{{ profile.photo.url }}" alt="Photo de profil" class="driver-avatar">
+          {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=eeeeee&color=111111&size=64" alt="Avatar" class="driver-avatar">
+          {% endif %}
+          <div class="driver-details">
+            <span class="driver-name">{{ user.get_full_name|default:user.username }}</span>
+            <span class="driver-status">En ligne</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content" id="main">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h1 class="page-title">{% block header %}Tableau de bord{% endblock %}</h1>
+        </div>
+        <div class="header-right">
+          <div class="global-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="globalSearch" placeholder="Rechercher..." />
+          </div>
+          <button class="pill-btn" id="themeToggle" title="Thème" aria-label="Changer de thème">
+            <i class="fas fa-moon"></i>
+          </button>
+          <div class="notifications">
+            <button class="pill-btn" id="notificationBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+              <i class="fas fa-bell"></i>
+              <span class="notification-badge">{{ notifications|length|default:0 }}</span>
+            </button>
+          </div>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout" title="Se déconnecter">
+              <i class="fas fa-power-off"></i><span class="label">Quitter</span>
+            </button>
+          </form>
+        </div>
+      </header>
+
+      <div class="container">
+        {% block content %}
+        <!-- Contenu injecté par les pages -->
+        {% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <!-- Notifications flyout -->
+  <div id="notificationsPanel" class="notifications-panel" role="dialog" aria-modal="false" aria-labelledby="notificationsTitle">
+    <div class="panel-head">
+      <strong id="notificationsTitle">Notifications</strong>
+      <button id="closeNotifications" class="pill-btn small" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="panel-body">
+      {% for n in notifications %}
+        <div class="notification-item">
+          <div class="notification-icon"><i class="fas {{ n.icon|default:'fa-info-circle' }}"></i></div>
+          <div class="notification-text">
+            <div>{{ n.text }}</div>
+            <div class="muted">{{ n.time }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-muted empty">Aucune notification.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Toasts (messages Django) -->
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="toast {% if message.tags %}{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    // ========== Theme Management ==========
+    (function(){
+      const root = document.documentElement;
+      const key = 'dashlivr.theme';
+      const stored = localStorage.getItem(key);
+      if (stored) root.setAttribute('data-theme', stored);
+      
+      const toggle = document.getElementById('themeToggle');
+      if (toggle) {
+        const setIcon = () => {
+          const isDark = root.getAttribute('data-theme') === 'dark';
+          toggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+          toggle.setAttribute('aria-label', isDark ? 'Passer en mode clair' : 'Passer en mode sombre');
+        };
+        
+        setIcon();
+        
+        toggle.addEventListener('click', () => {
+          const now = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', now);
+          localStorage.setItem(key, now);
+          setIcon();
+          
+          // Animate theme change
+          document.body.style.transition = 'background-color 0.3s ease';
+          setTimeout(() => {
+            document.body.style.transition = '';
+          }, 300);
+        });
+      }
+    })();
+
+    // ========== Sidebar Management ==========
+    (function(){
+      const sidebar = document.getElementById('sidebar');
+      const main = document.querySelector('.main-content');
+      const btn1 = document.getElementById('sidebarToggle');
+      const btn2 = document.getElementById('mobileMenuBtn');
+      const key = 'dashlivr.sidebar.visible';
+
+      const isSmall = () => window.innerWidth <= 1024;
+
+      const setIcons = (visible) => {
+        const openIcon = '<i class="fas fa-bars"></i>';
+        const closeIcon = '<i class="fas fa-times"></i>';
+        const html = visible ? closeIcon : openIcon;
+        if (btn1) {
+          btn1.innerHTML = html;
+          btn1.setAttribute('aria-label', visible ? 'Fermer le menu' : 'Ouvrir le menu');
+          btn1.setAttribute('aria-expanded', visible);
+        }
+        if (btn2) {
+          btn2.innerHTML = html;
+          btn2.setAttribute('aria-label', visible ? 'Fermer le menu' : 'Ouvrir le menu');
+          btn2.setAttribute('aria-expanded', visible);
+        }
+      };
+
+      const apply = (visible) => {
+        if (isSmall()) {
+          sidebar.classList.toggle('open', !!visible);
+          sidebar.classList.remove('collapsed');
+          if (main) main.classList.remove('expanded');
+        } else {
+          sidebar.classList.toggle('collapsed', !visible);
+          sidebar.classList.remove('open');
+          if (main) main.classList.toggle('expanded', !visible);
+        }
+        setIcons(visible);
+      };
+
+      const currentVisible = () => {
+        const stored = localStorage.getItem(key);
+        if (stored === null) return true;
+        return stored === '1';
+      };
+
+      const setVisible = (visible) => {
+        localStorage.setItem(key, visible ? '1' : '0');
+        apply(visible);
+      };
+
+      // Init
+      apply(currentVisible());
+      
+      // Handle resize
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          apply(currentVisible());
+        }, 100);
+      });
+
+      const toggle = () => setVisible(!currentVisible());
+      [btn1, btn2].forEach(b => b && b.addEventListener('click', toggle));
+      
+      // Close sidebar on mobile when clicking outside
+      if (isSmall()) {
+        document.addEventListener('click', (e) => {
+          if (sidebar.classList.contains('open') && 
+              !sidebar.contains(e.target) && 
+              !btn2?.contains(e.target)) {
+            setVisible(false);
+          }
+        });
+      }
+    })();
+
+    // ========== Notifications Panel ==========
+    (function(){
+      const btn = document.getElementById('notificationBtn');
+      const panel = document.getElementById('notificationsPanel');
+      const closeBtn = document.getElementById('closeNotifications');
+      if (!btn || !panel) return;
+
+      const toggle = () => {
+        const open = panel.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open);
+        
+        // Mark as read (remove badge)
+        if (open) {
+          setTimeout(() => {
+            const badge = btn.querySelector('.notification-badge');
+            if (badge) {
+              badge.style.animation = 'notificationPop 0.3s reverse';
+              setTimeout(() => badge.remove(), 300);
+            }
+          }, 1000);
+        }
+      };
+      
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle();
+      });
+      
+      closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target) && e.target !== btn) {
+          panel.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      
+      // Close on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && panel.classList.contains('open')) {
+          panel.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
+
+    // ========== Toast Messages ==========
+    (function(){
+      const box = document.getElementById('toasts');
+      if (!box) return;
+      
+      // Animate in
+      [...box.children].forEach((el, index) => {
+        setTimeout(() => {
+          el.classList.add('show');
+        }, index * 100);
+      });
+      
+      // Auto-hide
+      setTimeout(() => {
+        [...box.children].forEach((el, index) => {
+          setTimeout(() => {
+            el.classList.add('hide');
+          }, index * 100);
+        });
+        setTimeout(() => box.innerHTML = '', 500);
+      }, 4000);
+    })();
+
+    // ========== Global Search ==========
+    (function(){
+      const input = document.getElementById('globalSearch');
+      if (!input) return;
+      
+      let searchTimeout;
+      
+      input.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          const query = e.target.value.trim();
+          if (query.length >= 2) {
+            const event = new CustomEvent('dashlivr:search', { 
+              detail: { query } 
+            });
+            window.dispatchEvent(event);
+            console.log('Searching for:', query);
+          }
+        }, 300); // Debounce 300ms
+      });
+      
+      // Clear on Escape
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          input.value = '';
+          input.blur();
+        }
+      });
+    })();
+
+    // ========== Keyboard Shortcuts ==========
+    (function(){
+      const shortcuts = {
+        '/': () => document.getElementById('globalSearch')?.focus(),
+        'Escape': () => document.activeElement?.blur(),
+        't': () => document.getElementById('themeToggle')?.click(),
+        'n': () => document.getElementById('notificationBtn')?.click(),
+        'h': () => window.location.href = "{% url 'livreur_dashboard' %}",
+        'o': () => window.location.href = "{% url 'livreur_orders' %}",
+        'm': () => window.location.href = "{% url 'livreur_map' %}",
+      };
+      
+      document.addEventListener('keydown', (e) => {
+        // Don't trigger if typing in input
+        if (e.target.matches('input, textarea, select')) {
+          if (e.key !== 'Escape') return;
+        }
+        
+        const handler = shortcuts[e.key];
+        if (handler) {
+          e.preventDefault();
+          handler();
+        }
+      });
+      
+      // Show shortcuts help on "?"
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '?' && !e.target.matches('input, textarea, select')) {
+          e.preventDefault();
+          alert(`
+🎹 Raccourcis clavier:
+━━━━━━━━━━━━━━━━
+/ : Rechercher
+t : Changer le thème
+n : Notifications
+h : Accueil
+o : Commandes
+m : Carte
+Esc : Fermer/Annuler
+          `.trim());
+        }
+      });
+    })();
+
+    // ========== Performance Observer ==========
+    (function(){
+      if ('PerformanceObserver' in window) {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.entryType === 'navigation') {
+              console.log('⚡ Page load time:', Math.round(entry.loadEventEnd - entry.fetchStart), 'ms');
+            }
+          }
+        });
+        observer.observe({ entryTypes: ['navigation'] });
+      }
+    })();
+
+    // ========== Service Worker Registration (PWA) ==========
+    (function(){
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // navigator.serviceWorker.register('/sw.js')
+          //   .then(reg => console.log('✅ Service Worker registered'))
+          //   .catch(err => console.error('❌ SW registration failed:', err));
+        });
+      }
+    })();
+
+    // ========== Connection Status Indicator ==========
+    (function(){
+      window.addEventListener('online', () => {
+        console.log('🟢 Back online');
+        const toast = document.createElement('div');
+        toast.className = 'toast success show';
+        toast.textContent = '✅ Connexion rétablie';
+        document.getElementById('toasts')?.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      });
+      
+      window.addEventListener('offline', () => {
+        console.log('🔴 Offline');
+        const toast = document.createElement('div');
+        toast.className = 'toast warning show';
+        toast.textContent = '⚠️ Connexion perdue';
+        document.getElementById('toasts')?.appendChild(toast);
+      });
+    })();
+
+    // ========== Smooth Scroll Enhancement ==========
+    (function(){
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          const href = this.getAttribute('href');
+          if (href !== '#') {
+            const target = document.querySelector(href);
+            if (target) {
+              e.preventDefault();
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        });
+      });
+    })();
+
+    // ========== Lazy Loading Images ==========
+    (function(){
+      if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              img.src = img.dataset.src;
+              img.classList.add('loaded');
+              imageObserver.unobserve(img);
+            }
+          });
+        });
+        
+        document.querySelectorAll('img[data-src]').forEach(img => {
+          imageObserver.observe(img);
+        });
+      }
+    })();
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

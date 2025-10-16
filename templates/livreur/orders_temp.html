@@ -1,0 +1,246 @@
+{% extends "livreur/base_livreur.html" %}
+
+{% block title %}Commandes - DashLivr{% endblock %}
+{% block header %}Mes Commandes{% endblock %}
+
+{% block content %}
+<div class="content-card" style="padding: 1.5rem;">
+  
+  <!-- Filtres -->
+  <div class="filters mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="btn-group" role="group">
+          <a href="{% url 'livreur_orders' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Toutes ({{ stats.count_all }})
+          </a>
+          <a href="{% url 'livreur_orders' %}?status=EN_ATTENTE" class="btn btn-sm {% if status_filter == 'EN_ATTENTE' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+            En attente ({{ stats.pending }})
+          </a>
+          <a href="{% url 'livreur_orders' %}?status=EN_COURS" class="btn btn-sm {% if status_filter == 'EN_COURS' %}btn-info{% else %}btn-outline-info{% endif %}">
+            En cours ({{ stats.in_progress }})
+          </a>
+          <a href="{% url 'livreur_orders' %}?status=LIVREE" class="btn btn-sm {% if status_filter == 'LIVREE' %}btn-success{% else %}btn-outline-success{% endif %}">
+            Livrées ({{ stats.completed }})
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des commandes -->
+  <div class="orders-grid">
+    {% for order in orders %}
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <h5 class="order-id">Commande #{{ order.id }}</h5>
+          <p class="order-client">{{ order.user.get_full_name|default:order.user.username }}</p>
+        </div>
+        <span class="order-status status-{{ order.statut|lower }}">
+          {{ order.get_statut_display|default:order.statut }}
+        </span>
+      </div>
+
+      <div class="order-info">
+        <div class="info-row">
+          <span class="info-label">Total:</span>
+          <span class="info-value">{{ order.total|default:0 }}FCFA</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Date:</span>
+          <span class="info-value">{{ order.date_commande|date:"d/m/Y H:i" }}</span>
+        </div>
+        {% if order.adresse_gps %}
+        <div class="info-row">
+          <span class="info-label">Adresse GPS:</span>
+          <span class="info-value">{{ order.adresse_gps|truncatechars:50 }}</span>
+        </div>
+        {% endif %}
+        {% if order.user.userprofile and order.user.userprofile.address %}
+        <div class="info-row">
+          <span class="info-label">Adresse profil client:</span>
+          <span class="info-value">{{ order.user.userprofile.address|truncatechars:50 }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="order-actions">
+        {% if order.statut == 'EN_ATTENTE' %}
+        <form method="post" action="{% url 'livreur_order_update_status' order.id %}" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="accept">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="btn btn-sm btn-primary">
+            <i class="fas fa-play"></i> Accepter
+          </button>
+        </form>
+        
+        {% elif order.statut == 'EN_COURS' %}
+        <form method="post" action="{% url 'livreur_order_update_status' order.id %}" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="complete">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="btn btn-sm btn-success" onclick="return confirm('Confirmer la livraison ?')">
+            <i class="fas fa-check"></i> Livrer
+          </button>
+        </form>
+        
+        {% elif order.statut == 'LIVREE' %}
+        <span class="badge badge-success">
+          <i class="fas fa-check-circle"></i> Livrée
+        </span>
+        {% endif %}
+
+        <a href="{% url 'livreur_order_detail' order.id %}" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-eye"></i> Détails
+        </a>
+
+        {% if order.adresse and order.adresse.latitude and order.adresse.longitude %}
+        <a href="https://www.google.com/maps/dir/?api=1&destination={{ order.adresse.latitude }},{{ order.adresse.longitude }}" 
+           target="_blank" class="btn btn-sm btn-outline-primary">
+          <i class="fas fa-route"></i> GPS Client
+        </a>
+        <div class="info-row">
+          <span class="info-label">GPS Client:</span>
+          <span class="info-value">{{ order.adresse.latitude }}, {{ order.adresse.longitude }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5">
+      <i class="fas fa-box fa-3x text-muted mb-3"></i>
+      <h5>Aucune commande</h5>
+      <p class="text-muted">
+        {% if status_filter %}
+          Aucune commande avec le statut "{{ status_filter }}"
+        {% else %}
+          Aucune commande disponible pour le moment
+        {% endif %}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.orders-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.order-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--panel);
+  transition: box-shadow 0.2s;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.order-id {
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+}
+
+.order-client {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.order-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-en_attente {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-en_cours {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-livree {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.order-info {
+  margin-bottom: 1rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.info-label {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.info-value {
+  font-weight: 600;
+}
+
+.order-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-group .btn {
+  border-radius: 4px !important;
+}
+
+.filters {
+  background: var(--bg);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: -0.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.col-md-6 {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .order-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+  }
+  
+  .btn-group .btn {
+    margin-bottom: 0.25rem;
+  }
+}
+</style>
+{% endblock %}

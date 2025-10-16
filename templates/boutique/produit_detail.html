@@ -1,0 +1,1003 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ produit.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+  :root{
+    --gold:#ffc107;
+    --dark:#232526;
+    --light:#f8f9fa;
+
+    --radius:14px;
+    --radius-sm:10px;
+
+    --shadow-sm:0 6px 16px rgba(0,0,0,.06);
+    --shadow:0 14px 30px rgba(0,0,0,.10);
+    --shadow-lg:0 24px 48px rgba(0,0,0,.16);
+  }
+
+  body{ font-family:'Poppins', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
+
+  .container.mt-5{ margin-top: 2.5rem !important; }
+
+  /* Product media with gentle zoom/glass feel */
+  .product-hero{
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    overflow: hidden;
+    transition: transform .4s ease, box-shadow .3s ease;
+    transform-origin: center center;
+  }
+  .product-hero:hover{
+    transform: scale(1.02);
+    box-shadow: var(--shadow);
+  }
+  .product-hero img{
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+
+  /* Details column sticky on desktop */
+  @media (min-width: 992px){
+    .details-col{ position: sticky; top: 92px; }
+  }
+
+  /* Headings and price */
+  h2.fw-bold{ letter-spacing: .2px; }
+  .price-block{
+    display:flex; align-items: baseline; gap:.6rem; flex-wrap: wrap;
+  }
+  .price-old{
+    color:#6c757d; text-decoration: line-through;
+  }
+  .price-new{
+    font-weight:700; color:#dc3545;
+    background: rgba(220,53,69,.08);
+    border-radius: 999px;
+    padding: .2rem .6rem;
+  }
+  .price-base{
+    font-weight:700; color: var(--dark);
+    background: rgba(35,37,38,.06);
+    border-radius: 999px;
+    padding: .2rem .6rem;
+  }
+
+  /* Chips for categories */
+  .cat-chip{
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.3rem .6rem;
+    border:1px solid #e9ecef;
+    border-radius: 999px;
+    background:#fff;
+    color: var(--dark);
+    font-size:.85rem;
+    margin:.15rem .25rem .15rem 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+    transition: transform .2s ease, box-shadow .25s ease, border-color .2s ease;
+  }
+  .cat-chip:hover{
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 10px 24px rgba(35,37,38,.10);
+  }
+
+  /* Ratings */
+  .star{
+    color: var(--gold);
+  }
+  .rating-line{
+    display:flex; align-items:center; gap:.4rem; flex-wrap: wrap;
+  }
+  .rating-line .count{
+    color:#6c757d;
+  }
+
+  /* Add to cart button enhancements */
+  .js-add-to-cart{
+    border-width:2px;
+    font-weight:600;
+    border-color: var(--dark) !important;
+    color: var(--dark) !important;
+    transition: transform .2s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+  }
+  .js-add-to-cart:hover{
+    background: var(--dark) !important;
+    color:#fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(35,37,38,.2), 0 0 0 .2rem rgba(255,193,7,.25);
+  }
+
+  /* Reviews */
+  .review{
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    background:#fff;
+    box-shadow: var(--shadow-sm);
+    transition: transform .2s ease, box-shadow .25s ease, background-color .25s ease;
+    margin-bottom: 1rem;
+  }
+  .review:hover{
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .review .meta{
+    display:flex; align-items:center; gap:.5rem; flex-wrap: wrap; margin-bottom:.5rem;
+  }
+  .review .meta strong{ color: var(--dark); }
+  .review .date{ color:#6c757d; font-size: .85rem; }
+  .review .comment-text{
+    color:#495057;
+    line-height:1.6;
+  }
+
+  /* Review form */
+  .review-form{
+    background: rgba(255,193,7,.05);
+    border: 2px dashed rgba(255,193,7,.3);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .review-form h5{
+    color: var(--dark);
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .star-rating{
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+  .star-rating input[type="radio"]{
+    display: none;
+  }
+  .star-rating label{
+    cursor: pointer;
+    color: #ddd;
+    transition: color .2s ease, transform .2s ease;
+  }
+  .star-rating label:hover,
+  .star-rating label:hover ~ label{
+    color: var(--gold);
+    transform: scale(1.1);
+  }
+  .star-rating input[type="radio"]:checked ~ label{
+    color: var(--gold);
+  }
+
+  hr.my-4{
+    border:0;
+    height:1px;
+    background: linear-gradient(90deg, rgba(0,0,0,.06), rgba(0,0,0,.12), rgba(0,0,0,.06));
+  }
+
+  /* Section "Vous pourriez aimer" */
+  .similar-products-section {
+    padding: 4rem 0;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 50%, #e9ecef 100%);
+    border-radius: var(--radius);
+    margin-top: 4rem !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .similar-products-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold) 0%, #dc3545 50%, var(--gold) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .section-header {
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-header .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .section-header .section-title i {
+    color: #dc3545;
+    animation: heartBeat 2s infinite;
+    filter: drop-shadow(0 2px 4px rgba(220, 53, 69, 0.3));
+  }
+
+  @keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    10%, 30% { transform: scale(1.15); }
+    20%, 40% { transform: scale(1); }
+  }
+
+  .section-header .section-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    font-weight: 500;
+  }
+
+  .similar-product-card {
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .similar-product-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    border-color: var(--gold);
+  }
+
+  .product-link {
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 120%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  }
+
+  .product-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .similar-product-card:hover .product-image {
+    transform: scale(1.15) rotate(2deg);
+  }
+
+  .product-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+    padding: 1.5rem 1rem 1rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .similar-product-card:hover .product-overlay {
+    transform: translateY(0);
+  }
+
+  .view-details {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .no-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    color: #adb5bd;
+    font-size: 3rem;
+  }
+
+  .promo-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
+    color: white;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(255, 71, 87, 0.4);
+    z-index: 2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 6px 16px rgba(255, 71, 87, 0.4);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(255, 71, 87, 0.6);
+    }
+  }
+
+  .product-info {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+  }
+
+  .product-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.6em;
+  }
+
+  .product-price {
+    margin-bottom: 0.5rem;
+  }
+
+  .product-price .price-old {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-decoration: line-through;
+    display: block;
+  }
+
+  .product-price .price-new {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #dc3545;
+    display: block;
+  }
+
+  .product-price .price-current {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark);
+    display: block;
+  }
+
+  .product-rating {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: auto;
+  }
+
+  .product-rating .stars {
+    color: var(--gold);
+  }
+
+  .product-rating .rating-count {
+    margin-left: 0.25rem;
+  }
+
+  .btn-quick-add {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, var(--dark) 0%, #414345 100%);
+    color: white;
+    border: none;
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-quick-add::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-quick-add:hover::before {
+    left: 100%;
+  }
+
+  .btn-quick-add:hover {
+    background: linear-gradient(135deg, var(--gold) 0%, #ffb300 100%);
+    color: var(--dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+  }
+
+  .btn-quick-add:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  }
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark){
+    .product-hero{ background: rgba(26,29,32,.9); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+    .price-base{ background: rgba(255,255,255,.08); color:#f1f3f5; }
+    .cat-chip{ background:#1a1d20; border-color: rgba(255,255,255,.12); color:#e9ecef; }
+    .review{ background:#1a1d20; border-color: rgba(255,255,255,.08); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+    .review .date{ color:#adb5bd; }
+    .review-form{ background: rgba(255,193,7,.1); border-color: rgba(255,193,7,.4); }
+    .similar-products-section { background: linear-gradient(180deg, #1a1d20 0%, #2d3135 100%); }
+    .similar-product-card { background: #1a1d20; }
+    .section-header .section-title { color: #e9ecef; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px){
+    .similar-products-section {
+      padding: 3rem 1rem;
+    }
+    
+    .section-header .section-title {
+      font-size: 1.8rem;
+    }
+    
+    .section-header .section-subtitle {
+      font-size: 0.95rem;
+    }
+    
+    .product-image-wrapper {
+      padding-top: 140%;
+    }
+    
+    .product-name {
+      font-size: 0.85rem;
+    }
+    
+    .btn-quick-add {
+      padding: 0.7rem;
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 576px){
+    .review-form{ padding: 1rem; }
+    .star-rating{ font-size: 1.5rem; }
+    .container.mt-5{ margin-top: 1.5rem !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="product-hero">
+        {% if produit.image %}
+          <img src="{{ produit.image.url }}" class="img-fluid" alt="{{ produit.nom }}">
+        {% else %}
+          <img src="{% static 'images/default.png' %}" class="img-fluid" alt="{{ produit.nom }}">
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-md-6 details-col">
+      <h2 class="fw-bold mb-2">{{ produit.nom }}</h2>
+
+      <div class="price-block mb-3">
+        {% if produit.prix_promo %}
+          <span class="price-old">{{ produit.prix }} FCFA</span>
+          <span class="price-new">{{ produit.prix_promo }} FCFA</span>
+        {% else %}
+          <span class="price-base">{{ produit.prix }} FCFA</span>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <strong>Description :</strong>
+        <p class="mb-2">{{ produit.description|default:"Aucune description." }}</p>
+      </div>
+
+      <div class="mb-3">
+        <strong>Catégories :</strong>
+        <div class="mt-1">
+          {% for cat in produit.categories.all %}
+            <span class="cat-chip"><i class="fas fa-tag"></i> {{ cat.nom }}</span>
+          {% empty %}
+            <span class="text-muted">Non catégorisé</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Indicateur de Stock -->
+      <div class="mb-3">
+        <strong>Disponibilité :</strong>
+        <div class="mt-2">
+          {% if produit.stock == 0 %}
+            <span class="badge bg-danger fs-6">
+              <i class="fas fa-times-circle me-1"></i>
+              Rupture de stock
+            </span>
+          {% elif produit.stock < 5 %}
+            <span class="badge bg-warning text-dark fs-6">
+              <i class="fas fa-exclamation-triangle me-1"></i>
+              Stock limité - {{ produit.stock }} restant{{ produit.stock|pluralize }}
+            </span>
+          {% else %}
+            <span class="badge bg-success fs-6">
+              <i class="fas fa-check-circle me-1"></i>
+              En stock - {{ produit.stock }} disponible{{ produit.stock|pluralize }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mb-4 rating-line">
+        <div><strong>Note moyenne :</strong></div>
+        <div class="d-inline-flex align-items-center">
+          <span class="fw-bold">{{ produit.note_moyenne|floatformat:1 }} / 5</span>
+          <span class="count ms-2">({{ produit.nombre_notes }} avis)</span>
+        </div>
+      </div>
+
+      <button 
+        type="button" 
+        class="btn btn-outline-dark js-add-to-cart" 
+        data-url="{% url 'ajouter_au_panier' produit.id %}"
+        {% if produit.stock == 0 %}disabled title="Produit en rupture de stock"{% endif %}>
+        <i class="fas fa-shopping-cart me-2"></i> 
+        {% if produit.stock == 0 %}Indisponible{% else %}Ajouter au panier{% endif %}
+      </button>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- Section Avis et Commentaires -->
+  <div class="reviews-section">
+    <h4 class="mb-4"><i class="fas fa-comments me-2"></i> Avis des clients</h4>
+
+    <!-- Formulaire pour laisser un avis (seulement si connecté et a commandé) -->
+    {% if user.is_authenticated %}
+      {% if peut_noter %}
+        <div class="review-form">
+          <h5><i class="fas fa-star me-2"></i> Laisser un avis</h5>
+          <form method="post" action="{% url 'noter_produit' produit.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-bold">Votre note :</label>
+              <div class="star-rating">
+                <input type="radio" name="note" value="5" id="star5" required>
+                <label for="star5"><i class="fas fa-star"></i></label>
+                <input type="radio" name="note" value="4" id="star4">
+                <label for="star4"><i class="fas fa-star"></i></label>
+                <input type="radio" name="note" value="3" id="star3">
+                <label for="star3"><i class="fas fa-star"></i></label>
+                <input type="radio" name="note" value="2" id="star2">
+                <label for="star2"><i class="fas fa-star"></i></label>
+                <input type="radio" name="note" value="1" id="star1">
+                <label for="star1"><i class="fas fa-star"></i></label>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="commentaire" class="form-label fw-bold">Votre commentaire (optionnel) :</label>
+              <textarea class="form-control" id="commentaire" name="commentaire" rows="4" 
+                        placeholder="Partagez votre expérience avec ce produit..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-dark">
+              <i class="fas fa-paper-plane me-2"></i> Publier mon avis
+            </button>
+          </form>
+        </div>
+      {% elif a_deja_note %}
+        <div class="alert alert-info mb-4">
+          <i class="fas fa-info-circle me-2"></i> Vous avez déjà laissé un avis pour ce produit.
+        </div>
+      {% else %}
+        <div class="alert alert-warning mb-4">
+          <i class="fas fa-shopping-bag me-2"></i> Vous devez avoir commandé ce produit pour laisser un avis.
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <!-- Liste des avis existants -->
+    <div class="reviews-list">
+      {% if avis %}
+        {% for a in avis %}
+          <div class="review">
+            <div class="meta">
+              <strong><i class="fas fa-user-circle me-1"></i> {{ a.client.username }}</strong>
+              <span class="text-warning">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= a.note %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+              </span>
+              <span class="date"><i class="far fa-clock me-1"></i> {{ a.date_avis|date:"d/m/Y à H:i" }}</span>
+            </div>
+            {% if a.commentaire %}
+              <div class="comment-text">{{ a.commentaire }}</div>
+            {% else %}
+              <div class="comment-text text-muted fst-italic">(Aucun commentaire écrit)</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <p class="text-muted">Aucun avis pour ce produit pour le moment.</p>
+          <p class="text-muted small">Soyez le premier à partager votre expérience !</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Section "Vous pourriez aimer" -->
+  {% if produits_similaires %}
+  <div class="similar-products-section mt-5 pt-5">
+    <div class="section-header text-center mb-5">
+      <h3 class="section-title">
+        <i class="fas fa-heart me-2"></i>
+        Vous pourriez aussi aimer
+      </h3>
+      <p class="section-subtitle">Découvrez d'autres produits qui pourraient vous plaire</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      {% for p in produits_similaires %}
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="similar-product-card">
+            <a href="{% url 'produit_detail' p.id %}" class="product-link">
+              <div class="product-image-wrapper">
+                {% if p.image %}
+                  <img src="{{ p.image.url }}" alt="{{ p.nom }}" class="product-image">
+                {% else %}
+                  <div class="no-image">
+                    <i class="fas fa-image"></i>
+                  </div>
+                {% endif %}
+                {% if p.prix_promo %}
+                  <span class="promo-badge">
+                    <i class="fas fa-tag me-1"></i> PROMO
+                  </span>
+                {% endif %}
+                <div class="product-overlay">
+                  <span class="view-details">Voir les détails</span>
+                </div>
+              </div>
+              <div class="product-info">
+                <h6 class="product-name">{{ p.nom }}</h6>
+                <div class="product-price">
+                  {% if p.prix_promo %}
+                    <span class="price-old">{{ p.prix }} FCFA</span>
+                    <span class="price-new">{{ p.prix_promo }} FCFA</span>
+                  {% else %}
+                    <span class="price-current">{{ p.prix }} FCFA</span>
+                  {% endif %}
+                </div>
+                {% if p.note_moyenne %}
+                  <div class="product-rating">
+                    <span class="stars">
+                      {% for i in "12345" %}
+                        {% if forloop.counter <= p.note_moyenne %}
+                          <i class="fas fa-star"></i>
+                        {% else %}
+                          <i class="far fa-star"></i>
+                        {% endif %}
+                      {% endfor %}
+                    </span>
+                    <span class="rating-count">({{ p.nombre_avis }})</span>
+                  </div>
+                {% endif %}
+                <!-- Indicateur Stock -->
+                <div class="mt-1">
+                  {% if p.stock == 0 %}
+                    <small class="text-danger fw-bold">
+                      <i class="fas fa-times-circle"></i> Rupture
+                    </small>
+                  {% elif p.stock < 5 %}
+                    <small class="text-warning fw-bold">
+                      <i class="fas fa-exclamation-circle"></i> Stock limité
+                    </small>
+                  {% else %}
+                    <small class="text-success fw-bold">
+                      <i class="fas fa-check-circle"></i> Disponible
+                    </small>
+                  {% endif %}
+                </div>
+              </div>
+            </a>
+            <!-- Bouton HORS du lien avec type="button" pour éviter soumission de formulaire -->
+            <button 
+              type="button"
+              class="btn-quick-add" 
+              data-product-id="{{ p.id }}" 
+              data-url="{% url 'ajouter_au_panier' p.id %}"
+              {% if p.stock == 0 %}disabled{% endif %}>
+              <i class="fas fa-shopping-cart me-1"></i> 
+              {% if p.stock == 0 %}Indisponible{% else %}Ajouter{% endif %}
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Subtle parallax tilt on product image (no layout change, purely cosmetic)
+  (function(){
+    const card = document.querySelector('.product-hero');
+    if(!card) return;
+    let raf = null;
+    function onMove(e){
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        card.style.transform = `perspective(900px) rotateX(${ -y * 3 }deg) rotateY(${ x * 3 }deg) scale(1.02)`;
+        card.style.boxShadow = '0 20px 40px rgba(0,0,0,.12)';
+      });
+    }
+    function reset(){
+      if(raf) cancelAnimationFrame(raf);
+      card.style.transform = '';
+      card.style.boxShadow = '';
+    }
+    card.addEventListener('mousemove', onMove);
+    card.addEventListener('mouseleave', reset);
+    card.addEventListener('mouseenter', () => card.style.willChange = 'transform, box-shadow');
+  })();
+
+  // Add to cart via AJAX
+  (function(){
+    const btn = document.querySelector('.js-add-to-cart');
+    if(!btn) return;
+
+    function getCookie(name) {
+      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return m ? m.pop() : '';
+    }
+    const csrfToken = getCookie('csrftoken');
+
+    function updateCartCount(count){
+      // Utiliser la fonction globale de base.html si disponible
+      if (typeof window.updateCartBadge === 'function') {
+        window.updateCartBadge(count);
+      } else {
+        // Fallback si la fonction n'est pas disponible
+        const targets = ['#cart-count', '.cart-count'];
+        targets.forEach(sel => {
+          document.querySelectorAll(sel).forEach(el => {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'inline' : 'none';
+          });
+        });
+      }
+    }
+
+    btn.addEventListener('click', function(){
+      const url = btn.dataset.url;
+      if(!url) return;
+      btn.disabled = true;
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ajout en cours…';
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken
+        },
+        body: ''
+      }).then(res => res.json()).then(data => {
+        if (data && data.success){
+          updateCartCount(data.count || data.cart_count || 0);
+          btn.innerHTML = '<i class="fas fa-check me-2"></i>Ajouté !';
+          setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 900);
+        } else {
+          btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Erreur';
+          setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 1400);
+        }
+      }).catch(() => {
+        btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Erreur';
+        setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 1400);
+      });
+    });
+  })();
+
+  // Quick add to cart for similar products
+  (function(){
+    const quickAddButtons = document.querySelectorAll('.btn-quick-add');
+    console.log('Boutons trouvés:', quickAddButtons.length);
+    if(!quickAddButtons.length) {
+      console.warn('Aucun bouton .btn-quick-add trouvé !');
+      return;
+    }
+
+    function getCookie(name) {
+      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return m ? m.pop() : '';
+    }
+    const csrfToken = getCookie('csrftoken');
+
+    function updateCartCount(count){
+      // Utiliser la fonction globale de base.html si disponible
+      if (typeof window.updateCartBadge === 'function') {
+        window.updateCartBadge(count);
+      } else {
+        // Fallback si la fonction n'est pas disponible
+        const targets = ['#cart-count', '.cart-count'];
+        targets.forEach(sel => {
+          document.querySelectorAll(sel).forEach(el => {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'inline' : 'none';
+          });
+        });
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = 'quick-toast';
+      toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+      `;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+        font-weight: 600;
+      `;
+      
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(400px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(400px); opacity: 0; }
+        }
+      `;
+      if (!document.getElementById('toast-animation-similar')) {
+        style.id = 'toast-animation-similar';
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    quickAddButtons.forEach(btn => {
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const url = this.dataset.url;
+        console.log('Ajout au panier - URL:', url);
+        
+        if(!url) {
+          console.error('URL manquante pour le bouton');
+          return;
+        }
+        
+        this.disabled = true;
+        const originalHTML = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Ajout...';
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+          },
+          body: ''
+        })
+        .then(res => {
+          console.log('Réponse reçue, status:', res.status);
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('Données reçues:', data);
+          
+          if (data && data.success){
+            updateCartCount(data.count || data.cart_count || 0);
+            this.innerHTML = '<i class="fas fa-check me-1"></i> Ajouté !';
+            showToast(data.message || 'Produit ajouté au panier !', 'success');
+            setTimeout(() => { 
+              this.innerHTML = originalHTML; 
+              this.disabled = false; 
+            }, 1500);
+          } else {
+            console.error('Échec de l\'ajout:', data);
+            this.innerHTML = '<i class="fas fa-times me-1"></i> Erreur';
+            showToast(data.message || 'Erreur lors de l\'ajout', 'error');
+            setTimeout(() => { 
+              this.innerHTML = originalHTML; 
+              this.disabled = false; 
+            }, 1500);
+          }
+        })
+        .catch(error => {
+          console.error('Erreur fetch:', error);
+          this.innerHTML = '<i class="fas fa-times me-1"></i> Erreur';
+          showToast('Erreur de connexion: ' + error.message, 'error');
+          setTimeout(() => { 
+            this.innerHTML = originalHTML; 
+            this.disabled = false; 
+          }, 1500);
+        });
+      });
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,438 @@
+{% extends "livreur/base_livreur.html" %}
+{% block title %}Livraisons{% endblock %}
+{% block header %}Livraisons{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .toolbar {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .toolbar .form-control, .toolbar .form-select { height: 38px; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+  .stat {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: .5rem;
+    padding: .9rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+  .stat .num { font-weight: 700; font-size: 1.2rem; }
+  .stat .lbl { color: #6c757d; font-size: .85rem; }
+  .stat .ic { width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; border-radius: .5rem; }
+  .ic.pending { background:#fff7e6; color:#b26a00; }
+  .ic.progress { background:#e6f4ff; color:#0b6bcb; }
+  .ic.done { background:#e9faef; color:#1e7e34; }
+  .ic.revenue { background:#f3e8ff; color:#6f42c1; }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 1rem;
+  }
+  .card {
+    background:#fff;
+    border:1px solid #eee;
+    border-radius:.5rem;
+  }
+  .card .card-header {
+    padding:.75rem .9rem;
+    border-bottom:1px solid #eee;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .card .card-body { padding:.75rem .9rem; }
+  .orders { display: grid; gap: .6rem; }
+  .order {
+    border:1px solid #eee;
+    border-radius:.5rem;
+    padding:.75rem;
+    display:grid;
+    gap:.5rem;
+  }
+  .order[data-status="en_attente"] { border-left:4px solid #ffb703; }
+  .order[data-status="en_cours"] { border-left:4px solid #0b6bcb; }
+  .order[data-status="livree"] { border-left:4px solid #1e7e34; }
+  .order-head { display:flex; justify-content:space-between; gap:.75rem; align-items: center; flex-wrap: wrap; }
+  .order-meta { display:flex; gap:1rem; flex-wrap:wrap; color:#6c757d; font-size:.9rem; }
+  .order-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+  .badge-status { padding:.25rem .5rem; border-radius:999px; font-size:.75rem; }
+  .badge-warn { background:#fff7e6; color:#b26a00; }
+  .badge-info { background:#e6f4ff; color:#0b6bcb; }
+  .badge-ok { background:#e9faef; color:#1e7e34; }
+  #shipmentsMap { height: 500px; width: 100%; border-radius:.5rem; }
+  .muted { color:#6c757d; }
+  .no-results { display:none; padding:1rem; text-align:center; color:#6c757d; }
+
+  /* ----------- Responsive ----------- */
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    #shipmentsMap { height: 350px; }
+  }
+  @media (max-width: 900px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .layout { grid-template-columns: 1fr; }
+    #shipmentsMap { height: 250px; }
+  }
+  @media (max-width: 768px) {
+    .toolbar { grid-template-columns: 1fr; gap: .5rem; }
+    .stats { grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .card .card-header, .card .card-body { padding: .6rem .5rem; }
+    .order { padding: .6rem; font-size: 0.97rem; }
+    .order-meta { gap: .5rem; font-size: .92rem; }
+    .order-head { flex-direction: column; align-items: flex-start; gap: .3rem; }
+    .order-actions { gap: .3rem; }
+    #shipmentsMap { height: 180px; }
+  }
+  @media (max-width: 500px) {
+    .stats { grid-template-columns: 1fr; }
+    .card { border-radius: .3rem; }
+    .order { border-radius: .3rem; padding: .4rem; font-size: 0.93rem; }
+    .order-meta { font-size: .9rem; }
+    .order-head { font-size: 0.98rem; }
+    .order-actions .btn { font-size: 0.93rem; padding: .3rem .5rem; }
+    #shipmentsMap { height: 120px; }
+    .toolbar .form-control, .toolbar .form-select { height: 34px; font-size: 0.97rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="toolbar">
+  <input id="searchInput" class="form-control" placeholder="Rechercher: N°, client, adresse...">
+  <select id="statusFilter" class="form-select">
+    <option value="all">Tous les statuts</option>
+    <option value="EN_ATTENTE">En attente</option>
+    <option value="EN_COURS">En cours</option>
+    <option value="LIVREE">Livrées</option>
+  </select>
+  <select id="sortSelect" class="form-select">
+    <option value="recent">Plus récentes</option>
+    <option value="amount_desc">Montant décroissant</option>
+    <option value="amount_asc">Montant croissant</option>
+    <option value="distance">Plus proches (GPS)</option>
+  </select>
+  <div class="d-flex gap-2">
+    <button id="locateBtn" class="btn btn-outline-primary"><i class="fa-solid fa-location-crosshairs"></i> Ma position</button>
+    <button id="refreshBtn" class="btn btn-outline-secondary"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="ic pending"><i class="fa-solid fa-clock"></i></div>
+    <div>
+      <div class="num">{{ stats.count_pending|default:stats.pending|default:0 }}</div>
+      <div class="lbl">En attente</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="ic progress"><i class="fa-solid fa-truck-fast"></i></div>
+    <div>
+      <div class="num">{{ stats.count_in_progress|default:0 }}</div>
+      <div class="lbl">En cours</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="ic done"><i class="fa-solid fa-check-circle"></i></div>
+    <div>
+      <div class="num">{{ stats.delivered_today|default:stats.count_completed|default:0 }}</div>
+      <div class="lbl">Livrées aujourd'hui</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="ic revenue"><i class="fa-solid fa-coins"></i></div>
+    <div>
+      <div class="num">{{ stats.revenue_today|default:0 }}</div>
+      <div class="lbl">Revenus (jour)</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Liste des commandes -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="m-0">Commandes</h6>
+      <span class="muted"><span id="visibleCount">{{ orders|length }}</span> sur {{ orders|length }}</span>
+    </div>
+    <div class="card-body">
+      <div id="ordersList" class="orders">
+        {% for o in orders %}
+        {% with has_lat=o.latitude has_lng=o.longitude %}
+        <div class="order"
+             data-id="{{ o.id }}"
+             data-status="{% if o.statut == 'EN_ATTENTE' %}en_attente{% elif o.statut == 'EN_COURS' %}en_cours{% elif o.statut == 'LIVREE' %}livree{% else %}autre{% endif %}"
+             data-status-raw="{{ o.statut|default:'' }}"
+             data-client="{{ o.user.get_full_name|default:o.user.username|escape }}"
+             data-amount="{{ o.total|default:0 }}"
+             data-lat="{% if has_lat and has_lng %}{{ o.latitude }}{% endif %}"
+             data-lng="{% if has_lat and has_lng %}{{ o.longitude }}{% endif %}"
+             data-address="{% if o.adresse_gps %}{{ o.adresse_gps|escape }}{% else %}{{ o.adresse|default:'—'|escape }}{% endif %}">
+          <div class="order-head">
+            <div>
+              <strong>#{{ o.id }}</strong> • {{ o.user.get_full_name|default:o.user.username }}
+            </div>
+            <div>
+              {% if o.statut == 'EN_ATTENTE' %}<span class="badge-status badge-warn">En attente</span>{% endif %}
+              {% if o.statut == 'EN_COURS' %}<span class="badge-status badge-info">En cours</span>{% endif %}
+              {% if o.statut == 'LIVREE' %}<span class="badge-status badge-ok">Livrée</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="order-meta">
+            <div><i class="fa-solid fa-location-dot"></i> {% if o.adresse_gps %}{{ o.adresse_gps }}{% else %}{{ o.adresse|default:"—" }}{% endif %}</div>
+            {% if o.date_commande %}
+              <div><i class="fa-solid fa-clock"></i> {{ o.date_commande|date:"d/m/Y H:i" }}</div>
+            {% elif o.created_at %}
+              <div><i class="fa-solid fa-clock"></i> {{ o.created_at|date:"d/m/Y H:i" }}</div>
+            {% endif %}
+            {% if o.total %}
+              <div><i class="fa-solid fa-coins"></i> {{ o.total }} FCFA</div>
+            {% endif %}
+            {% if has_lat and has_lng %}
+              <div class="muted"><i class="fa-solid fa-satellite-dish"></i> {{ o.latitude }}, {{ o.longitude }}</div>
+            {% endif %}
+          </div>
+
+          <div class="order-actions">
+            {% if o.statut == 'EN_ATTENTE' %}
+            <form method="post" action="{% url 'livreur_order_update_status' o.id %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="accept">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-circle-check"></i> Accepter
+              </button>
+            </form>
+            
+            {% elif o.statut == 'EN_COURS' %}
+            <form method="post" action="{% url 'livreur_order_update_status' o.id %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="complete">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="btn btn-sm btn-success" 
+                      onclick="return confirm('Confirmer la livraison de cette commande ?')">
+                <i class="fa-solid fa-check"></i> Livrer
+              </button>
+            </form>
+            
+            {% elif o.statut == 'LIVREE' %}
+            <span class="badge badge-success d-inline-flex align-items-center gap-1">
+              <i class="fa-solid fa-check-circle"></i> Livrée
+            </span>
+            {% endif %}
+
+            <a class="btn btn-sm btn-dark" href="{% url 'livreur_order_detail' o.id %}">
+              <i class="fa-solid fa-file-lines"></i> Détails
+            </a>
+
+            {% if has_lat and has_lng %}
+            <a class="btn btn-sm btn-primary" target="_blank"
+               href="https://www.google.com/maps/dir/?api=1&destination={{ o.latitude }},{{ o.longitude }}">
+              <i class="fa-solid fa-route"></i> Itinéraire
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endwith %}
+        {% empty %}
+          <div class="muted">Aucune commande.</div>
+        {% endfor %}
+      </div>
+
+      <div id="noResults" class="no-results">Aucun résultat pour ce filtre.</div>
+    </div>
+  </div>
+
+  <!-- Carte -->
+  <div class="card">
+    <div class="card-header">
+      <h6 class="m-0">Carte des livraisons</h6>
+      <small class="muted">Affiche les commandes avec coordonnées GPS</small>
+    </div>
+    <div class="card-body">
+      <div id="shipmentsMap"></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  const elList = document.getElementById('ordersList');
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const sortSelect = document.getElementById('sortSelect');
+  const visibleCount = document.getElementById('visibleCount');
+  const noResults = document.getElementById('noResults');
+  const locateBtn = document.getElementById('locateBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  // Collecte des commandes depuis le DOM
+  function collectOrders() {
+    return Array.from(elList.querySelectorAll('.order')).map(card => {
+      const lat = parseFloat(card.dataset.lat);
+      const lng = parseFloat(card.dataset.lng);
+      return {
+        node: card,
+        id: parseInt(card.dataset.id),
+        statusRaw: card.dataset.statusRaw || '',
+        status: card.dataset.status || 'autre',
+        client: (card.dataset.client || '').toLowerCase(),
+        address: (card.dataset.address || '').toLowerCase(),
+        amount: parseFloat(card.dataset.amount || '0') || 0,
+        lat: isNaN(lat) ? null : lat,
+        lng: isNaN(lng) ? null : lng,
+        hasGps: !(isNaN(lat) || isNaN(lng))
+      };
+    });
+  }
+
+  let orders = collectOrders();
+  let userPos = null;
+
+  // Filtrage + recherche
+  function applyFilters() {
+    const q = (searchInput.value || '').trim().toLowerCase();
+    const st = statusFilter.value;
+    let shown = 0;
+
+    orders.forEach(o => {
+      let ok = true;
+      if (st !== 'all') ok = ok && (o.statusRaw === st);
+      if (q) {
+        ok = ok && (
+          String(o.id).includes(q) ||
+          o.client.includes(q) ||
+          o.address.includes(q)
+        );
+      }
+      o.node.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+
+    visibleCount.textContent = shown;
+    noResults.style.display = shown === 0 ? 'block' : 'none';
+  }
+
+  // Tri
+  function applySort() {
+    const val = sortSelect.value;
+    let sorted = [...orders];
+
+    if (val === 'amount_desc') sorted.sort((a,b)=>b.amount-a.amount);
+    else if (val === 'amount_asc') sorted.sort((a,b)=>a.amount-b.amount);
+    else if (val === 'distance') {
+      if (!userPos) {
+        alert('Active ta position (bouton "Ma position").');
+        sortSelect.value = 'recent';
+        return;
+      }
+      const d = (o)=>o.hasGps ? haversine(userPos.lat, userPos.lng, o.lat, o.lng) : Number.POSITIVE_INFINITY;
+      sorted.sort((a,b)=>d(a)-d(b));
+    } else {
+      // recent: on considère id plus grand = plus récent
+      sorted.sort((a,b)=>b.id-a.id);
+    }
+
+    // Reposionner dans le DOM
+    sorted.forEach(o => elList.appendChild(o.node));
+  }
+
+  // Haversine (km)
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371, toRad = d => d*Math.PI/180;
+    const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  // Carte Leaflet
+  let map, markers = [];
+  function initMap() {
+    map = L.map('shipmentsMap').setView([14.6928, -17.4467], 12); // Dakar par défaut
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    drawMarkers();
+  }
+
+  function drawMarkers() {
+    // Clear
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    const gpsOrders = orders.filter(o => o.hasGps);
+    gpsOrders.forEach(o => {
+      const m = L.marker([o.lat, o.lng]).addTo(map)
+        .bindPopup(`<div>
+          <strong>Commande #${o.id}</strong><br>
+          <span>${o.client || ''}</span><br>
+          <small>${o.address || ''}</small><br>
+          <a href="/livreur/orders/${o.id}/" class="btn btn-sm btn-dark mt-1">Détails</a>
+        </div>`);
+      markers.push(m);
+    });
+
+    if (gpsOrders.length) {
+      const group = new L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.15));
+    }
+  }
+
+  // Géoloc
+  function locateMe() {
+    if (!navigator.geolocation) { alert('Géolocalisation non supportée.'); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const me = L.circleMarker([userPos.lat, userPos.lng], {radius:7, color:'#0b6bcb', fillColor:'#0b6bcb', fillOpacity:.7});
+      me.addTo(map).bindPopup('Vous êtes ici').openPopup();
+      map.setView([userPos.lat, userPos.lng], 14);
+      if (sortSelect.value === 'distance') applySort();
+    }, err => {
+      alert('Impossible de récupérer la position.');
+      console.warn(err);
+    }, { enableHighAccuracy:true, timeout:8000, maximumAge:0 });
+  }
+
+  // Events
+  searchInput.addEventListener('input', applyFilters);
+  statusFilter.addEventListener('change', ()=>{ applyFilters(); });
+  sortSelect.addEventListener('change', ()=>{ applySort(); });
+  locateBtn.addEventListener('click', locateMe);
+  refreshBtn.addEventListener('click', ()=>{ window.location.reload(); });
+
+  // Init
+  initMap();
+  applyFilters();
+  applySort();
+
+  // Si filtres changent, on peut rafraîchir les marqueurs après 200ms
+  let redrawTimer = null;
+  function scheduleRedraw() {
+    if (redrawTimer) clearTimeout(redrawTimer);
+    redrawTimer = setTimeout(()=>{ orders = collectOrders(); drawMarkers(); }, 200);
+  }
+  searchInput.addEventListener('input', scheduleRedraw);
+  statusFilter.addEventListener('change', scheduleRedraw);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Noter le produit{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --gold:#ffc107;
+    --dark:#232526;
+    --muted:#6b7280;
+    --radius:14px;
+    --radius-sm:10px;
+    --shadow-sm:0 6px 16px rgba(0,0,0,.06);
+    --shadow:0 14px 30px rgba(0,0,0,.10);
+  }
+
+  .container.py-4{ padding-top:1.25rem !important; padding-bottom:1.25rem !important; }
+  h3{ font-weight:700; letter-spacing:.2px; }
+
+  /* Product card */
+  .product-card{
+    border: 1px solid rgba(0,0,0,.06) !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: rgba(255,255,255,.95);
+    transition: transform .25s ease, box-shadow .25s ease;
+    max-width: 680px;
+  }
+  .product-card:hover{ transform: translateY(-3px); box-shadow: var(--shadow); }
+  .product-card img{
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    max-height: 140px;
+    width: 100%;
+  }
+
+  /* Form card */
+  .card.form-card{
+    border: 1px solid rgba(0,0,0,.06) !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: #fff;
+    max-width: 680px;
+  }
+  .card.form-card:hover{ transform: translateY(-2px); box-shadow: var(--shadow); }
+
+  .form-control{
+    border-radius: var(--radius-sm);
+    border:1px solid rgba(0,0,0,.12);
+  }
+  .form-control:focus{
+    border-color: var(--gold);
+    box-shadow: 0 0 0 .2rem rgba(255,193,7,.25);
+  }
+
+  .btn{
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    transition: transform .2s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+  }
+  .btn:hover{ transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.12); }
+  .btn-primary{ background: var(--dark); border-color: var(--dark); }
+  .btn-primary:hover{ background: #111; border-color: #111; }
+
+  /* Stars: JS-driven coloring (no row-reverse) */
+  #star-rating{ display: inline-flex; gap: .25rem; }
+  #star-rating input[type="radio"]{ position: absolute; left: -9999px; }
+  #star-rating label{
+    font-size: 2.2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #e2e8f0; /* gris par défaut */
+    transition: transform .12s ease, color .2s ease, text-shadow .2s ease;
+    user-select: none;
+  }
+  #star-rating label:focus-visible{
+    outline: 2px solid rgba(255,193,7,.6);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+  #ratingValue{ color: var(--muted); font-weight: 600; }
+
+  @media (prefers-color-scheme: dark){
+    .product-card{ background:#1a1d20; border-color: rgba(255,255,255,.08) !important; }
+    .card.form-card{ background:#1a1d20; border-color: rgba(255,255,255,.08) !important; }
+    .form-control{ background:#16181a; color:#e9ecef; border-color: rgba(255,255,255,.12); }
+    .btn-outline-secondary{ color:#e9ecef; border-color:#ced4da; }
+    .btn-outline-secondary:hover{ background:#e9ecef; color:#111; }
+    #star-rating label{ color:#3b424a; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">Noter le produit</h3>
+
+  <!-- Produit -->
+  <div class="card product-card mb-4">
+    <div class="row g-0 align-items-center">
+      <div class="col-md-4 text-center p-3">
+        <img
+          src="{% if produit.image %}{{ produit.image.url }}{% else %}{% static 'images/default.png' %}{% endif %}"
+          alt="{{ produit.nom }}"
+          onerror="this.onerror=null;this.src='{% static 'images/default.png' %}';">
+      </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <h5 class="card-title mb-1">{{ produit.nom }}</h5>
+          <p class="card-text small text-muted mb-0">{{ produit.description|default:"Aucune description." }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de notation -->
+  <div class="card form-card">
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <span>Note</span>
+            <span id="ratingValue" class="small">(sélectionnez une note)</span>
+          </label>
+
+          <div id="star-rating" class="mb-2" role="radiogroup" aria-label="Note du produit (1 à 5 étoiles)">
+            {% for i in "12345" %}
+              <input type="radio" name="note" id="star{{ i }}" value="{{ i }}" class="visually-hidden">
+              <label for="star{{ i }}" title="{{ i }} étoile{% if i != '1' %}s{% endif %}">&#9733;</label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+          <textarea name="commentaire" id="commentaire" class="form-control" rows="3" placeholder="Partagez votre expérience..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Envoyer mon avis</button>
+        <a href="{% url 'produit_detail' produit.id %}" class="btn btn-outline-secondary ms-2">Annuler</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const box = document.getElementById('star-rating');
+  if (!box) return;
+
+  const inputs = Array.from(box.querySelectorAll('input[type="radio"]'));
+  const labels = Array.from(box.querySelectorAll('label'));
+  const ratingText = document.getElementById('ratingValue');
+
+  // Associer une valeur à chaque label via son "for"
+  labels.forEach(label => {
+    const v = Number((label.getAttribute('for') || '').replace('star','')) || 0;
+    label.dataset.value = String(v);
+  });
+
+  function paint(n){
+    labels.forEach(l => {
+      const v = Number(l.dataset.value);
+      const active = v <= n;
+      l.style.color = active ? '#ffc107' : '#e2e8f0';
+      l.style.textShadow = active ? '0 0 10px rgba(255,193,7,.35)' : 'none';
+    });
+    if (ratingText){
+      ratingText.textContent = n > 0 ? (n + ' étoile' + (n > 1 ? 's' : '')) : '(sélectionnez une note)';
+    }
+  }
+
+  // Aperçu au survol
+  labels.forEach(l => {
+    l.addEventListener('mouseenter', () => paint(Number(l.dataset.value)));
+    l.addEventListener('mouseleave', () => {
+      const checked = inputs.find(i => i.checked);
+      paint(checked ? Number(checked.value) : 0);
+    });
+  });
+
+  // Clic/choix
+  inputs.forEach(i => i.addEventListener('change', () => paint(Number(i.value))));
+
+  // État initial si édition
+  const initial = inputs.find(i => i.checked);
+  paint(initial ? Number(initial.value) : 0);
+});
+</script>
+{% endblock %}

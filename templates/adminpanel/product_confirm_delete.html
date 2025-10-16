@@ -1,0 +1,10 @@
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}Supprimer le produit{% endblock %}
+{% block header %}Supprimer le produit{% endblock %}
+{% block content %}
+<div class="alert alert-warning">Supprimer “{{ produit }}” ?</div>
+<form method="post">{% csrf_token %}
+  <a class="btn btn-outline-secondary" href="{% url 'admin_products' %}">Annuler</a>
+  <button class="btn btn-danger" type="submit">Supprimer</button>
+</form>
+{% endblock %}

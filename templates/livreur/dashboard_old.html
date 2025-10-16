@@ -1,0 +1,377 @@
+{% extends "livreur/base_livreur.html" %}
+
+{% block title %}Tableau de bord - DashLivr{% endblock %}
+{% block header %}Tableau de bord{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+<style>
+  :root {
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-warning: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
+  }
+  
+<style>
+  /* Quick Actions */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space);
+    margin-bottom: var(--space-xl);
+  }
+  
+  .quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    background: var(--panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: center;
+  }
+  
+  .quick-action-btn i {
+    font-size: 2rem;
+    color: var(--primary);
+    transition: all var(--transition);
+  }
+  
+  .quick-action-btn span {
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .quick-action-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    background: var(--panel-hover);
+  }
+  
+  .quick-action-btn:hover i {
+    transform: scale(1.2);
+  }
+  
+  /* Performance Chart Mini */
+  .performance-mini {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-xs);
+    height: 60px;
+    padding: var(--space);
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    border-radius: var(--radius);
+    margin-top: var(--space);
+  }
+  
+  .performance-bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--primary), var(--secondary));
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+    cursor: pointer;
+  }
+  
+  .performance-bar:hover {
+    transform: scaleY(1.1);
+    opacity: 0.8;
+  }
+  
+  /* Today Summary */
+  .today-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space);
+    margin-bottom: var(--space-xl);
+  }
+  
+  .summary-item {
+    text-align: center;
+    padding: var(--space);
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+  }
+  
+  .summary-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .summary-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin-top: var(--space-xs);
+  }
+  
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: var(--space-xl);
+  }
+  
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--primary), var(--secondary));
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-bottom: var(--space-lg);
+  }
+  
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 3px solid var(--panel-solid);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .timeline-content {
+    background: var(--panel);
+    padding: var(--space);
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+  }
+  
+  .timeline-time {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: var(--space-xs);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a href="{% url 'livreur_orders' %}" class="quick-action-btn">
+      <i class="fas fa-plus-circle"></i>
+      <span>Nouvelle commande</span>
+    </a>
+    <a href="{% url 'livreur_map' %}" class="quick-action-btn">
+      <i class="fas fa-map-marked-alt"></i>
+      <span>Voir la carte</span>
+    </a>
+    <button class="quick-action-btn" onclick="window.print()">
+      <i class="fas fa-file-pdf"></i>
+      <span>Rapport PDF</span>
+    </button>
+    <a href="{% url 'livreur_stats' %}" class="quick-action-btn">
+      <i class="fas fa-chart-line"></i>
+      <span>Statistiques</span>
+    </a>
+  </div>
+
+  <!-- Today Summary -->
+  <h4 class="section-title">Aujourd'hui</h4>
+  <div class="today-summary">
+    <div class="summary-item">
+      <div class="summary-value">{{ stats.pending|default:0 }}</div>
+      <div class="summary-label">En attente</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">{{ stats.in_progress|default:0 }}</div>
+      <div class="summary-label">En cours</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">{{ stats.completed|default:0 }}</div>
+      <div class="summary-label">Livrées</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-value">{{ stats.count_all|default:0 }}</div>
+      <div class="summary-label">Total</div>
+    </div>
+  </div>
+
+  <!-- Performance Mini Chart -->
+  <h4 class="section-title">Performance (7 derniers jours)</h4>
+  <div class="performance-mini">
+    <div class="performance-bar" style="height: 40%;" title="Lundi"></div>
+    <div class="performance-bar" style="height: 65%;" title="Mardi"></div>
+    <div class="performance-bar" style="height: 50%;" title="Mercredi"></div>
+    <div class="performance-bar" style="height: 80%;" title="Jeudi"></div>
+    <div class="performance-bar" style="height: 95%;" title="Vendredi"></div>
+    <div class="performance-bar" style="height: 70%;" title="Samedi"></div>
+    <div class="performance-bar" style="height: 60%;" title="Dimanche"></div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" style="margin-top: var(--space-xl);">
+    <div class="stat-card glass elevate-hover bg-primary">
+      <h3>{{ stats.count_all }}</h3>
+      <p>Commandes totales</p>
+    </div>
+    <div class="stat-card glass elevate-hover bg-warning">
+      <h3>{{ stats.pending }}</h3>
+      <p>En attente</p>
+    </div>
+    <div class="stat-card glass elevate-hover bg-info">
+      <h3>{{ stats.in_progress }}</h3>
+      <p>En cours</p>
+    </div>
+    <div class="stat-card glass elevate-hover bg-success">
+      <h3>{{ stats.completed }}</h3>
+      <p>Livrées</p>
+    </div>
+  </div>
+
+  <!-- Timeline Section -->
+  <h4 class="section-title" style="margin-top: var(--space-xl);">Activité récente</h4>
+  <div class="timeline">
+    {% if recent_orders %}
+      {% for order in recent_orders|slice:":5" %}
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <div class="timeline-time">{{ order.date_commande|date:"H:i" }}</div>
+          <strong>Commande #{{ order.id }}</strong>
+          <p style="margin: var(--space-xs) 0;">
+            {{ order.user.get_full_name|default:order.user.username }}
+          </p>
+          <span class="badge badge-{% if order.statut == 'EN_ATTENTE' %}warning{% elif order.statut == 'EN_COURS' %}info{% else %}success{% endif %}">
+            {{ order.get_statut_display|default:order.statut }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-clipboard-list"></i>
+        <p>Aucune activité récente</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Commandes récentes -->
+  <div class="recent-orders mt-4">
+    <h4 class="mb-3 section-title">Commandes récentes</h4>
+    
+    {% if recent_orders %}
+      <div class="orders-list">
+        {% for order in recent_orders %}
+        <div class="order-item glass elevate-hover">
+          <div class="order-header">
+            <h5>Commande #{{ order.id }}</h5>
+            <span class="badge badge-{% if order.statut == 'EN_ATTENTE' %}warning{% elif order.statut == 'EN_COURS' %}info{% else %}success{% endif %}">
+              {{ order.get_statut_display|default:order.statut }}
+            </span>
+          </div>
+          
+          <div class="order-details">
+            <p><strong>Client:</strong> {{ order.user.get_full_name|default:order.user.username }}</p>
+            <p><strong>Total:</strong> {{ order.total|default:0 }} FCFA</p>
+            <p><strong>Date:</strong> {{ order.date_commande|date:"d/m/Y H:i" }}</p>
+          </div>
+          
+          <div class="order-actions">
+            {% if order.statut == 'EN_ATTENTE' %}
+            <form method="post" action="{% url 'livreur_order_update_status' order.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="accept">
+              <button class="btn btn-sm btn-primary">
+                <i class="fas fa-check"></i> Accepter
+              </button>
+            </form>
+            
+            {% elif order.statut == 'EN_COURS' %}
+            <form method="post" action="{% url 'livreur_order_update_status' order.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="complete">
+              <button class="btn btn-sm btn-success" onclick="return confirm('Confirmer la livraison ?')">
+                <i class="fas fa-check"></i> Livrer
+              </button>
+            </form>
+            {% endif %}
+            
+            <a href="{% url 'livreur_order_detail' order.id %}" class="btn btn-sm btn-outline-light">
+              <i class="fas fa-eye"></i> Voir
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-box-open"></i>
+        <p>Aucune commande récente</p>
+        <a href="{% url 'livreur_orders' %}" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Voir toutes les commandes
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Auto-refresh Script -->
+<script>
+  // Auto-refresh stats every 30 seconds
+  let refreshInterval;
+  
+  function startAutoRefresh() {
+    refreshInterval = setInterval(() => {
+      console.log('Auto-refreshing dashboard data...');
+      // You can add AJAX call here to refresh stats without page reload
+    }, 30000); // 30 seconds
+  }
+  
+  function stopAutoRefresh() {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
+  }
+  
+  // Start auto-refresh on page load
+  document.addEventListener('DOMContentLoaded', startAutoRefresh);
+  
+  // Stop on page unload
+  window.addEventListener('beforeunload', stopAutoRefresh);
+  
+  // Animate stat cards on scroll
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '0';
+        entry.target.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          entry.target.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }, 100);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+  
+  document.querySelectorAll('.stat-card, .order-item, .summary-item').forEach(el => {
+    observer.observe(el);
+  });
+</script>
+{% endblock %}

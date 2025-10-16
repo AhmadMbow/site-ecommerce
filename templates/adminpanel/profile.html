@@ -1,0 +1,143 @@
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}Mon profil | Admin{% endblock %}
+{% block header %}Mon profil{% endblock %}
+{% block content %}
+
+{% if messages %}
+  <div class="mb-3">
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags|default:'info' }} py-2 my-0">{{ m }}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<form id="adminProfileForm" method="post" enctype="multipart/form-data" class="row g-4" novalidate>
+  {% csrf_token %}
+
+  {% if user_form and user_form.non_field_errors %}
+    <div class="col-12">{% for e in user_form.non_field_errors %}<div class="alert alert-danger py-2 my-1">{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+  {% if profile_form and profile_form.non_field_errors %}
+    <div class="col-12">{% for e in profile_form.non_field_errors %}<div class="alert alert-danger py-2 my-1">{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <!-- Résumé + avatar -->
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">Profil</div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="position-relative">
+            {% if profile and profile.photo %}
+              <img id="avatarPreview" src="{{ profile.photo.url }}" alt="Avatar" class="rounded-circle" style="width:96px;height:96px;object-fit:cover;border:2px solid #e9ecef;">
+            {% else %}
+              <img id="avatarPreview" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=0D6EFD&color=fff&size=96" alt="Avatar" class="rounded-circle" style="width:96px;height:96px;object-fit:cover;border:2px solid #e9ecef;">
+            {% endif %}
+          </div>
+          <div>
+            <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</div>
+            <div class="text-muted small">{{ request.user.email|default:"—" }}</div>
+            <div class="text-muted small">Dernière connexion: {{ request.user.last_login|date:"d/m/Y H:i"|default:"—" }}</div>
+          </div>
+        </div>
+
+        {% if profile_form and profile_form.photo %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ profile_form.photo.id_for_label }}">Changer la photo</label>
+            {{ profile_form.photo }}
+            {% for e in profile_form.photo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            <div class="form-text">PNG/JPG, max 2 Mo.</div>
+          </div>
+        {% endif %}
+
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'admin_change_password' %}">
+            <i class="fa-solid fa-key me-1"></i> Changer le mot de passe
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informations du compte -->
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between">
+        <span>Informations du compte</span>
+        <span class="badge bg-light text-dark">Admin</span>
+      </div>
+      <div class="card-body">
+        {% if user_form %}
+          <div class="row g-3">
+            {% for field in user_form.visible_fields %}
+              <div class="col-12 col-md-6">
+                <label class="form-label" for="{{ field.id_for_label }}">
+                  {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">Aucun champ de compte.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-header bg-white fw-semibold">Détails du profil</div>
+      <div class="card-body">
+        {% if profile_form %}
+          <div class="row g-3">
+            {% for field in profile_form.visible_fields %}
+              {% if field.name != 'photo' %}
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="{{ field.id_for_label }}">
+                    {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                  </label>
+                  {{ field }}
+                  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                  {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">Aucun champ de profil.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Boutons d'action -->
+  <div class="col-12">
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary" type="submit">
+        <i class="fa-regular fa-floppy-disk me-1"></i> Enregistrer les modifications
+      </button>
+      <a class="btn btn-outline-secondary" href="{% url 'admin_dashboard' %}">Annuler</a>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    const fileInput = document.querySelector('input[type="file"][name$="photo"]');
+    const preview = document.getElementById('avatarPreview');
+
+    if (fileInput && preview) {
+      fileInput.addEventListener('change', () => {
+        const f = fileInput.files && fileInput.files[0];
+        if (f && /^image\//.test(f.type)) {
+          preview.src = URL.createObjectURL(f);
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

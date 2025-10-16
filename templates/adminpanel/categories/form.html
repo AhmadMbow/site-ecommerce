@@ -1,0 +1,23 @@
+// filepath: /home/ahmadmbow/e-commerce/ecommerce/templates/adminpanel/categories/form.html
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}{{ title }} | Admin{% endblock %}
+{% block header %}{{ title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="card shadow-sm">
+  {% csrf_token %}
+  <div class="card-body row g-3">
+    {{ form.non_field_errors }}
+    <div class="col-md-6">
+      {{ form.nom.label_tag }}{{ form.nom }}
+      {{ form.nom.errors }}
+    </div>
+    {% if form.fields|length > 1 %}
+      <!-- Placez ici d'autres champs si vous les avez ajoutés dans CategorieForm -->
+    {% endif %}
+  </div>
+  <div class="card-footer bg-white d-flex gap-2">
+    <button class="btn btn-primary" type="submit">Enregistrer</button>
+    <a class="btn btn-outline-secondary" href="{% url 'admin_categories' %}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,1330 @@
+{% extends "livreur/base_livreur.html" %}
+{% block title %}Commande #{{ order.id }}{% endblock %}
+{% block header %}Détail Commande{% endblock %}
+
+{% block content %}
+<style>
+/* Order Detail Styles */
+.detail-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: white;
+  box-shadow: var(--shadow-lg);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.order-number {
+  font-size: 2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.order-meta {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+  opacity: 0.95;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.meta-item i {
+  font-size: 1.1rem;
+}
+
+.status-badge-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.status-dot-large {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* Action Bar */
+.action-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius-md);
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+}
+
+.action-btn-back {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.action-btn-back:hover {
+  background: var(--surface-hover);
+  transform: translateX(-4px);
+}
+
+.action-btn-print {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.action-btn-print:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.action-btn-copy {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.action-btn-copy:hover {
+  background: var(--surface-hover);
+  border-color: var(--secondary);
+  color: var(--secondary);
+  transform: translateY(-2px);
+}
+
+.action-btn-copy.copied {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: white;
+  border-color: transparent;
+}
+
+.action-btn-maps {
+  background: linear-gradient(135deg, #4285F4, #34A853);
+  color: white;
+}
+
+.action-btn-maps:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(66, 133, 244, 0.4);
+}
+
+/* Cards */
+.detail-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  animation: slideUp 0.5s ease-out backwards;
+}
+
+.detail-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.card-title i {
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+/* Products Table */
+.products-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 1rem;
+}
+
+.products-table thead th {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  padding: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.products-table tbody tr {
+  transition: all var(--transition-fast);
+}
+
+.products-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.products-table tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.products-table tbody td:first-child {
+  font-weight: 600;
+}
+
+.product-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.product-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.quantity-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.75rem;
+  background: var(--surface-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.price-cell {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.total-cell {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.products-table tfoot {
+  background: var(--surface-secondary);
+}
+
+.products-table tfoot td {
+  padding: 1.25rem 1rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.total-label {
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.total-amount {
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+/* Empty State */
+.empty-products {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-tertiary);
+}
+
+.empty-products i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Action Buttons (in card) */
+.card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.card-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-md);
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: white;
+}
+
+.btn-accept:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(67, 233, 123, 0.4);
+}
+
+.btn-route {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+}
+
+.btn-route:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(79, 172, 254, 0.4);
+}
+
+.btn-complete {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.btn-complete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* Map Card */
+.map-container {
+  height: 400px;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.map-overlay i {
+  color: var(--primary);
+}
+
+/* Info Card */
+.info-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-label i {
+  color: var(--primary);
+}
+
+.info-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.info-value code {
+  background: var(--surface-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  color: var(--primary);
+  border: 1px solid var(--border-color);
+}
+
+.info-value a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.info-value a:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+.client-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.client-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.client-details {
+  flex: 1;
+}
+
+.client-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.client-contact {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+/* Status Timeline */
+.status-timeline {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.timeline-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timeline-items {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline-items::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--primary), var(--secondary));
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -2rem;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--surface-primary);
+  box-shadow: 0 0 0 4px var(--glass-bg);
+}
+
+.timeline-dot.active {
+  background: var(--secondary);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.timeline-content {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.timeline-date {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .detail-header {
+    padding: 1.5rem;
+  }
+  
+  .order-number {
+    font-size: 1.5rem;
+  }
+  
+  .order-meta {
+    gap: 1rem;
+  }
+  
+  .action-bar {
+    flex-direction: column;
+  }
+  
+  .action-btn,
+  .card-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .products-table {
+    font-size: 0.875rem;
+  }
+  
+  .products-table thead th,
+  .products-table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .product-icon {
+    display: none;
+  }
+  
+  .map-container {
+    height: 300px;
+  }
+}
+
+@media (max-width: 576px) {
+  .detail-header {
+    padding: 1rem;
+  }
+  
+  .order-number {
+    font-size: 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-badge-large {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .products-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .card-actions {
+    flex-direction: column;
+  }
+  
+  .client-info {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-card:nth-child(1) { animation-delay: 0.1s; }
+.detail-card:nth-child(2) { animation-delay: 0.2s; }
+.detail-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* Print Styles */
+@media print {
+  .action-bar,
+  .card-actions,
+  .map-overlay {
+    display: none !important;
+  }
+  
+  .detail-header {
+    background: #667eea !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .detail-card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+}
+</style>
+
+<!-- Header avec gradient -->
+<div class="detail-header">
+  <div class="order-number">
+    <i class="fas fa-receipt"></i>
+    <span>Commande #{{ order.id }}</span>
+    {% with s=order.statut %}
+      {% if s == "EN_ATTENTE" %}
+        <span class="status-badge-large">
+          <span class="status-dot-large"></span>
+          En attente
+        </span>
+      {% elif s == "EN_COURS" %}
+        <span class="status-badge-large">
+          <span class="status-dot-large"></span>
+          En cours
+        </span>
+      {% elif s == "LIVREE" %}
+        <span class="status-badge-large">
+          <span class="status-dot-large"></span>
+          Livrée
+        </span>
+      {% else %}
+        <span class="status-badge-large">
+          <span class="status-dot-large"></span>
+          {{ s|default:"Inconnu" }}
+        </span>
+      {% endif %}
+    {% endwith %}
+  </div>
+  
+  <div class="order-meta">
+    <div class="meta-item">
+      <i class="far fa-calendar-alt"></i>
+      <span>
+        {% if order.date_commande %}
+          {{ order.date_commande|date:"d/m/Y à H:i" }}
+        {% elif order.created_at %}
+          {{ order.created_at|date:"d/m/Y à H:i" }}
+        {% else %}
+          Date inconnue
+        {% endif %}
+      </span>
+    </div>
+    
+    <div class="meta-item">
+      <i class="fas fa-coins"></i>
+      <span>{{ order.total|default:"—" }} FCFA</span>
+    </div>
+    
+    {% if order.latitude and order.longitude %}
+    <div class="meta-item">
+      <i class="fas fa-map-marker-alt"></i>
+      <span>GPS disponible</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Action Bar -->
+<div class="action-bar">
+  <button class="action-btn action-btn-back" onclick="history.back()">
+    <i class="fas fa-arrow-left"></i>
+    Retour
+  </button>
+  
+  <button class="action-btn action-btn-print" onclick="window.print()">
+    <i class="fas fa-print"></i>
+    Imprimer
+  </button>
+  
+  {% if order.latitude and order.longitude %}
+  <button class="action-btn action-btn-copy" id="copyGpsBtn" 
+          data-lat="{{ order.latitude }}" 
+          data-lng="{{ order.longitude }}">
+    <i class="fas fa-copy"></i>
+    Copier coordonnées
+  </button>
+  
+  <a class="action-btn action-btn-maps" 
+     target="_blank"
+     href="https://www.google.com/maps/dir/?api=1&destination={{ order.latitude }},{{ order.longitude }}">
+    <i class="fab fa-google"></i>
+    Ouvrir dans Google Maps
+  </a>
+  {% endif %}
+</div>
+
+<!-- Content Grid -->
+<div class="row g-3">
+  <!-- Left Column: Products & Map -->
+  <div class="col-lg-8">
+    <!-- Products Card -->
+    <div class="detail-card">
+      <h2 class="card-title">
+        <i class="fas fa-shopping-bag"></i>
+        Articles commandés
+      </h2>
+      
+      <div class="table-responsive">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th style="text-align: center;">Quantité</th>
+              <th style="text-align: right;">Prix unitaire</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in items %}
+            <tr>
+              <td>
+                <div class="product-name">
+                  <div class="product-icon">
+                    {{ it.produit.nom|slice:":1"|upper }}
+                  </div>
+                  <span>{{ it.produit.nom }}</span>
+                </div>
+              </td>
+              <td style="text-align: center;">
+                <span class="quantity-badge">{{ it.quantite }}</span>
+              </td>
+              <td class="price-cell" style="text-align: right;">
+                {% if it.unit_price is not None %}
+                  {{ it.unit_price|floatformat:0 }} FCFA
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="total-cell" style="text-align: right;">
+                {% if it.line_total is not None %}
+                  {{ it.line_total|floatformat:0 }} FCFA
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4">
+                <div class="empty-products">
+                  <i class="fas fa-box-open"></i>
+                  <p>Aucun article dans cette commande</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          {% if items %}
+          <tfoot>
+            <tr>
+              <td colspan="3" class="total-label">Total commande</td>
+              <td class="total-amount" style="text-align: right;">
+                {% if order.total %}
+                  {{ order.total|floatformat:0 }} FCFA
+                {% else %}
+                  {% widthratio 0 1 1 as total %}
+                  {% for it in items %}
+                    {% if it.line_total %}
+                      {% widthratio it.line_total 1 1 as line %}
+                      {% widthratio total 1 1|add:line as total %}
+                    {% endif %}
+                  {% endfor %}
+                  {{ total|default:0 }} FCFA
+                {% endif %}
+              </td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="card-actions">
+        {% if order.statut == 'EN_ATTENTE' %}
+        <form method="post" action="{% url 'livreur_order_accept' order.id %}" style="margin: 0;">
+          {% csrf_token %}
+          <button type="submit" class="card-action-btn btn-accept">
+            <i class="fas fa-check-circle"></i>
+            Accepter la commande
+          </button>
+        </form>
+        {% endif %}
+        
+        {% if order.latitude and order.longitude %}
+        <a class="card-action-btn btn-route" 
+           target="_blank"
+           href="https://www.google.com/maps/dir/?api=1&destination={{ order.latitude }},{{ order.longitude }}">
+          <i class="fas fa-route"></i>
+          Voir l'itinéraire
+        </a>
+        {% endif %}
+        
+        {% if order.statut == 'EN_COURS' %}
+        <button class="card-action-btn btn-complete" onclick="alert('Fonctionnalité bientôt disponible')">
+          <i class="fas fa-flag-checkered"></i>
+          Marquer comme livrée
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Map Card -->
+    {% if order.latitude and order.longitude %}
+    <div class="detail-card mt-3">
+      <h2 class="card-title">
+        <i class="fas fa-map-marked-alt"></i>
+        Localisation
+      </h2>
+      
+      <div class="map-container" id="miniMap">
+        <div class="map-overlay">
+          <i class="fas fa-map-pin"></i>
+          Point de livraison
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- Right Column: Info -->
+  <div class="col-lg-4">
+    <!-- Client Info Card -->
+    <div class="detail-card">
+      <h2 class="card-title">
+        <i class="fas fa-user-circle"></i>
+        Informations client
+      </h2>
+      
+      <div class="info-grid">
+        <!-- Client -->
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-user"></i>
+            Client
+          </div>
+          <div class="info-value">
+            <div class="client-info">
+              <div class="client-avatar">
+                {{ order.user.get_full_name|default:order.user.username|slice:":1"|upper }}
+              </div>
+              <div class="client-details">
+                <div class="client-name">
+                  {{ order.user.get_full_name|default:order.user.username }}
+                </div>
+                <div class="client-contact">
+                  {% if order.user.email %}
+                  <span>
+                    <i class="fas fa-envelope"></i>
+                    <a href="mailto:{{ order.user.email }}">{{ order.user.email }}</a>
+                  </span>
+                  {% endif %}
+                  {% if order.user.userprofile and order.user.userprofile.phone %}
+                  <span>
+                    <i class="fas fa-phone"></i>
+                    <a href="tel:{{ order.user.userprofile.phone }}">{{ order.user.userprofile.phone }}</a>
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Statut -->
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-info-circle"></i>
+            Statut
+          </div>
+          <div class="info-value">
+            {{ order.statut|default:"—" }}
+          </div>
+        </div>
+        
+        <!-- Total -->
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-wallet"></i>
+            Montant total
+          </div>
+          <div class="info-value" style="color: var(--primary); font-size: 1.5rem;">
+            {{ order.total|default:"0"|floatformat:0 }} FCFA
+          </div>
+        </div>
+        
+        <!-- Adresse -->
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-location-dot"></i>
+            Adresse de livraison
+          </div>
+          <div class="info-value">
+            {% if order.adresse_gps %}
+              {{ order.adresse_gps }}
+            {% elif order.adresse_livraison %}
+              {{ order.adresse_livraison }}
+            {% elif order.adresse %}
+              {{ order.adresse }}
+            {% else %}
+              <span class="text-muted">Non renseignée</span>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- GPS -->
+        {% if order.latitude and order.longitude %}
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-map-marker-alt"></i>
+            Coordonnées GPS
+          </div>
+          <div class="info-value">
+            <code>{{ order.latitude }}, {{ order.longitude }}</code>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Status Timeline -->
+      <div class="status-timeline">
+        <div class="timeline-title">
+          <i class="fas fa-clock-rotate-left"></i>
+          Historique
+        </div>
+        <div class="timeline-items">
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <strong>Commande créée</strong>
+              <div class="timeline-date">
+                {% if order.date_commande %}
+                  {{ order.date_commande|date:"d/m/Y à H:i" }}
+                {% elif order.created_at %}
+                  {{ order.created_at|date:"d/m/Y à H:i" }}
+                {% else %}
+                  Date inconnue
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          {% if order.statut != 'EN_ATTENTE' %}
+          <div class="timeline-item">
+            <div class="timeline-dot {% if order.statut == 'EN_COURS' or order.statut == 'LIVREE' %}active{% endif %}"></div>
+            <div class="timeline-content">
+              <strong>Commande acceptée</strong>
+              <div class="timeline-date">En cours de livraison</div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if order.statut == 'LIVREE' %}
+          <div class="timeline-item">
+            <div class="timeline-dot active"></div>
+            <div class="timeline-content">
+              <strong>Commande livrée</strong>
+              <div class="timeline-date">Livraison terminée</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if order.latitude and order.longitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Copy GPS Coordinates
+  const copyBtn = document.getElementById('copyGpsBtn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async function() {
+      const lat = this.dataset.lat;
+      const lng = this.dataset.lng;
+      const text = `${lat}, ${lng}`;
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        
+        // Visual feedback
+        const originalHTML = this.innerHTML;
+        this.classList.remove('action-btn-copy');
+        this.classList.add('copied');
+        this.innerHTML = '<i class="fas fa-check"></i> Coordonnées copiées !';
+        
+        setTimeout(() => {
+          this.classList.remove('copied');
+          this.classList.add('action-btn-copy');
+          this.innerHTML = originalHTML;
+        }, 2000);
+        
+        // Toast notification
+        showToast('Coordonnées GPS copiées dans le presse-papier', 'success');
+      } catch (err) {
+        console.error('Erreur de copie:', err);
+        showToast('Impossible de copier les coordonnées', 'error');
+      }
+    });
+  }
+  
+  // Initialize Map
+  {% if order.latitude and order.longitude %}
+  const mapEl = document.getElementById('miniMap');
+  if (mapEl) {
+    const lat = {{ order.latitude|default:"null" }};
+    const lng = {{ order.longitude|default:"null" }};
+    
+    if (lat && lng) {
+      // Create map
+      const map = L.map('miniMap', {
+        zoomControl: true,
+        scrollWheelZoom: false
+      }).setView([lat, lng], 15);
+      
+      // Add tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+      
+      // Custom marker icon
+      const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background: linear-gradient(135deg, #667eea, #764ba2); width: 40px; height: 40px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 3px solid white;"><i class="fas fa-location-dot" style="color: white; font-size: 20px; transform: rotate(45deg);"></i></div>',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40]
+      });
+      
+      // Add marker
+      const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+      
+      // Add popup
+      marker.bindPopup(`
+        <div style="text-align: center; padding: 0.5rem;">
+          <strong style="color: #667eea;">📍 Point de livraison</strong><br>
+          <small>${lat}, ${lng}</small><br>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" 
+             target="_blank" 
+             style="color: #667eea; font-weight: 600; text-decoration: none; display: inline-block; margin-top: 0.5rem;">
+            🗺️ Ouvrir dans Google Maps
+          </a>
+        </div>
+      `).openPopup();
+      
+      // Add circle around marker
+      L.circle([lat, lng], {
+        color: '#667eea',
+        fillColor: '#667eea',
+        fillOpacity: 0.1,
+        radius: 100
+      }).addTo(map);
+    }
+  }
+  {% endif %}
+  
+  // Animate cards on scroll
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationPlayState = 'running';
+      }
+    });
+  }, observerOptions);
+  
+  document.querySelectorAll('.detail-card').forEach(card => {
+    observer.observe(card);
+  });
+  
+  // Add loading state to form buttons
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const btn = this.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+        
+        // Restore button after 5 seconds (in case of error)
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }, 5000);
+      }
+    });
+  });
+  
+  // Print functionality enhancement
+  window.addEventListener('beforeprint', () => {
+    document.body.classList.add('printing');
+  });
+  
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('printing');
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + P : Print
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      e.preventDefault();
+      window.print();
+    }
+    
+    // Escape : Go back
+    if (e.key === 'Escape' && !e.target.matches('input, textarea')) {
+      history.back();
+    }
+    
+    // M : Open Google Maps (if GPS available)
+    {% if order.latitude and order.longitude %}
+    if (e.key === 'm' && !e.target.matches('input, textarea')) {
+      e.preventDefault();
+      window.open('https://www.google.com/maps/dir/?api=1&destination={{ order.latitude }},{{ order.longitude }}', '_blank');
+    }
+    {% endif %}
+  });
+  
+  // Auto-refresh order status (every 30 seconds)
+  {% if order.statut != 'LIVREE' %}
+  let autoRefreshInterval = setInterval(() => {
+    // Check if page is visible
+    if (!document.hidden) {
+      fetch(window.location.href, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.text())
+      .then(html => {
+        // Parse new status (you can enhance this)
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newStatusBadge = doc.querySelector('.status-badge-large');
+        const currentStatusBadge = document.querySelector('.status-badge-large');
+        
+        if (newStatusBadge && currentStatusBadge) {
+          const newStatus = newStatusBadge.textContent.trim();
+          const currentStatus = currentStatusBadge.textContent.trim();
+          
+          if (newStatus !== currentStatus) {
+            showToast(`Statut mis à jour: ${newStatus}`, 'info');
+            // Reload page after 2 seconds
+            setTimeout(() => location.reload(), 2000);
+          }
+        }
+      })
+      .catch(err => console.error('Auto-refresh error:', err));
+    }
+  }, 30000); // 30 seconds
+  
+  // Stop auto-refresh on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(autoRefreshInterval);
+  });
+  {% endif %}
+});
+
+// Toast notification function
+function showToast(message, type = 'info') {
+  // Remove existing toasts
+  const existingToast = document.querySelector('.toast-notification');
+  if (existingToast) existingToast.remove();
+  
+  // Create toast
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+  
+  const icons = {
+    success: 'fa-check-circle',
+    error: 'fa-exclamation-circle',
+    warning: 'fa-exclamation-triangle',
+    info: 'fa-info-circle'
+  };
+  
+  toast.innerHTML = `
+    <i class="fas ${icons[type] || icons.info}"></i>
+    <span>${message}</span>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Animate in
+  setTimeout(() => toast.classList.add('show'), 100);
+  
+  // Auto-dismiss after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+</script>
+
+<style>
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(100px);
+  transition: all var(--transition-normal);
+  max-width: 400px;
+}
+
+.toast-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-notification i {
+  font-size: 1.25rem;
+}
+
+.toast-success {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: white;
+}
+
+.toast-error {
+  background: linear-gradient(135deg, #f56565, #ff6b6b);
+  color: white;
+}
+
+.toast-warning {
+  background: linear-gradient(135deg, #ffd93d, #f7931e);
+  color: #333;
+}
+
+.toast-info {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+}
+
+/* Custom Leaflet Marker */
+.custom-marker {
+  background: none !important;
+  border: none !important;
+}
+
+/* Responsive Toast */
+@media (max-width: 576px) {
+  .toast-notification {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+}
+</style>
+{% endblock %}

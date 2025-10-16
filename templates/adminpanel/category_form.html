@@ -1,0 +1,24 @@
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}{% if mode == 'update' %}Modifier une catégorie{% else %}Nouvelle catégorie{% endif %}{% endblock %}
+{% block header %}{% if mode == 'update' %}Modifier une catégorie{% else %}Nouvelle catégorie{% endif %}{% endblock %}
+{% block content %}
+<form method="post" class="card">
+  <div class="card-body">
+    {% csrf_token %}
+    {% if form.non_field_errors %}{% for e in form.non_field_errors %}<div class="text-danger mb-2">{{ e }}</div>{% endfor %}{% endif %}
+    <div class="row g-3">
+      {% for field in form.visible_fields %}
+        <div class="col-md-6">
+          <label class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-footer d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'admin_categories' %}">Annuler</a>
+    <button class="btn btn-primary" type="submit">Enregistrer</button>
+  </div>
+</form>
+{% endblock %}

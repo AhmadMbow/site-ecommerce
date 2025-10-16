@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Accueil Boutique{% endblock %}
+
+{% block extra_css %}
+<!-- Si tu as du CSS spécifique à cette page, tu peux l'ajouter ici -->
+<style>
+/* Styles pour les cartes de catégories */
+.category-card {
+    display: block;
+    color: #212529;
+    transition: all 0.3s ease;
+}
+
+.category-card:hover {
+    text-decoration: none;
+    color: #212529;
+}
+
+.category-card .card {
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.category-card:hover .card {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+.category-card.active .card {
+    background: #212529;
+    color: white;
+}
+
+.category-card .card i {
+    color: #212529;
+}
+
+.category-card:hover .card i {
+    color: #212529;
+}
+
+.category-card.active .card i,
+.category-card.active .card .text-primary {
+    color: white !important;
+}
+
+.category-card.active .card .text-muted {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+/* Modification des boutons et autres éléments en couleur */
+.btn-primary {
+    background-color: #212529;
+    border-color: #212529;
+}
+
+.btn-primary:hover {
+    background-color: #000000;
+    border-color: #000000;
+}
+
+.text-primary {
+    color: #212529 !important;
+}
+
+.bg-primary {
+    background-color: #212529 !important;
+}
+
+/* Pour les icônes colorées au bas de la page */
+.fa-shipping-fast,
+.fa-lock,
+.fa-headset {
+    color: #212529 !important;
+}
+
+/* Pour les étoiles */
+.star {
+    color: #212529 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- IMPORTANT: Ajoutez le token CSRF -->
+{% csrf_token %}
+
+<!-- En-tête avec effet hover -->
+<header>
+  <div class="glare-hover">
+    <div>
+      <h1 class="blur-text">Faites vos courses avec style</h1>
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const el = document.querySelector(".blur-text");
+          if (!el) return;
+
+          const text = el.textContent.trim();
+          el.textContent = "";
+
+          text.split("").forEach((char, i) => {
+            const span = document.createElement("span");
+            span.textContent = char === " " ? "\u00A0" : char;
+            span.style.animationDelay = `${i * 0.08}s`;
+            el.appendChild(span);
+          });
+        });
+      </script>
+      <p class="lead fw-normal text-white-50 mb-0">Découvrez nos articles exceptionnels</p>
+    </div>
+  </div>
+</header>
+
+<!-- Remplacer la section des catégories existante -->
+<!-- Section des catégories -->
+<section class="categories-section py-5 bg-light">
+    <div class="container">
+        <h3 class="text-center mb-4">Nos Catégories</h3>
+        <div class="row g-4 justify-content-center">
+            <div class="col-12 col-md-3">
+                <a href="{% url 'boutique' %}" 
+                   class="category-card text-decoration-none {% if not categorie_selected_int %}active{% endif %}">
+                    <div class="card h-100 border-0 shadow-sm hover-scale">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tags fa-2x mb-3"></i>
+                            <h5 class="card-title mb-0">Toutes les catégories</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% for cat in categories %}
+            <div class="col-12 col-md-3">
+                <a href="?categorie={{ cat.id }}" 
+                   class="category-card text-decoration-none {% if cat.id == categorie_selected_int %}active{% endif %}">
+                    <div class="card h-100 border-0 shadow-sm hover-scale">
+                        <div class="card-body text-center">
+                            <i class="{{ cat.icon }} fa-2x mb-3"></i>
+                            <h5 class="card-title mb-0">{{ cat.nom }}</h5>
+                            <p class="small mb-0">{{ cat.produits.count }} produits</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<style>
+  body {
+    background-color: #ffffff; /* Fond blanc */
+  }
+
+  .btn-outline-dark {
+    border-width: 2px;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .btn-outline-dark:hover,
+  .btn-outline-dark.active {
+    background-color: black;
+    color: white;
+    transform: scale(1.05);
+  }
+</style>
+
+
+
+
+<!-- Section Produits -->
+<section class="py-5">
+  <div class="container px-4 px-lg-5 mt-5">
+    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+      {% for produit in produits %}
+      <div class="col mb-5">
+        <div class="card h-100 position-relative shadow-sm border-0">
+          
+          <!-- Badge promo -->
+          {% if produit.prix_promo %}
+            <div class="badge bg-danger text-white position-absolute" style="top: 0.5rem; right: 0.5rem; font-size: 0.8rem;">
+              Promo
+            </div>
+          {% endif %}
+
+          <!-- Image produit -->
+          {% if produit.image %}
+            <img class="card-img-top" src="{{ produit.image.url }}" alt="{{ produit.nom }}">
+          {% else %}
+            <img class="card-img-top" src="{% static 'images/default.png' %}" alt="{{ produit.nom }}">
+          {% endif %}
+
+          <!-- Corps de la carte -->
+          <div class="card-body p-4 text-center">
+            <h5 class="fw-bold">{{ produit.nom }}</h5>
+            
+            <!-- Prix -->
+            <div class="mt-2">
+              {% if produit.prix_promo %}
+                <span class="text-muted text-decoration-line-through">{{ produit.prix }} FCFA</span>
+                <span class="fw-bold text-danger ms-2">{{ produit.prix_promo }} FCFA</span>
+              {% else %}
+                <span class="fw-bold">{{ produit.prix }} FCFA</span>
+              {% endif %}
+            </div>
+
+            <!-- Étoiles de notation -->
+            <div class="rating" data-produit-id="{{ produit.id }}">
+                {% for i in "12345" %}
+                <i class="star {% if produit.note_moyenne >= forloop.counter %}fas fa-star{% elif produit.note_moyenne >= forloop.counter|add:'-0.5' %}fas fa-star-half-alt{% else %}far fa-star{% endif %} text-warning"></i>
+                {% endfor %}
+                <span class="ms-2">({{ produit.nombre_notes }} avis)</span>
+            </div>
+          </div>
+
+          <!-- Footer avec bouton (Produits) -->
+          <div class="card-footer p-4 pt-0 border-top-0 bg-transparent text-center">
+            <button 
+              type="button"
+              class="btn btn-outline-dark mt-auto js-add-to-cart"
+              data-url="{% url 'ajouter_au_panier' produit.id %}">
+              Ajouter au panier
+            </button>
+          </div>
+
+        </div>
+      </div>
+      {% empty %}
+        <p class="text-center">Aucun produit disponible.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Section Promotions -->
+<section class="py-5">
+  <div class="container px-4 px-lg-5 mt-5">
+    <h3 class="mb-4 text-center fw-bold">Promotions</h3>
+    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+      {% for produit in promotions %}
+        <div class="col mb-5">
+          <div class="card h-100 position-relative shadow-sm border-0">
+            <div class="badge bg-danger text-white position-absolute" style="top: 0.5rem; right: 0.5rem; font-size: 0.8rem;">
+              Promo
+            </div>
+            {% if produit.image %}
+              <img class="card-img-top" src="{{ produit.image.url }}" alt="{{ produit.nom }}">
+            {% else %}
+              <img class="card-img-top" src="{% static 'images/default.png' %}" alt="{{ produit.nom }}">
+            {% endif %}
+            <div class="card-body p-4 text-center">
+              <h5 class="fw-bold">{{ produit.nom }}</h5>
+              <div class="mt-2">
+                <span class="text-muted text-decoration-line-through">{{ produit.prix }} FCFA</span>
+                <span class="fw-bold text-danger ms-2">{{ produit.prix_promo }} FCFA</span>
+              </div>
+              <div class="rating" data-produit-id="{{ produit.id }}">
+                  {% for i in "12345" %}
+                  <i class="star {% if produit.note_moyenne >= forloop.counter %}fas fa-star{% elif produit.note_moyenne >= forloop.counter|add:'-0.5' %}fas fa-star-half-alt{% else %}far fa-star{% endif %} text-warning"></i>
+                  {% endfor %}
+                  <span class="ms-2">({{ produit.nombre_notes }} avis)</span>
+              </div>
+            </div>
+             <!-- Footer avec bouton (Promotions) -->
+            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent text-center">
+            <button 
+              type="button"
+              class="btn btn-outline-dark mt-auto js-add-to-cart"
+              data-url="{% url 'ajouter_au_panier' produit.id %}">
+              Ajouter au panier
+            </button>
+          </div>
+
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-center">Aucune promotion disponible.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="py-5 bg-light">
+  <div class="container px-4 px-lg-5 mt-5">
+    <h3 class="mb-5 text-center fw-bold">Les plus populaires</h3>
+    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+      {% for produit in nouveautes %}
+      <div class="col mb-5" data-category="{{ produit.categorie }}">
+        <div class="card h-100 shadow-sm border-0 hover-scale rounded-4 overflow-hidden">
+          
+          <!-- Badge promo -->
+          {% if produit.prix_promo %}
+          <div class="badge bg-danger text-white position-absolute top-0 end-0 m-3 px-2 py-1 fs-6 rounded-pill">
+            Promo
+          </div>
+          {% endif %}
+
+          <!-- Image produit -->
+          {% if produit.image %}
+          <img class="card-img-top img-fluid" src="{{ produit.image.url }}" alt="{{ produit.nom }}">
+          {% else %}
+          <img class="card-img-top img-fluid" src="{% static 'images/default.png' %}" alt="{{ produit.nom }}">
+          {% endif %}
+
+          <!-- Corps de la carte -->
+          <div class="card-body text-center p-4">
+            <h5 class="fw-bolder">{{ produit.nom }}</h5>
+
+            <!-- Prix -->
+            {% if produit.prix_promo %}
+            <p class="mb-2">
+              <span class="text-muted text-decoration-line-through">{{ produit.prix }} FCFA</span>
+              <span class="fw-bold text-danger ms-2">{{ produit.prix_promo }} FCFA</span>
+            </p>
+            {% else %}
+            <p class="fw-bold mb-2">{{ produit.prix }} FCFA</p>
+            {% endif %}
+
+            <!-- Bouton -->
+             <!-- Footer avec bouton (Les plus populaires) -->
+            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent text-center">
+            <button 
+              type="button"
+              class="btn btn-outline-dark mt-auto js-add-to-cart"
+              data-url="{% url 'ajouter_au_panier' produit.id %}">
+              Ajouter au panier
+            </button>
+          </div>
+
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style>
+.hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-scale:hover {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 1rem 2rem rgba(0,0,0,0.2);
+}
+
+.card-img-top {
+  object-fit: cover;
+  height: 200px;
+}
+
+.card-body h5 {
+  font-size: 1.1rem;
+  min-height: 3rem;
+}
+
+.btn-primary {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.btn-primary:hover {
+  background-color: #0d6efdcc;
+  transform: translateY(-2px);
+}
+</style>
+
+<section class="py-5 bg-light">
+  <div class="container px-4 px-lg-5 mt-5">
+    <h3 class="mb-5 text-center fw-bold">Les mieux notés</h3>
+    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+      {% for produit in mieux_notes %}
+      <div class="col mb-5" data-category="{{ produit.categorie }}">
+        <div class="card h-100 shadow-sm border-0 hover-scale rounded-4 overflow-hidden position-relative">
+
+          <!-- Badge promo -->
+          {% if produit.prix_promo %}
+            <div class="badge bg-danger text-white position-absolute top-0 end-0 m-3 px-2 py-1 fs-6 rounded-pill">
+              Promo
+            </div>
+          {% endif %}
+
+          <!-- Image produit -->
+          {% if produit.image %}
+            <img class="card-img-top img-fluid" src="{{ produit.image.url }}" alt="{{ produit.nom }}">
+          {% else %}
+            <img class="card-img-top img-fluid" src="{% static 'images/default.png' %}" alt="{{ produit.nom }}">
+          {% endif %}
+
+          <!-- Corps de la carte -->
+          <div class="card-body text-center p-4">
+            <h5 class="fw-bolder">{{ produit.nom }}</h5>
+
+            <!-- Prix -->
+            {% if produit.prix_promo %}
+              <p class="mb-2">
+                <span class="text-muted text-decoration-line-through">{{ produit.prix }} FCFA</span>
+                <span class="fw-bold text-danger ms-2">{{ produit.prix_promo }} FCFA</span>
+              </p>
+            {% else %}
+              <p class="fw-bold mb-2">{{ produit.prix }} FCFA</p>
+            {% endif %}
+
+            <!-- Étoiles de notation -->
+            <div class="rating" data-produit-id="{{ produit.id }}">
+                {% for i in "12345" %}
+                <i class="star {% if produit.note_moyenne >= forloop.counter %}fas fa-star{% elif produit.note_moyenne >= forloop.counter|add:'-0.5' %}fas fa-star-half-alt{% else %}far fa-star{% endif %} text-warning"></i>
+                {% endfor %}
+                <span class="ms-2">({{ produit.nombre_notes }} avis)</span>
+            </div>
+
+            <!-- Bouton -->
+             <!-- Footer avec bouton (Les mieux notés) -->
+            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent text-center">
+            <button 
+              type="button"
+              class="btn btn-outline-dark mt-auto js-add-to-cart"
+              data-url="{% url 'ajouter_au_panier' produit.id %}">
+              Ajouter au panier
+            </button>
+          </div>
+
+          </div>
+        </div>
+      </div>
+      {% empty %}
+        <p class="text-center">Aucun produit noté disponible.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style>
+.hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-scale:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+</style>
+
+<section class="py-5 bg-light text-center">
+  <div class="container">
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 hover-scale">
+          <i class="fas fa-shipping-fast fa-3x mb-3 text-primary"></i>
+          <h5 class="fw-bold">Livraison rapide</h5>
+          <p class="text-muted">Recevez vos commandes en un temps record partout au Sénégal.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 hover-scale">
+          <i class="fas fa-lock fa-3x mb-3 text-success"></i>
+          <h5 class="fw-bold">Paiement sécurisé</h5>
+          <p class="text-muted">Vos transactions sont protégées par des protocoles fiables et sécurisés.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 hover-scale">
+          <i class="fas fa-headset fa-3x mb-3 text-warning"></i>
+          <h5 class="fw-bold">Support 24/7</h5>
+          <p class="text-muted">Notre équipe est disponible à tout moment pour répondre à vos questions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-scale:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+</style>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+  <small>
+    {% if page_obj.has_other_pages %}
+      Affichage {{ page_obj.start_index }}–{{ page_obj.end_index }} sur {{ total_count }}
+    {% else %}
+      Total: {{ total_count }}
+    {% endif %}
+  </small>
+  <form method="get" class="d-inline">
+    <input type="hidden" name="search" value="{{ search|default:'' }}">
+    <input type="hidden" name="categorie" value="{{ current_categorie|default:'' }}">
+    <input type="hidden" name="sort" value="{{ current_sort|default:'nom' }}">
+    <label class="me-1">Par page</label>
+    <select name="per_page" onchange="this.form.submit()">
+      {% for n in per_page_options %}
+    <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+  {% endfor %}
+    </select>
+  </form>
+</div>
+
+<nav aria-label="pagination" class="mt-2">
+  <ul class="pagination mb-0">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1&per_page={{ per_page }}&search={{ search|urlencode }}&categorie={{ current_categorie }}&sort={{ current_sort }}">«</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search|urlencode }}&categorie={{ current_categorie }}&sort={{ current_sort }}">Préc.</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">«</span></li>
+      <li class="page-item disabled"><span class="page-link">Préc.</span></li>
+    {% endif %}
+
+    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search|urlencode }}&categorie={{ current_categorie }}&sort={{ current_sort }}">Suiv.</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}&search={{ search|urlencode }}&categorie={{ current_categorie }}&sort={{ current_sort }}">»</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Suiv.</span></li>
+      <li class="page-item disabled"><span class="page-link">»</span></li>
+    {% endif %}
+  </ul>
+</nav>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/index.js' %}"></script>
+{% endblock %}

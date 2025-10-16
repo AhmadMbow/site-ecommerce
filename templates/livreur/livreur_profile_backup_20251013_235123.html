@@ -1,0 +1,696 @@
+{% extends "livreur/base_livreur.html" %}
+{% block title %}Mon Profil - DashLivr{% endblock %}
+{% block header %}Mon Profil{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+  <div class="alerts-container mb-4">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- En-tête du profil -->
+<div class="profile-header mb-4">
+  <div class="profile-cover">
+    <div class="profile-info">
+      <div class="profile-avatar">
+        {% if profile and profile.photo %}
+          <img id="avatarPreview" src="{{ profile.photo.url }}" alt="Photo livreur">
+        {% else %}
+          <img id="avatarPreview" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=0b6bcb&color=ffffff&size=120&font-size=0.4" alt="Avatar">
+        {% endif %}
+        <div class="avatar-badge">
+          <i class="fas fa-camera"></i>
+        </div>
+      </div>
+      
+      <div class="profile-details">
+        <h1>{{ request.user.get_full_name|default:request.user.username }}</h1>
+        <p class="profile-subtitle">
+          <i class="fas fa-truck me-2"></i>Livreur professionnel
+          {% if profile and profile.available %}
+            <span class="status-badge available"><i class="fas fa-circle"></i> Disponible</span>
+          {% else %}
+            <span class="status-badge unavailable"><i class="fas fa-circle"></i> Indisponible</span>
+          {% endif %}
+        </p>
+        <div class="profile-stats">
+          <div class="stat-item">
+            <strong>{{ stats.completed|default:0 }}</strong>
+            <span>Livraisons</span>
+          </div>
+          <div class="stat-item">
+            <strong>{{ stats.revenue_total|floatformat:0|default:0 }} FCFA</strong>
+            <span>Revenus totaux</span>
+          </div>
+          <div class="stat-item">
+            <strong>{% if stats.count_all and stats.count_all > 0 %}{% widthratio stats.completed stats.count_all 100 %}%{% else %}0%{% endif %}</strong>
+            <span>Taux de réussite</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-actions">
+        <a href="{% url 'livreur_dashboard' %}" class="btn btn-outline-primary">
+          <i class="fas fa-arrow-left me-2"></i>Tableau de bord
+        </a>
+        <a href="{% url 'livreur_change_password' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-key me-2"></i>Mot de passe
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulaire principal -->
+{% with UF=uform PF=pform %}
+<form method="post" enctype="multipart/form-data" class="profile-form">
+  {% csrf_token %}
+  
+  <!-- Erreurs générales -->
+  {% if UF.non_field_errors or PF.non_field_errors %}
+    <div class="alert alert-danger mb-4">
+      <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs détectées :</h6>
+      {% for error in UF.non_field_errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+      {% for error in PF.non_field_errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+    <!-- Informations du compte -->
+    <div class="col-lg-6">
+      <div class="profile-card">
+        <div class="card-header">
+          <h5><i class="fas fa-user me-2"></i>Informations du compte</h5>
+        </div>
+        <div class="card-body">
+          {% for field in UF.visible_fields %}
+            {% if field.name in 'username,first_name,last_name,email' %}
+            <div class="form-group">
+              <label for="{{ field.id_for_label }}" class="form-label">
+                {% if field.name == 'username' %}<i class="fas fa-at text-muted me-2"></i>{% endif %}
+                {% if field.name == 'first_name' %}<i class="fas fa-user text-muted me-2"></i>{% endif %}
+                {% if field.name == 'last_name' %}<i class="fas fa-user text-muted me-2"></i>{% endif %}
+                {% if field.name == 'email' %}<i class="fas fa-envelope text-muted me-2"></i>{% endif %}
+                {{ field.label }}
+                {% if field.field.required %}<span class="required">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="form-help">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+                <div class="field-error">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          {% endfor %}
+          
+          <!-- Informations supplémentaires -->
+          <div class="account-info">
+            <div class="info-item">
+              <i class="fas fa-clock text-muted"></i>
+              <span>Dernière connexion: {{ request.user.last_login|date:"d/m/Y H:i"|default:"Jamais" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-calendar text-muted"></i>
+              <span>Membre depuis: {{ request.user.date_joined|date:"d/m/Y" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informations livreur -->
+    <div class="col-lg-6">
+      <div class="profile-card">
+        <div class="card-header">
+          <h5><i class="fas fa-truck me-2"></i>Informations livreur</h5>
+        </div>
+        <div class="card-body">
+          {% with F=PF %}
+          {% for field in F.visible_fields %}
+            <div class="form-group">
+              <label for="{{ field.id_for_label }}" class="form-label">
+                {% if field.name == 'phone' %}<i class="fas fa-phone text-muted me-2"></i>{% endif %}
+                {% if field.name == 'address' %}<i class="fas fa-map-marker-alt text-muted me-2"></i>{% endif %}
+                {% if field.name == 'photo' %}<i class="fas fa-camera text-muted me-2"></i>{% endif %}
+                {% if field.name == 'vehicle_type' %}<i class="fas fa-motorcycle text-muted me-2"></i>{% endif %}
+                {% if field.name == 'available' %}<i class="fas fa-toggle-on text-muted me-2"></i>{% endif %}
+                {{ field.label }}
+              </label>
+              
+              {% if field.name == 'available' %}
+                <div class="form-check-custom">
+                  {{ field }}
+                  <span class="form-help">Activez pour recevoir de nouvelles commandes</span>
+                </div>
+              {% elif field.name == 'photo' %}
+                <div class="file-upload-wrapper">
+                  {{ field }}
+                  <div class="file-upload-help">
+                    <i class="fas fa-upload me-2"></i>PNG, JPG max 2 Mo
+                  </div>
+                </div>
+              {% else %}
+                {{ field }}
+              {% endif %}
+              
+              {% if field.help_text %}
+                <div class="form-help">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+                <div class="field-error">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques personnelles -->
+    <div class="col-12">
+      <div class="profile-card">
+        <div class="card-header">
+          <h5><i class="fas fa-chart-bar me-2"></i>Mes performances</h5>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon bg-primary">
+                <i class="fas fa-box"></i>
+              </div>
+              <div class="stat-content">
+                <h6>{{ stats.count_all|default:0 }}</h6>
+                <span>Commandes totales</span>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon bg-success">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="stat-content">
+                <h6>{{ stats.completed|default:0 }}</h6>
+                <span>Livraisons réussies</span>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon bg-warning">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-content">
+                <h6>{{ stats.in_progress|default:0 }}</h6>
+                <span>En cours</span>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon bg-info">
+                <i class="fas fa-coins"></i>
+              </div>
+              <div class="stat-content">
+                <h6>{{ stats.revenue_this_month|floatformat:0|default:0 }} FCFA</h6>
+                <span>Revenus ce mois</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #10b981;">
+                <i class="fas fa-calendar-day"></i>
+              </div>
+              <div class="stat-content">
+                <h6>{{ stats.delivered_today|default:0 }}</h6>
+                <span>Livrées aujourd'hui</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #8b5cf6;">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stat-content">
+                <h6>{% if stats.count_all and stats.count_all > 0 %}{% widthratio stats.completed stats.count_all 100 %}%{% else %}0%{% endif %}</h6>
+                <span>Taux de réussite</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenus détaillés -->
+          <div class="revenue-summary mt-4 pt-4" style="border-top: 1px solid var(--border);">
+            <h6 class="mb-3"><i class="fas fa-wallet me-2"></i>Détail des revenus</h6>
+            <div class="row">
+              <div class="col-md-3">
+                <div class="revenue-item">
+                  <span class="revenue-label">Aujourd'hui</span>
+                  <span class="revenue-value">{{ stats.revenue_today|floatformat:0|default:0 }} FCFA</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="revenue-item">
+                  <span class="revenue-label">Ce mois</span>
+                  <span class="revenue-value">{{ stats.revenue_this_month|floatformat:0|default:0 }} FCFA</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="revenue-item">
+                  <span class="revenue-label">Total</span>
+                  <span class="revenue-value">{{ stats.revenue_total|floatformat:0|default:0 }} FCFA</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="revenue-item">
+                  <span class="revenue-label">Par livraison</span>
+                  <span class="revenue-value">{{ stats.frais_livraison|floatformat:0|default:2000 }} FCFA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary btn-lg">
+      <i class="fas fa-save me-2"></i>Enregistrer les modifications
+    </button>
+    <a href="{% url 'livreur_dashboard' %}" class="btn btn-secondary btn-lg">
+      <i class="fas fa-times me-2"></i>Annuler
+    </a>
+  </div>
+</form>
+{% endwith %}
+
+<style>
+/* Profile Header */
+.profile-header {
+  margin: -1.5rem -1.5rem 2rem -1.5rem;
+}
+
+.profile-cover {
+  background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+  padding: 2rem 1.5rem;
+  border-radius: 0 0 16px 16px;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.profile-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  object-fit: cover;
+}
+
+.avatar-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  border: 3px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.profile-details {
+  flex: 1;
+  min-width: 250px;
+}
+
+.profile-details h1 {
+  color: white;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.profile-subtitle {
+  color: rgba(255,255,255,0.9);
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-badge.available {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-badge.unavailable {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.profile-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-item strong {
+  display: block;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.stat-item span {
+  color: rgba(255,255,255,0.8);
+  font-size: 0.8rem;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Cards */
+.profile-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.profile-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.profile-card .card-header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  margin: 0;
+}
+
+.profile-card .card-header h5 {
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.profile-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 0.25rem;
+}
+
+.form-help {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.field-error::before {
+  content: "⚠";
+}
+
+/* File Upload */
+.file-upload-wrapper {
+  position: relative;
+}
+
+.file-upload-help {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+
+/* Form Check Custom */
+.form-check-custom {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.form-check-custom .form-check-label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.form-check-custom .form-help {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* Account Info */
+.account-info {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-1px);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.stat-icon.bg-primary { background: var(--primary); }
+.stat-icon.bg-success { background: #22c55e; }
+.stat-icon.bg-warning { background: #f59e0b; }
+.stat-icon.bg-info { background: #3b82f6; }
+
+.stat-content h6 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-content span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Revenue Summary */
+.revenue-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.revenue-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.revenue-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 2rem 0;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-info {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profile-actions {
+    justify-content: center;
+  }
+  
+  .profile-stats {
+    justify-content: center;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-header {
+    margin: -1rem -1rem 1rem -1rem;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Preview de l'image
+  const photoInput = document.getElementById('id_photo') || document.querySelector('input[name="photo"]');
+  const avatarPreview = document.getElementById('avatarPreview');
+  
+  if (photoInput && avatarPreview) {
+    photoInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (!file || !/^image\//.test(file.type)) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        avatarPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
+  // Click sur l'avatar pour ouvrir le sélecteur de fichier
+  const avatarBadge = document.querySelector('.avatar-badge');
+  if (avatarBadge && photoInput) {
+    avatarBadge.addEventListener('click', function() {
+      photoInput.click();
+    });
+  }
+  
+  // Animation des cartes au scroll
+  const cards = document.querySelectorAll('.profile-card');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  cards.forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s, transform 0.6s';
+    observer.observe(card);
+  });
+});
+</script>
+{% endblock %}

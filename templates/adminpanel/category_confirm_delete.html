@@ -1,0 +1,10 @@
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}Supprimer la catégorie{% endblock %}
+{% block header %}Supprimer la catégorie{% endblock %}
+{% block content %}
+<div class="alert alert-warning">Supprimer “{{ categorie }}” ?</div>
+<form method="post">{% csrf_token %}
+  <a class="btn btn-outline-secondary" href="{% url 'admin_categories' %}">Annuler</a>
+  <button class="btn btn-danger" type="submit">Supprimer</button>
+</form>
+{% endblock %}

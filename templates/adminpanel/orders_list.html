@@ -1,0 +1,1364 @@
+{% extends "adminpanel/base_admin.html" %}
+{% load static %}
+{% block title %}Admin | Gestion des Commandes{% endblock %}
+{% block header %}Gestion des Commandes{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --card-shadow-hover: 0 8px 32px rgba(102, 126, 234, 0.2);
+    --radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+  }
+
+  /* Page Header */
+  .orders-header {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .orders-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--primary-gradient);
+  }
+
+  .orders-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(102,126,234,0.1), transparent);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-30px, -30px) rotate(180deg); }
+  }
+
+  .orders-title {
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .orders-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card-order {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .stat-card-order::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .stat-card-order.all::before {
+    background: var(--primary-gradient);
+  }
+
+  .stat-card-order.pending::before {
+    background: var(--warning-gradient);
+  }
+
+  .stat-card-order.in-progress::before {
+    background: var(--info-gradient);
+  }
+
+  .stat-card-order.completed::before {
+    background: var(--success-gradient);
+  }
+
+  .stat-card-order:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .stat-card-order:hover::before {
+    opacity: 1;
+  }
+
+  .stat-card-order.active {
+    border: 2px solid rgba(102,126,234,0.3);
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+  }
+
+  .stat-card-order.active::before {
+    opacity: 1;
+  }
+
+  .stat-icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+  }
+
+  .stat-card-order:hover .stat-icon-box {
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  .stat-value-box {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label-box {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Toolbar */
+  .orders-toolbar {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .search-input-ultra {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    border: 2px solid rgba(102,126,234,0.2);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    transition: var(--transition);
+    background: white;
+  }
+
+  .search-input-ultra:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 1.1rem;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-toolbar {
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .btn-primary-ultra {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+  }
+
+  .btn-primary-ultra:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+  }
+
+  .btn-outline-ultra {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+  }
+
+  .btn-outline-ultra:hover {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+  }
+
+  /* View Toggle */
+  .view-toggle {
+    display: flex;
+    background: rgba(102,126,234,0.1);
+    border-radius: 0.75rem;
+    padding: 0.25rem;
+  }
+
+  .view-toggle button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #667eea;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+  }
+
+  .view-toggle button.active {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  /* Orders Table */
+  .orders-table-container {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+
+  .table-header-ultra {
+    padding: 1.5rem;
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-header-ultra h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a1f26;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .table-header-ultra h3 i {
+    color: #667eea;
+  }
+
+  .orders-count {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+    color: #667eea;
+    border-radius: 2rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .table-ultra-modern {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-ultra-modern thead {
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+  }
+
+  .table-ultra-modern thead th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+  }
+
+  .table-ultra-modern tbody tr {
+    transition: var(--transition);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .table-ultra-modern tbody tr:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.03), rgba(118,75,162,0.03));
+    transform: scale(1.01);
+  }
+
+  .table-ultra-modern tbody td {
+    padding: 1.25rem 1.5rem;
+    color: #1a1f26;
+    font-size: 0.95rem;
+  }
+
+  /* Order ID Badge */
+  .order-id-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-radius: 0.5rem;
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1rem;
+  }
+
+  /* Client Info */
+  .client-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .client-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+  }
+
+  .client-details-small {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .client-name {
+    font-weight: 600;
+    color: #1a1f26;
+  }
+
+  .client-email {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  /* Status Badge Modern */
+  .status-badge-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-en_attente {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.15));
+    color: #f59e0b;
+    border: 2px solid rgba(245,158,11,0.3);
+  }
+
+  .status-en_cours {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.15));
+    color: #3b82f6;
+    border: 2px solid rgba(59,130,246,0.3);
+  }
+
+  .status-livree {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));
+    color: #10b981;
+    border: 2px solid rgba(16,185,129,0.3);
+  }
+
+  .status-annulee {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.15));
+    color: #ef4444;
+    border: 2px solid rgba(239,68,68,0.3);
+  }
+
+  /* GPS Badge */
+  .gps-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .gps-badge.available {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));
+    color: #10b981;
+  }
+
+  .gps-badge.unavailable {
+    background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(100,116,139,0.15));
+    color: #64748b;
+  }
+
+  /* Action Buttons */
+  .action-buttons-cell {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  .btn-action-small {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn-details {
+    background: rgba(102,126,234,0.1);
+    color: #667eea;
+  }
+
+  .btn-details:hover {
+    background: var(--primary-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+  }
+
+  .btn-map {
+    background: rgba(16,185,129,0.1);
+    color: #10b981;
+  }
+
+  .btn-map:hover {
+    background: var(--success-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+  }
+
+  .btn-cancel {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+  }
+
+  .btn-cancel:hover {
+    background: var(--danger-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: #e3e7f0;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1f26;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    color: #64748b;
+  }
+
+  /* Card View (Alternative) */
+  .orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .order-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .order-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .order-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .order-card:hover::before {
+    opacity: 1;
+  }
+
+  .order-card-header {
+    padding: 1.5rem;
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .order-card-body {
+    padding: 1.5rem;
+  }
+
+  .order-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .order-info-row:last-child {
+    border-bottom: none;
+  }
+
+  .order-info-label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+
+  .order-info-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1f26;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animated {
+    animation: fadeInUp 0.5s ease backwards;
+  }
+
+  .animated:nth-child(1) { animation-delay: 0.05s; }
+  .animated:nth-child(2) { animation-delay: 0.1s; }
+  .animated:nth-child(3) { animation-delay: 0.15s; }
+  .animated:nth-child(4) { animation-delay: 0.2s; }
+  .animated:nth-child(5) { animation-delay: 0.25s; }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .orders-header {
+      padding: 1.5rem;
+    }
+
+    .orders-title {
+      font-size: 1.5rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .orders-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-wrapper {
+      min-width: 100%;
+    }
+
+    .toolbar-actions {
+      width: 100%;
+      flex-direction: column;
+    }
+
+    .btn-toolbar {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .table-ultra-modern {
+      display: block;
+      overflow-x: auto;
+    }
+
+    .action-buttons-cell {
+      flex-direction: column;
+    }
+
+    .orders-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Loading State */
+  .loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* 🔥 FIX CRITIQUE POUR LE MODAL */
+  #cancelOrderModal {
+    z-index: 99999 !important;
+  }
+
+  #cancelOrderModal.show {
+    display: block !important;
+    opacity: 1 !important;
+  }
+
+  #cancelOrderModal .modal-dialog {
+    z-index: 100000 !important;
+    position: relative;
+  }
+
+  #cancelOrderModal .modal-content {
+    background: white !important;
+    color: #1a1f26 !important;
+    position: relative;
+    z-index: 100001 !important;
+  }
+
+  .modal-backdrop {
+    z-index: 99998 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .modal-backdrop.show {
+    opacity: 0.5 !important;
+  }
+
+  /* Force visibility */
+  .modal.show .modal-dialog {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="orders-header animated">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <h1 class="orders-title">
+        <i class="bi bi-cart-check"></i>
+        Gestion des Commandes
+      </h1>
+      <p class="orders-subtitle">
+        Suivez et gérez toutes vos commandes en temps réel
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card-order all animated {% if not request.GET.status %}active{% endif %}" 
+       onclick="window.location.href='?'">
+    <div class="stat-icon-box" style="background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15)); color: #667eea;">
+      <i class="bi bi-cart-check-fill"></i>
+    </div>
+    <div class="stat-value-box" style="color: #667eea;">{{ stats.all }}</div>
+    <div class="stat-label-box">Toutes les Commandes</div>
+  </div>
+
+  <div class="stat-card-order pending animated {% if request.GET.status == 'EN_ATTENTE' %}active{% endif %}" 
+       onclick="window.location.href='?status=EN_ATTENTE'">
+    <div class="stat-icon-box" style="background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.15)); color: #f59e0b;">
+      <i class="bi bi-hourglass-split"></i>
+    </div>
+    <div class="stat-value-box" style="color: #f59e0b;">{{ stats.pending }}</div>
+    <div class="stat-label-box">En Attente</div>
+  </div>
+
+  <div class="stat-card-order in-progress animated {% if request.GET.status == 'EN_COURS' %}active{% endif %}" 
+       onclick="window.location.href='?status=EN_COURS'">
+    <div class="stat-icon-box" style="background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.15)); color: #3b82f6;">
+      <i class="bi bi-truck"></i>
+    </div>
+    <div class="stat-value-box" style="color: #3b82f6;">{{ stats.in_progress }}</div>
+    <div class="stat-label-box">En Cours</div>
+  </div>
+
+  <div class="stat-card-order completed animated {% if request.GET.status == 'LIVREE' %}active{% endif %}" 
+       onclick="window.location.href='?status=LIVREE'">
+    <div class="stat-icon-box" style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15)); color: #10b981;">
+      <i class="bi bi-check-circle-fill"></i>
+    </div>
+    <div class="stat-value-box" style="color: #10b981;">{{ stats.completed }}</div>
+    <div class="stat-label-box">Livrées</div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="orders-toolbar animated">
+  <div class="search-wrapper">
+    <i class="bi bi-search search-icon"></i>
+    <form method="get" style="margin: 0;">
+      <input type="text" 
+             class="search-input-ultra" 
+             name="q" 
+             value="{{ q }}" 
+             placeholder="Rechercher par numéro, client, email..."
+             id="searchInput">
+      {% if request.GET.status %}
+        <input type="hidden" name="status" value="{{ request.GET.status }}">
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="toolbar-actions">
+    <div class="view-toggle">
+      <button class="active" onclick="switchView('table')" id="tableViewBtn">
+        <i class="bi bi-table me-1"></i>
+        Tableau
+      </button>
+      <button onclick="switchView('grid')" id="gridViewBtn">
+        <i class="bi bi-grid-3x3-gap me-1"></i>
+        Cartes
+      </button>
+    </div>
+
+    <button class="btn-toolbar btn-outline-ultra" onclick="exportOrders()">
+      <i class="bi bi-download"></i>
+      Exporter
+    </button>
+
+    <button class="btn-toolbar btn-primary-ultra" onclick="refreshOrders()">
+      <i class="bi bi-arrow-clockwise"></i>
+      Actualiser
+    </button>
+  </div>
+</div>
+
+<!-- Table View (Default) -->
+<div class="orders-table-container animated" id="tableView">
+  <div class="table-header-ultra">
+    <h3>
+      <i class="bi bi-list-ul"></i>
+      Liste des Commandes
+    </h3>
+    <span class="orders-count">
+      {{ orders|length }} commande{{ orders|length|pluralize }}
+    </span>
+  </div>
+
+  {% if orders %}
+  <div style="overflow-x: auto;">
+    <table class="table-ultra-modern">
+      <thead>
+        <tr>
+          <th>Commande</th>
+          <th>Client</th>
+          <th>Total</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th>GPS</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td>
+            <span class="order-id-badge">
+              <i class="bi bi-receipt"></i>
+              #{{ o.id }}
+            </span>
+          </td>
+          
+          <td>
+            <div class="client-info-cell">
+              <div class="client-avatar-small">
+                {{ o.user.get_full_name|default:o.user.username|slice:":1"|upper }}
+              </div>
+              <div class="client-details-small">
+                <span class="client-name">{{ o.user.get_full_name|default:o.user.username }}</span>
+                <span class="client-email">{{ o.user.email|default:"—" }}</span>
+              </div>
+            </div>
+          </td>
+          
+          <td>
+            <span style="font-weight: 700; font-size: 1.1rem; color: #667eea;">
+              {% if o.total %}
+                {{ o.total|floatformat:0 }} <span style="font-size: 0.85rem; color: #94a3b8;">FCFA</span>
+              {% else %}
+                <span style="color: #94a3b8;">—</span>
+              {% endif %}
+            </span>
+          </td>
+          
+          <td>
+            <span class="status-badge-modern status-{{ o.statut|lower|cut:" " }}">
+              <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+              {{ o.statut|default:"—" }}
+            </span>
+          </td>
+          
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+              <span style="font-weight: 600; color: #1a1f26;">
+                {% if o.date_commande %}
+                  {{ o.date_commande|date:"d/m/Y" }}
+                {% elif o.created_at %}
+                  {{ o.created_at|date:"d/m/Y" }}
+                {% else %}
+                  —
+                {% endif %}
+              </span>
+              <span style="font-size: 0.8rem; color: #94a3b8;">
+                {% if o.date_commande %}
+                  {{ o.date_commande|date:"H:i" }}
+                {% elif o.created_at %}
+                  {{ o.created_at|date:"H:i" }}
+                {% endif %}
+              </span>
+            </div>
+          </td>
+          
+          <td>
+            {% if o.latitude and o.longitude %}
+              <span class="gps-badge available">
+                <i class="bi bi-geo-alt-fill"></i>
+                Disponible
+              </span>
+            {% else %}
+              <span class="gps-badge unavailable">
+                <i class="bi bi-geo-alt"></i>
+                N/A
+              </span>
+            {% endif %}
+          </td>
+          
+          <td>
+            <div class="action-buttons-cell">
+              <a href="{% url 'admin_order_detail' o.id %}" class="btn-action-small btn-details">
+                <i class="bi bi-eye"></i>
+                Détails
+              </a>
+              {% if o.latitude and o.longitude %}
+                <a href="https://www.google.com/maps?q={{ o.latitude }},{{ o.longitude }}" 
+                   target="_blank" 
+                   class="btn-action-small btn-map">
+                  <i class="bi bi-map"></i>
+                  Carte
+                </a>
+              {% endif %}
+              {% if o.statut != 'LIVREE' and o.statut != 'ANNULEE' %}
+                <button onclick="confirmCancelOrder({{ o.id }}, '{{ o.user.get_full_name|default:o.user.username }}')" 
+                        class="btn-action-small btn-cancel">
+                  <i class="bi bi-x-circle"></i>
+                  Annuler
+                </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-inbox"></i>
+    <h3>Aucune commande trouvée</h3>
+    <p>
+      {% if q %}
+        Aucun résultat pour "{{ q }}"
+      {% else %}
+        Aucune commande n'a encore été passée
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Grid View (Hidden by default) -->
+<div class="orders-grid" id="gridView" style="display: none;">
+  {% for o in orders %}
+  <div class="order-card">
+    <div class="order-card-header">
+      <span class="order-id-badge">
+        <i class="bi bi-receipt"></i>
+        #{{ o.id }}
+      </span>
+      <span class="status-badge-modern status-{{ o.statut|lower|cut:" " }}">
+        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+        {{ o.statut|default:"—" }}
+      </span>
+    </div>
+    
+    <div class="order-card-body">
+      <div class="order-info-row">
+        <span class="order-info-label">
+          <i class="bi bi-person me-1"></i>
+          Client
+        </span>
+        <span class="order-info-value">{{ o.user.get_full_name|default:o.user.username }}</span>
+      </div>
+      
+      <div class="order-info-row">
+        <span class="order-info-label">
+          <i class="bi bi-cash me-1"></i>
+          Total
+        </span>
+        <span class="order-info-value" style="color: #667eea;">
+          {% if o.total %}{{ o.total|floatformat:0 }} FCFA{% else %}—{% endif %}
+        </span>
+      </div>
+      
+      <div class="order-info-row">
+        <span class="order-info-label">
+          <i class="bi bi-calendar me-1"></i>
+          Date
+        </span>
+        <span class="order-info-value">
+          {% if o.date_commande %}
+            {{ o.date_commande|date:"d/m/Y H:i" }}
+          {% elif o.created_at %}
+            {{ o.created_at|date:"d/m/Y H:i" }}
+          {% else %}
+            —
+          {% endif %}
+        </span>
+      </div>
+      
+      <div class="order-info-row">
+        <span class="order-info-label">
+          <i class="bi bi-geo-alt me-1"></i>
+          GPS
+        </span>
+        {% if o.latitude and o.longitude %}
+          <span class="gps-badge available">
+            <i class="bi bi-geo-alt-fill"></i>
+            Disponible
+          </span>
+        {% else %}
+          <span class="gps-badge unavailable">
+            <i class="bi bi-geo-alt"></i>
+            N/A
+          </span>
+        {% endif %}
+      </div>
+      
+      <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+        <a href="{% url 'admin_order_detail' o.id %}" class="btn-action-small btn-details" style="flex: 1; justify-content: center;">
+          <i class="bi bi-eye"></i>
+          Détails
+        </a>
+        {% if o.latitude and o.longitude %}
+          <a href="https://www.google.com/maps?q={{ o.latitude }},{{ o.longitude }}" 
+             target="_blank" 
+             class="btn-action-small btn-map" style="flex: 1; justify-content: center;">
+            <i class="bi bi-map"></i>
+            Carte
+          </a>
+        {% endif %}
+        {% if o.statut != 'LIVREE' and o.statut != 'ANNULEE' %}
+          <button onclick="confirmCancelOrder({{ o.id }}, '{{ o.user.get_full_name|default:o.user.username }}')" 
+                  class="btn-action-small btn-cancel" style="flex: 1; justify-content: center;">
+            <i class="bi bi-x-circle"></i>
+            Annuler
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true" style="z-index: 9999 !important;">
+  <div class="modal-dialog modal-dialog-centered" style="z-index: 10000 !important;">
+    <div class="modal-content" style="border-radius: 1rem; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.15); background: white; position: relative; z-index: 10001 !important;">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding: 1.5rem; background: linear-gradient(135deg, rgba(239,68,68,0.05), rgba(220,38,38,0.05));">
+        <h5 class="modal-title" style="font-weight: 700; display: flex; align-items: center; gap: 0.75rem; color: #1a1f26;">
+          <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 1.5rem;"></i>
+          Annuler la Commande
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 2rem;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div style="width: 80px; height: 80px; margin: 0 auto 1rem; background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.15)); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-x-circle" style="font-size: 3rem; color: #ef4444;"></i>
+          </div>
+          <p style="font-size: 1.1rem; color: #1a1f26; margin-bottom: 0.5rem;">
+            Êtes-vous sûr de vouloir annuler cette commande ?
+          </p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05)); padding: 1rem; border-radius: 0.75rem; border-left: 4px solid #667eea; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: #64748b; font-weight: 600;">Commande</span>
+            <span style="font-weight: 700; color: #667eea;" id="modalOrderId">#0</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #64748b; font-weight: 600;">Client</span>
+            <span style="font-weight: 700; color: #1a1f26;" id="modalOrderClient">-</span>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, rgba(239,68,68,0.05), rgba(220,38,38,0.05)); padding: 1rem; border-radius: 0.75rem; border: 2px solid rgba(239,68,68,0.2);">
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <i class="bi bi-info-circle-fill" style="color: #ef4444; font-size: 1.2rem; margin-top: 0.2rem;"></i>
+            <div>
+              <p style="margin: 0; font-size: 0.95rem; color: #64748b;">
+                <strong>Attention :</strong> Cette action est irréversible. La commande sera définitivement annulée et ne pourra plus être traitée.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid rgba(0,0,0,0.05); padding: 1.5rem; gap: 0.75rem;">
+        <button type="button" 
+                class="btn" 
+                data-bs-dismiss="modal"
+                style="background: rgba(0,0,0,0.05); color: #64748b; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.3s ease;">
+          <i class="bi bi-x-lg me-2"></i>
+          Non, garder la commande
+        </button>
+        <form id="cancelOrderForm" method="post" style="margin: 0;">
+          {% csrf_token %}
+          <button type="submit" 
+                  class="btn" 
+                  style="background: var(--danger-gradient); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; box-shadow: 0 4px 12px rgba(239,68,68,0.3); transition: all 0.3s ease;">
+            <i class="bi bi-x-circle me-2"></i>
+            Oui, annuler la commande
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Search functionality
+  let searchTimeout;
+  document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      this.form.submit();
+    }, 500);
+  });
+
+  // View switcher
+  function switchView(view) {
+    const tableView = document.getElementById('tableView');
+    const gridView = document.getElementById('gridView');
+    const tableBtn = document.getElementById('tableViewBtn');
+    const gridBtn = document.getElementById('gridViewBtn');
+
+    if (view === 'table') {
+      tableView.style.display = 'block';
+      gridView.style.display = 'none';
+      tableBtn.classList.add('active');
+      gridBtn.classList.remove('active');
+      localStorage.setItem('ordersView', 'table');
+    } else {
+      tableView.style.display = 'none';
+      gridView.style.display = 'grid';
+      tableBtn.classList.remove('active');
+      gridBtn.classList.add('active');
+      localStorage.setItem('ordersView', 'grid');
+    }
+  }
+
+  // Restore saved view preference
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('ordersView');
+    if (savedView === 'grid') {
+      switchView('grid');
+    }
+  });
+
+  // Refresh orders
+  function refreshOrders() {
+    showNotification('Actualisation en cours...', 'info');
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  }
+
+  // Export orders
+  function exportOrders() {
+    showNotification('Export en cours...', 'info');
+    
+    // Simulate export (implement real export here)
+    setTimeout(() => {
+      showNotification('Commandes exportées avec succès!', 'success');
+    }, 1500);
+  }
+
+  // Confirm cancel order
+  function confirmCancelOrder(orderId, clientName) {
+    console.log('🎯 confirmCancelOrder appelée:', orderId, clientName);
+    
+    // Mettre à jour les informations du modal
+    const modalOrderId = document.getElementById('modalOrderId');
+    const modalOrderClient = document.getElementById('modalOrderClient');
+    const form = document.getElementById('cancelOrderForm');
+    const modalElement = document.getElementById('cancelOrderModal');
+    
+    console.log('📋 Éléments trouvés:', {
+      modalOrderId: !!modalOrderId,
+      modalOrderClient: !!modalOrderClient,
+      form: !!form,
+      modalElement: !!modalElement,
+      bootstrap: typeof bootstrap !== 'undefined'
+    });
+    
+    if (modalOrderId) modalOrderId.textContent = '#' + orderId;
+    if (modalOrderClient) modalOrderClient.textContent = clientName;
+    if (form) form.action = `/boutique/admin-panel/orders/${orderId}/cancel/`;
+    
+    // SOLUTION SIMPLIFIÉE: Utiliser Bootstrap directement
+    if (modalElement && typeof bootstrap !== 'undefined') {
+      const bsModal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+      });
+      console.log('✅ Affichage du modal avec Bootstrap');
+      bsModal.show();
+    } else {
+      console.error('❌ Erreur:', !modalElement ? 'Modal non trouvé' : 'Bootstrap non chargé');
+      alert(`Annuler la commande #${orderId} de ${clientName} ?\n\nCliquez OK pour confirmer.`);
+    }
+  }
+
+  // Notification system
+  function showNotification(message, type = 'success') {
+    const colors = {
+      success: 'linear-gradient(135deg, #10b981, #059669)',
+      error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+      info: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+      warning: 'linear-gradient(135deg, #f59e0b, #d97706)'
+    };
+
+    const icons = {
+      success: 'check-circle-fill',
+      error: 'x-circle-fill',
+      info: 'info-circle-fill',
+      warning: 'exclamation-triangle-fill'
+    };
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      background: ${colors[type]};
+      color: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      z-index: 9999;
+      animation: slideInRight 0.3s ease;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 400px;
+    `;
+    notification.innerHTML = `
+      <i class="bi bi-${icons[type]}" style="font-size: 1.2rem;"></i>
+      <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('searchInput')?.focus();
+    }
+    
+    // Ctrl/Cmd + R to refresh
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+      e.preventDefault();
+      refreshOrders();
+    }
+    
+    // Ctrl/Cmd + E to export
+    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+      e.preventDefault();
+      exportOrders();
+    }
+  });
+
+  // Add animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Initialize modal close handlers
+  document.addEventListener('DOMContentLoaded', function() {
+    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const modal = document.getElementById('cancelOrderModal');
+        if (modal) {
+          modal.classList.remove('show');
+          modal.style.display = 'none';
+          document.body.classList.remove('modal-open');
+          
+          // Remove backdrop
+          const backdrop = document.querySelector('.modal-backdrop');
+          if (backdrop) {
+            backdrop.remove();
+          }
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,888 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load boutique_filters %}
+
+{% block title %}Comparaison de Produits - Maryama Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --color-gold: #ffc107;
+    --color-dark: #232526;
+    --color-light: #f8f9fa;
+    --radius: 16px;
+  }
+
+  body {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+  }
+
+  .compare-header {
+    background: linear-gradient(135deg, var(--color-dark) 0%, #414345 100%);
+    color: white;
+    padding: 3rem 0 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .compare-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+
+  .compare-header h1 {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-weight: 700;
+    font-size: 2.5rem;
+  }
+
+  .compare-header .subtitle {
+    position: relative;
+    z-index: 1;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+  }
+
+  .compare-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  .compare-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    color: var(--color-dark);
+    border: 2px solid var(--color-dark);
+    border-radius: calc(var(--radius) / 2);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-back:hover {
+    background: var(--color-dark);
+    color: white;
+  }
+
+  .btn-clear-compare {
+    padding: 0.75rem 1.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: calc(var(--radius) / 2);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-clear-compare:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+  }
+
+  /* Table de comparaison */
+  .compare-table-wrapper {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .compare-table thead {
+    background: var(--color-dark);
+    color: white;
+  }
+
+  .compare-table th {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-weight: 600;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .compare-table th:first-child {
+    text-align: left;
+    background: var(--color-gold);
+    color: var(--color-dark);
+    font-weight: 700;
+    width: 200px;
+  }
+
+  .compare-table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .compare-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  .compare-table td {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border-right: 1px solid #e9ecef;
+    vertical-align: middle;
+  }
+
+  .compare-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+    background: #f8f9fa;
+    color: var(--color-dark);
+    border-right: 2px solid #dee2e6;
+  }
+
+  .product-image-cell {
+    padding: 1rem !important;
+  }
+
+  .product-image {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: calc(var(--radius) / 2);
+    margin: 0 auto;
+    display: block;
+  }
+
+  .product-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .product-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-gold);
+  }
+
+  .product-price-promo {
+    color: #dc3545;
+  }
+
+  .old-price {
+    font-size: 1rem;
+    color: #6c757d;
+    text-decoration: line-through;
+    display: block;
+    margin-top: 0.25rem;
+  }
+
+  .rating-stars {
+    color: var(--color-gold);
+    font-size: 1.2rem;
+  }
+
+  .rating-value {
+    margin-left: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .badge-pill {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0.2rem;
+  }
+
+  .badge-success {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
+
+  .badge-warning {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .check-icon {
+    color: #28a745;
+    font-size: 1.5rem;
+  }
+
+  .times-icon {
+    color: #dc3545;
+    font-size: 1.5rem;
+  }
+
+  .btn-add-to-cart {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--color-dark);
+    color: white;
+    border: none;
+    border-radius: calc(var(--radius) / 2);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+  }
+
+  .btn-add-to-cart:hover {
+    background: var(--color-gold);
+    color: var(--color-dark);
+    transform: translateY(-2px);
+  }
+
+  .btn-view-product {
+    width: 100%;
+    padding: 0.75rem;
+    background: white;
+    color: var(--color-dark);
+    border: 2px solid var(--color-dark);
+    border-radius: calc(var(--radius) / 2);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .btn-view-product:hover {
+    background: var(--color-dark);
+    color: white;
+  }
+
+  .btn-remove-product {
+    width: 100%;
+    padding: 0.5rem;
+    background: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    border-radius: calc(var(--radius) / 2);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+
+  .btn-remove-product:hover {
+    background: #dc3545;
+    color: white;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 6rem 2rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .empty-icon {
+    font-size: 6rem;
+    color: #dee2e6;
+    margin-bottom: 2rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.8rem;
+    color: var(--color-dark);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state p {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+  }
+
+  .highlight-best {
+    position: relative;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%) !important;
+  }
+
+  .highlight-best::after {
+    content: '🏆 Meilleur choix';
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: linear-gradient(135deg, var(--color-gold) 0%, #ffb300 100%);
+    color: var(--color-dark);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Highlight best values in each row */
+  .best-value {
+    position: relative;
+    background: #d4edda !important;
+    font-weight: 700;
+  }
+
+  .best-value::before {
+    content: '✓';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #28a745;
+    font-weight: 900;
+    font-size: 1.2rem;
+  }
+
+  .worst-value {
+    background: #f8d7da !important;
+    opacity: 0.8;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .compare-header h1 {
+      font-size: 2rem;
+    }
+
+    .compare-table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .product-image {
+      width: 150px;
+      height: 150px;
+    }
+
+    .compare-table th:first-child,
+    .compare-table td:first-child {
+      min-width: 150px;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      min-width: 200px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="compare-header">
+  <div class="container text-center">
+    <h1>
+      <i class="fas fa-balance-scale me-3"></i>
+      Comparaison de Produits
+    </h1>
+    <p class="subtitle">Comparez les caractéristiques pour faire le meilleur choix</p>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="compare-container">
+  <!-- Actions -->
+  <div class="compare-actions">
+    <a href="{% url 'boutique' %}" class="btn-back">
+      <i class="fas fa-arrow-left"></i>
+      Retour à la boutique
+    </a>
+    <button class="btn-clear-compare" onclick="clearComparison()">
+      <i class="fas fa-trash me-2"></i>
+      Effacer la comparaison
+    </button>
+  </div>
+
+  {% if produits %}
+    <!-- Info banner -->
+    <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left: 4px solid #2196f3; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);">
+      <div style="display: flex; align-items: start; gap: 1rem;">
+        <i class="fas fa-info-circle" style="color: #2196f3; font-size: 2rem; margin-top: 0.2rem;"></i>
+        <div>
+          <h4 style="margin: 0 0 0.5rem 0; color: #1565c0; font-weight: 700;">
+            💡 Comment lire cette comparaison ?
+          </h4>
+          <ul style="margin: 0; padding-left: 1.5rem; color: #0d47a1; line-height: 1.8;">
+            <li><strong style="color: #1565c0;">Meilleur choix 🏆</strong> : Calculé automatiquement selon la note, le stock et le prix</li>
+            <li><strong style="color: #28a745;">Cases vertes ✓</strong> : Meilleures valeurs pour chaque critère</li>
+            <li><strong style="color: #dc3545;">Cases rouges</strong> : Valeurs moins avantageuses</li>
+            <li><strong style="color: #ffc107;">Rapport qualité/prix</strong> : Combinaison de la note moyenne et du prix</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare-table-wrapper">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Caractéristiques</th>
+            {% for produit in produits %}
+              <th class="{% if produit.id == best_product_id %}highlight-best{% endif %}">
+                Produit {{ forloop.counter }}
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Images -->
+          <tr>
+            <td>Image</td>
+            {% for produit in produits %}
+              <td class="product-image-cell">
+                {% if produit.image %}
+                  <img src="{{ produit.image.url }}" alt="{{ produit.nom }}" class="product-image">
+                {% else %}
+                  <img src="{% static 'img/placeholder.jpg' %}" alt="{{ produit.nom }}" class="product-image">
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Nom -->
+          <tr>
+            <td>Nom</td>
+            {% for produit in produits %}
+              <td>
+                <div class="product-name">{{ produit.nom }}</div>
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Prix -->
+          <tr>
+            <td>Prix</td>
+            {% for produit in produits %}
+              <td>
+                {% if produit.prix_promo %}
+                  <div class="product-price product-price-promo">{{ produit.prix_promo }} FCFA</div>
+                  <span class="old-price">{{ produit.prix }} FCFA</span>
+                {% else %}
+                  <div class="product-price">{{ produit.prix }} FCFA</div>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Note moyenne -->
+          <tr>
+            <td>Note moyenne</td>
+            {% for produit in produits %}
+              <td>
+                <div class="rating-stars">
+                  {% with note=produit.note_moyenne %}
+                    {% for i in "12345" %}
+                      {% if forloop.counter <= note %}
+                        <i class="fas fa-star"></i>
+                      {% elif forloop.counter|add:"-0.5" <= note %}
+                        <i class="fas fa-star-half-alt"></i>
+                      {% else %}
+                        <i class="far fa-star"></i>
+                      {% endif %}
+                    {% endfor %}
+                  {% endwith %}
+                </div>
+                <span class="rating-value">{{ produit.note_moyenne|floatformat:1 }}/5 ({{ produit.nombre_notes }} avis)</span>
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Catégories -->
+          <tr>
+            <td>Catégories</td>
+            {% for produit in produits %}
+              <td>
+                {% for categorie in produit.categories.all %}
+                  <span class="badge-pill badge-info">{{ categorie.nom }}</span>
+                {% empty %}
+                  <span class="text-muted">Aucune</span>
+                {% endfor %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Stock disponible -->
+          <tr>
+            <td>Stock disponible</td>
+            {% for produit in produits %}
+              <td>
+                {% if produit.stock == 0 %}
+                  <i class="fas fa-times-circle times-icon"></i>
+                  <div class="mt-1">
+                    <span class="badge-pill" style="background: #f8d7da; color: #721c24;">Rupture de stock</span>
+                  </div>
+                {% elif produit.stock < 5 %}
+                  <i class="fas fa-exclamation-triangle" style="color: #ffc107; font-size: 1.5rem;"></i>
+                  <div class="mt-1">
+                    <span class="badge-pill badge-warning">Stock limité : {{ produit.stock }} unité{{ produit.stock|pluralize }}</span>
+                  </div>
+                {% elif produit.stock < 10 %}
+                  <i class="fas fa-check-circle" style="color: #ffc107; font-size: 1.5rem;"></i>
+                  <div class="mt-1">
+                    <span class="badge-pill badge-info">{{ produit.stock }} unité{{ produit.stock|pluralize }}</span>
+                  </div>
+                {% else %}
+                  <i class="fas fa-check-circle check-icon"></i>
+                  <div class="mt-1">
+                    <span class="badge-pill badge-success">En stock : {{ produit.stock }} unité{{ produit.stock|pluralize }}</span>
+                  </div>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Promotion -->
+          <tr>
+            <td>Promotion active</td>
+            {% for produit in produits %}
+              <td>
+                {% if produit.prix_promo %}
+                  <i class="fas fa-check-circle check-icon"></i>
+                  <div class="mt-1">
+                    {% with economie=produit.prix|sub:produit.prix_promo %}
+                    {% with pourcentage=economie|percentage:produit.prix %}
+                    <span class="badge-pill badge-warning" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                      -{{ economie|floatformat:0 }} FCFA (-{{ pourcentage|floatformat:0 }}%)
+                    </span>
+                    {% endwith %}
+                    {% endwith %}
+                  </div>
+                {% else %}
+                  <i class="fas fa-times-circle times-icon"></i>
+                  <div class="mt-1 text-muted">Pas de promotion</div>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Prix unitaire effectif (pour comparaison) -->
+          <tr style="background: #fffbea;">
+            <td><strong>Prix final</strong> <i class="fas fa-info-circle" title="Prix que vous payez réellement"></i></td>
+            {% for produit in produits %}
+              <td>
+                {% if produit.prix_promo %}
+                  <div class="product-price product-price-promo" style="font-size: 1.8rem;">{{ produit.prix_promo|floatformat:0 }} FCFA</div>
+                {% else %}
+                  <div class="product-price" style="font-size: 1.8rem;">{{ produit.prix|floatformat:0 }} FCFA</div>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Rapport qualité/prix -->
+          <tr style="background: #e7f3ff;">
+            <td><strong>Rapport qualité/prix</strong></td>
+            {% for produit in produits %}
+              <td>
+                {% with prix_final=produit.prix_promo|default:produit.prix %}
+                {% with score_qualite_prix=produit.note_moyenne|div:prix_final|mul:10000 %}
+                <div style="font-size: 2rem; font-weight: 700;">
+                  {% if score_qualite_prix >= 0.015 %}
+                    <span style="color: #28a745;">⭐⭐⭐ Excellent</span>
+                  {% elif score_qualite_prix >= 0.010 %}
+                    <span style="color: #ffc107;">⭐⭐ Bon</span>
+                  {% elif score_qualite_prix >= 0.005 %}
+                    <span style="color: #ff9800;">⭐ Correct</span>
+                  {% else %}
+                    <span style="color: #dc3545;">Faible</span>
+                  {% endif %}
+                </div>
+                <small class="text-muted">Score: {{ score_qualite_prix|floatformat:3 }}</small>
+                {% endwith %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Date d'ajout -->
+          <tr>
+            <td>Ajouté le</td>
+            {% for produit in produits %}
+              <td>
+                {{ produit.date_creation|date:"d/m/Y" }}
+                {% if produit.date_creation|timesince < "7 days" %}
+                  <span class="badge-pill badge-success">✨ Nouveau</span>
+                {% elif produit.date_creation|timesince < "30 days" %}
+                  <span class="badge-pill badge-info">Récent</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Description -->
+          <tr>
+            <td>Description</td>
+            {% for produit in produits %}
+              <td style="text-align: left; max-width: 300px;">
+                {% if produit.description %}
+                  <div style="max-height: 150px; overflow-y: auto; padding: 0.5rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; line-height: 1.6;">
+                    {{ produit.description|truncatewords:50 }}
+                  </div>
+                {% else %}
+                  <span class="text-muted"><em>Aucune description disponible</em></span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Actions -->
+          <tr>
+            <td>Actions</td>
+            {% for produit in produits %}
+              <td>
+                <button type="button" class="btn-add-to-cart js-add-to-cart" data-url="{% url 'ajouter_au_panier' produit.id %}">
+                  <i class="fas fa-cart-plus me-2"></i>
+                  Ajouter au panier
+                </button>
+                <a href="{% url 'produit_detail' produit.id %}" class="btn-view-product">
+                  <i class="fas fa-eye me-2"></i>
+                  Voir détails
+                </a>
+                <button type="button" class="btn-remove-product" onclick="removeFromComparison('{{ produit.id }}')">
+                  <i class="fas fa-times me-2"></i>
+                  Retirer
+                </button>
+              </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-balance-scale"></i>
+      </div>
+      <h3>Aucun produit à comparer</h3>
+      <p>Sélectionnez des produits dans la boutique pour les comparer</p>
+      <a href="{% url 'boutique' %}" class="btn-back">
+        <i class="fas fa-shopping-bag me-2"></i>
+        Aller à la boutique
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Highlight best values for comparison
+  function highlightBestValues() {
+    const table = document.querySelector('.compare-table');
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      const firstCell = row.querySelector('td:first-child');
+      if (!firstCell) return;
+      
+      const label = firstCell.textContent.trim().toLowerCase();
+      const cells = Array.from(row.querySelectorAll('td:not(:first-child)'));
+      
+      // Skip rows that shouldn't be compared
+      if (label.includes('image') || label.includes('nom') || label.includes('description') || 
+          label.includes('action') || label.includes('catégorie') || label.includes('ajouté')) {
+        return;
+      }
+      
+      // For price rows (lower is better)
+      if (label.includes('prix final')) {
+        const prices = cells.map(cell => {
+          const text = cell.textContent.replace(/[^0-9]/g, '');
+          return parseFloat(text) || Infinity;
+        });
+        const minPrice = Math.min(...prices);
+        
+        cells.forEach((cell, i) => {
+          if (prices[i] === minPrice && prices[i] !== Infinity) {
+            cell.classList.add('best-value');
+          } else if (prices[i] === Math.max(...prices)) {
+            cell.classList.add('worst-value');
+          }
+        });
+      }
+      
+      // For stock (higher is better)
+      if (label.includes('stock')) {
+        const stocks = cells.map(cell => {
+          const text = cell.textContent;
+          if (text.includes('Rupture')) return 0;
+          const match = text.match(/(\d+)\s*unité/);
+          return match ? parseInt(match[1]) : 0;
+        });
+        const maxStock = Math.max(...stocks);
+        
+        cells.forEach((cell, i) => {
+          if (stocks[i] === maxStock && stocks[i] > 0) {
+            cell.classList.add('best-value');
+          } else if (stocks[i] === 0) {
+            cell.classList.add('worst-value');
+          }
+        });
+      }
+      
+      // For ratings (higher is better)
+      if (label.includes('note moyenne')) {
+        const ratings = cells.map(cell => {
+          const ratingText = cell.querySelector('.rating-value')?.textContent || '0';
+          const match = ratingText.match(/(\d+\.?\d*)/);
+          return match ? parseFloat(match[1]) : 0;
+        });
+        const maxRating = Math.max(...ratings);
+        
+        cells.forEach((cell, i) => {
+          if (ratings[i] === maxRating && ratings[i] > 0) {
+            cell.classList.add('best-value');
+          }
+        });
+      }
+    });
+  }
+
+  // Execute when page loads
+  document.addEventListener('DOMContentLoaded', highlightBestValues);
+
+  function removeFromComparison(productId) {
+    // Get current URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const products = urlParams.get('products')?.split(',').filter(id => id !== productId) || [];
+    
+    if (products.length === 0) {
+      window.location.href = '{% url "boutique" %}';
+      return;
+    }
+    
+    // Redirect with updated params
+    window.location.href = `{% url "compare" %}?products=${products.join(',')}`;
+  }
+
+  function clearComparison() {
+    if (confirm('Êtes-vous sûr de vouloir effacer cette comparaison ?')) {
+      window.location.href = '{% url "boutique" %}';
+    }
+  }
+
+  // Enhanced Add to Cart with AJAX
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.js-add-to-cart');
+    if (!btn || btn.classList.contains('adding')) return;
+    
+    e.preventDefault();
+    
+    const url = btn.dataset.url;
+    console.log('Ajout au panier depuis comparaison - URL:', url);
+    
+    if (!url) {
+      console.error('URL manquante pour le bouton');
+      return;
+    }
+    
+    btn.classList.add('adding');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ajout...';
+    btn.disabled = true;
+    
+    // Get CSRF token
+    function getCookie(name) {
+      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return m ? m.pop() : '';
+    }
+    const csrfToken = getCookie('csrftoken');
+    
+    // Real AJAX call to add to cart
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrfToken
+      },
+      body: ''
+    })
+    .then(res => {
+      console.log('Réponse reçue, status:', res.status);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('Données reçues:', data);
+      
+      if (data && data.success) {
+        // Update cart badge using global function from base.html
+        if (typeof window.updateCartBadge === 'function') {
+          window.updateCartBadge(data.count || data.cart_count || 0);
+        }
+        
+        btn.classList.remove('adding');
+        btn.classList.add('added');
+        btn.innerHTML = '<i class="fas fa-check"></i> Ajouté au panier';
+        
+        setTimeout(() => {
+          btn.classList.remove('added');
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }, 2000);
+      } else {
+        console.error('Échec de l\'ajout:', data);
+        btn.classList.remove('adding');
+        btn.innerHTML = '<i class="fas fa-times"></i> Erreur';
+        setTimeout(() => {
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }, 2000);
+      }
+    })
+    .catch(error => {
+      console.error('Erreur fetch:', error);
+      btn.classList.remove('adding');
+      btn.innerHTML = '<i class="fas fa-times"></i> Erreur: ' + error.message;
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      }, 3000);
+    });
+  });
+</script>
+{% endblock %}

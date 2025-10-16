@@ -1,0 +1,1057 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mon Panier{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.0/mdb.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+  :root{
+    --gold: #ffc107;
+    --dark: #232526;
+    --success: #28a745;
+    --info: #17a2b8;
+    --danger: #dc3545;
+    --warning: #ff9800;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow-sm: 0 6px 16px rgba(0,0,0,.06);
+    --shadow: 0 14px 30px rgba(0,0,0,.10);
+    --shadow-lg: 0 24px 48px rgba(0,0,0,.16);
+  }
+
+  body{
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+
+  .page-header {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold) 0%, #ffcd39 100%);
+  }
+
+  .page-header h3 {
+    margin: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .cart-badge {
+    background: linear-gradient(135deg, var(--gold) 0%, #ffcd39 100%);
+    color: var(--dark);
+    border-radius: 999px;
+    padding: .25rem .75rem;
+    font-size: .9rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(255,193,7,.3);
+  }
+
+  .card{
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: white;
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+
+  .card:hover{ 
+    transform: translateY(-2px); 
+    box-shadow: var(--shadow); 
+  }
+
+  .card-header{
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+
+  .card-header h5{ 
+    margin: 0; 
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+
+  .cart-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    transition: background .3s ease;
+  }
+
+  .cart-item:last-child {
+    border-bottom: none;
+  }
+
+  .cart-item:hover {
+    background: rgba(255,193,7,.03);
+  }
+
+  .product-image-wrapper {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .product-image {
+    width: 100%;
+    transition: transform .5s ease;
+  }
+
+  .cart-item:hover .product-image {
+    transform: scale(1.05);
+  }
+
+  .discount-badge {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    background: linear-gradient(135deg, var(--danger) 0%, #e74c3c 100%);
+    color: white;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+  }
+
+  .product-name {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: .5rem;
+    font-size: 1.1rem;
+  }
+
+  .product-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: .75rem;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    color: #6c757d;
+    font-size: .9rem;
+  }
+
+  .meta-item i {
+    color: var(--gold);
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: #f8f9fa;
+    border-radius: var(--radius-sm);
+    padding: .5rem;
+    max-width: 280px;
+  }
+
+  .qty-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: var(--dark);
+    cursor: pointer;
+    transition: all .25s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  }
+
+  .qty-btn:hover {
+    background: var(--gold);
+    transform: scale(1.1);
+  }
+
+  .qty-input {
+    flex: 1;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .btn-action {
+    border-radius: var(--radius-sm);
+    padding: .5rem 1rem;
+    font-weight: 600;
+    transition: all .25s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .btn-remove {
+    background: #fff;
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+
+  .btn-remove:hover {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn{
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    padding: .75rem 1.5rem;
+    transition: all .3s ease;
+  }
+
+  .btn-primary{
+    background: linear-gradient(135deg, var(--dark) 0%, #000 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(35,37,38,.3);
+  }
+
+  .btn-primary:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(35,37,38,.4);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success) 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+
+  .total-row {
+    background: rgba(255,193,7,.1);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem !important;
+    margin-top: 1rem;
+  }
+
+  .total-row .summary-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .total-row .summary-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  /* 📍 Location Section Styles */
+  .location-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .location-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .location-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .location-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .location-status {
+    flex: 1;
+  }
+
+  .location-status h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .location-status p {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+
+  .location-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-location {
+    flex: 1;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-location:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-location i {
+    margin-right: 0.5rem;
+  }
+
+  .btn-location.active {
+    background: rgba(255,255,255,0.95);
+    color: #667eea;
+    border-color: white;
+  }
+
+  .location-map {
+    height: 300px;
+    border-radius: var(--radius-sm);
+    margin-top: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: none;
+    position: relative;
+    z-index: 1;
+  }
+
+  .location-map.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .location-details {
+    background: rgba(255,255,255,0.15);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-top: 1rem;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+  }
+
+  .location-detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  .location-detail-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .location-detail-label {
+    opacity: 0.9;
+  }
+
+  .location-detail-value {
+    font-weight: 600;
+  }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .status-badge.detecting {
+    background: rgba(255, 152, 0, 0.2);
+    color: var(--warning);
+    border: 2px solid var(--warning);
+  }
+
+  .status-badge.success {
+    background: rgba(40, 167, 69, 0.2);
+    color: var(--success);
+    border: 2px solid var(--success);
+  }
+
+  .status-badge.error {
+    background: rgba(220, 53, 69, 0.2);
+    color: var(--danger);
+    border: 2px solid var(--danger);
+  }
+
+  .status-badge i {
+    animation: spin 1s linear infinite;
+  }
+
+  .status-badge.success i,
+  .status-badge.error i {
+    animation: none;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* Alert styles */
+  .alert-modern {
+    border-radius: var(--radius-sm);
+    border: none;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .alert-modern i {
+    font-size: 1.25rem;
+  }
+
+  .alert-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #0d47a1;
+  }
+
+  .alert-warning {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #e65100;
+  }
+
+  .alert-danger {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    color: #b71c1c;
+  }
+
+  .alert-success {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    color: #1b5e20;
+  }
+
+  @media (max-width: 768px){
+    .page-header {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .location-actions {
+      flex-direction: column;
+    }
+
+    .btn-location {
+      width: 100%;
+    }
+
+    .location-map {
+      height: 250px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <script type="application/json" id="lat_json">{{ adresse_latitude|default:'null'|json_script }}</script>
+  <script type="application/json" id="lng_json">{{ adresse_longitude|default:'null'|json_script }}</script>
+
+  <div class="page-header">
+    <h3>
+      <i class="fas fa-shopping-cart"></i>
+      Mon Panier
+      {% if items %}
+        <span class="cart-badge">{{ items|length }} article{{ items|length|pluralize }}</span>
+      {% endif %}
+    </h3>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>
+            <i class="fas fa-box-open"></i>
+            Articles
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          {% if items %}
+            {% for item in items %}
+              <div class="cart-item">
+                <div class="row align-items-center">
+                  <div class="col-lg-3">
+                    <div class="product-image-wrapper">
+                      <img src="{% if item.produit.image %}{{ item.produit.image.url }}{% else %}{% static 'images/default.png' %}{% endif %}" 
+                           class="product-image" 
+                           alt="{{ item.produit.nom }}">
+                      {% if item.produit.prix_promo %}
+                        <div class="discount-badge">PROMO</div>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="col-lg-5">
+                    <div class="product-name">{{ item.produit.nom }}</div>
+                    <div class="product-meta">
+                      {% if item.produit.couleur %}
+                        <div class="meta-item">
+                          <i class="fas fa-palette"></i>
+                          {{ item.produit.couleur }}
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <form action="{% url 'modifier_quantite' %}" method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="item_id" value="{{ item.id }}">
+                      <div class="quantity-controls">
+                        <button type="button" class="qty-btn" onclick="this.nextElementSibling.value = Math.max(1, parseInt(this.nextElementSibling.value) - 1); this.closest('form').submit();">
+                          <i class="fas fa-minus"></i>
+                        </button>
+                        <input name="qty" value="{{ item.quantite }}" type="number" min="1" class="qty-input" readonly>
+                        <button type="button" class="qty-btn" onclick="this.previousElementSibling.value = parseInt(this.previousElementSibling.value) + 1; this.closest('form').submit();">
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
+                    </form>
+
+                    <form action="{% url 'retirer_du_panier' item.id %}" method="post" style="margin-top: 1rem;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn-action btn-remove">
+                        <i class="fas fa-trash"></i>
+                        Retirer
+                      </button>
+                    </form>
+                  </div>
+
+                  <div class="col-lg-4 text-end">
+                    <div style="font-size: 1.5rem; font-weight: 700;">
+                      {% if item.produit.prix_promo %}
+                        {{ item.produit.prix_promo }} FCFA
+                        <div style="font-size: .9rem; text-decoration: line-through; color: #6c757d;">{{ item.produit.prix }} FCFA</div>
+                      {% else %}
+                        {{ item.produit.prix }} FCFA
+                      {% endif %}
+                    </div>
+                    <div style="margin-top: .5rem; color: #6c757d;">
+                      Sous-total: <strong>{{ item.prix_total }} FCFA</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div style="text-align: center; padding: 4rem 2rem;">
+              <i class="fas fa-shopping-cart" style="font-size: 5rem; color: #dee2e6;"></i>
+              <h5 style="margin-top: 1.5rem;">Votre panier est vide</h5>
+              <a class="btn btn-primary" href="{% url 'boutique' %}" style="margin-top: 1.5rem;">
+                <i class="fas fa-store"></i> Découvrir nos produits
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if items %}
+      <!-- 📍 Location Section -->
+      <div class="col-12">
+        <div class="location-card">
+          <div class="location-header">
+            <div class="location-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="location-status">
+              <h5 id="locationTitle">
+                {% if adresse_latitude and adresse_longitude %}
+                  📍 Adresse de livraison détectée
+                {% else %}
+                  📍 Localisation requise
+                {% endif %}
+              </h5>
+              <p id="locationSubtitle">
+                {% if adresse_latitude and adresse_longitude %}
+                  Nous avons votre position pour calculer les frais de livraison
+                {% else %}
+                  Activez la géolocalisation pour calculer les frais de livraison
+                {% endif %}
+              </p>
+            </div>
+            <div id="locationStatusBadge"></div>
+          </div>
+
+          <div class="location-actions">
+            <button type="button" class="btn-location" id="detectLocationBtn">
+              <i class="fas fa-crosshairs"></i>
+              Détecter ma position
+            </button>
+            <button type="button" class="btn-location" id="showMapBtn">
+              <i class="fas fa-map"></i>
+              Voir sur la carte
+            </button>
+          </div>
+
+          <!-- Map Container -->
+          <div id="mapContainer" class="location-map"></div>
+
+          <!-- Location Details -->
+          <div class="location-details" id="locationDetails" style="display: none;">
+            <div class="location-detail-item">
+              <span class="location-detail-label">
+                <i class="fas fa-map-pin me-2"></i>Coordonnées
+              </span>
+              <span class="location-detail-value" id="coordsDisplay">—</span>
+            </div>
+            <div class="location-detail-item">
+              <span class="location-detail-label">
+                <i class="fas fa-route me-2"></i>Distance estimée
+              </span>
+              <span class="location-detail-value" id="distanceDisplay">—</span>
+            </div>
+            <div class="location-detail-item">
+              <span class="location-detail-label">
+                <i class="fas fa-truck me-2"></i>Frais de livraison
+              </span>
+              <span class="location-detail-value" id="shippingDisplay">—</span>
+            </div>
+          </div>
+
+          <!-- Status Alert -->
+          <div id="locationAlert" style="margin-top: 1rem;"></div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header">
+            <h5>
+              <i class="fas fa-calculator"></i>
+              Résumé
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="summary-item">
+              <span>Sous-total</span>
+              <span>{{ total }} FCFA</span>
+            </div>
+            <div class="summary-item">
+              <span>Livraison</span>
+              <span id="shippingSummary">{% if shipping %}{{ shipping }} FCFA{% else %}—{% endif %}</span>
+            </div>
+            <div class="summary-item total-row">
+              <div>
+                <div class="summary-label">Total</div>
+                <small style="color: #6c757d;">(TVA incluse)</small>
+              </div>
+              <span class="summary-value" id="totalSummary">{{ total|add:shipping|default:total }} FCFA</span>
+            </div>
+
+            <form method="post" action="{% url 'confirmer_commande' %}" id="orderForm" style="margin-top: 1.5rem;">
+              {% csrf_token %}
+              <input type="hidden" id="latitude" name="latitude">
+              <input type="hidden" id="longitude" name="longitude">
+              <input type="hidden" id="shipping" name="shipping">
+              
+              <div class="alert d-none" id="locationStatus"></div>
+
+              <button type="button" class="btn btn-success w-100" id="confirmOrderBtn">
+                <i class="fas fa-check-circle"></i>
+                Confirmer
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  'use strict';
+  
+  // Configuration
+  const total = Number("{{ total }}") || 0;
+  const STORE_LAT = 14.693425;  // Coordonnées du magasin (Dakar - à ajuster)
+  const STORE_LNG = -17.447938;
+  
+  // CSRF Token
+  function getCookie(name) {
+    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  const CSRF = getCookie('csrftoken');
+  
+  // DOM Elements
+  const latInput = document.getElementById('latitude');
+  const lngInput = document.getElementById('longitude');
+  const shippingInput = document.getElementById('shipping');
+  const orderForm = document.getElementById('orderForm');
+  const confirmBtn = document.getElementById('confirmOrderBtn');
+  const detectBtn = document.getElementById('detectLocationBtn');
+  const showMapBtn = document.getElementById('showMapBtn');
+  const mapContainer = document.getElementById('mapContainer');
+  const locationAlert = document.getElementById('locationAlert');
+  const locationTitle = document.getElementById('locationTitle');
+  const locationSubtitle = document.getElementById('locationSubtitle');
+  const locationDetails = document.getElementById('locationDetails');
+  const statusBadge = document.getElementById('locationStatusBadge');
+  
+  // State
+  let shippingReady = false;
+  let map = null;
+  let userMarker = null;
+  let storeMarker = null;
+  let routeLine = null;
+  let currentLat = null;
+  let currentLng = null;
+  
+  // UI Functions
+  function showAlert(message, type = 'info') {
+    locationAlert.innerHTML = `
+      <div class="alert-modern alert-${type}">
+        <i class="fas fa-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'check-circle'}"></i>
+        <span>${message}</span>
+      </div>
+    `;
+  }
+  
+  function updateStatus(status) {
+    statusBadge.innerHTML = '';
+    if (status === 'detecting') {
+      statusBadge.innerHTML = '<span class="status-badge detecting"><i class="fas fa-spinner"></i> Détection...</span>';
+    } else if (status === 'success') {
+      statusBadge.innerHTML = '<span class="status-badge success"><i class="fas fa-check"></i> Détecté</span>';
+    } else if (status === 'error') {
+      statusBadge.innerHTML = '<span class="status-badge error"><i class="fas fa-times"></i> Erreur</span>';
+    }
+  }
+  
+  function updateLocationDisplay(lat, lng, distance, shipping) {
+    currentLat = lat;
+    currentLng = lng;
+    
+    locationTitle.innerHTML = '📍 Position détectée';
+    locationSubtitle.innerHTML = 'Votre position a été enregistrée avec succès';
+    
+    document.getElementById('coordsDisplay').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    document.getElementById('distanceDisplay').textContent = `${distance.toFixed(2)} km`;
+    document.getElementById('shippingDisplay').textContent = `${shipping} FCFA`;
+    
+    locationDetails.style.display = 'block';
+    updateStatus('success');
+  }
+  
+  // Map Functions
+  function initMap(lat, lng) {
+    if (map) {
+      map.remove();
+    }
+    
+    mapContainer.classList.add('show');
+    showMapBtn.classList.add('active');
+    showMapBtn.innerHTML = '<i class="fas fa-map-marked-alt"></i> Masquer la carte';
+    
+    // Create map
+    map = L.map('mapContainer').setView([lat, lng], 13);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // User marker (client)
+    userMarker = L.marker([lat, lng], {
+      icon: L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).addTo(map);
+    userMarker.bindPopup('📍 <b>Votre position</b>').openPopup();
+    
+    // Store marker (magasin)
+    storeMarker = L.marker([STORE_LAT, STORE_LNG], {
+      icon: L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).addTo(map);
+    storeMarker.bindPopup('🏪 <b>Maryama Shop</b>');
+    
+    // Draw route line
+    routeLine = L.polyline([
+      [STORE_LAT, STORE_LNG],
+      [lat, lng]
+    ], {
+      color: '#ffc107',
+      weight: 3,
+      opacity: 0.7,
+      dashArray: '10, 10'
+    }).addTo(map);
+    
+    // Fit bounds to show both markers
+    const bounds = L.latLngBounds([
+      [STORE_LAT, STORE_LNG],
+      [lat, lng]
+    ]);
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }
+  
+  function toggleMap() {
+    if (mapContainer.classList.contains('show')) {
+      mapContainer.classList.remove('show');
+      showMapBtn.classList.remove('active');
+      showMapBtn.innerHTML = '<i class="fas fa-map"></i> Voir sur la carte';
+      if (map) {
+        map.remove();
+        map = null;
+      }
+    } else if (currentLat && currentLng) {
+      initMap(currentLat, currentLng);
+    } else {
+      showAlert('Veuillez d\'abord détecter votre position', 'warning');
+    }
+  }
+  
+  // Shipping Calculation
+  function calculateShipping(lat, lng) {
+    updateStatus('detecting');
+    showAlert('Calcul des frais de livraison en cours...', 'info');
+    
+    return fetch("{% url 'calculer_shipping' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": CSRF
+      },
+      body: `latitude=${lat}&longitude=${lng}`
+    })
+    .then(res => res.json())
+    .then(data => {
+      const shipping = Number(data.shipping || 0);
+      const distance = Number(data.distance || 0);
+      
+      // Update UI
+      document.getElementById('shippingSummary').textContent = shipping + ' FCFA';
+      document.getElementById('totalSummary').textContent = (total + shipping) + ' FCFA';
+      
+      updateLocationDisplay(lat, lng, distance, shipping);
+      showAlert(`✅ Frais de livraison : ${shipping} FCFA (Distance: ${distance.toFixed(2)} km)`, 'success');
+      
+      return { shipping, distance };
+    })
+    .catch(err => {
+      updateStatus('error');
+      showAlert('❌ Erreur lors du calcul des frais de livraison', 'danger');
+      throw err;
+    });
+  }
+
+  function setLocation(lat, lng){
+    latInput.value = lat;
+    lngInput.value = lng;
+    
+    calculateShipping(lat, lng).then(data => {
+      shippingInput.value = data.shipping;
+      shippingReady = true;
+      detectBtn.innerHTML = '<i class="fas fa-check"></i> Position enregistrée';
+      detectBtn.classList.add('active');
+    });
+  }
+  
+  // Geolocation Detection
+  function detectLocation() {
+    if (!navigator.geolocation) {
+      showAlert('❌ Votre navigateur ne supporte pas la géolocalisation', 'danger');
+      updateStatus('error');
+      return;
+    }
+    
+    updateStatus('detecting');
+    showAlert('🔍 Détection de votre position en cours...', 'info');
+    detectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Détection...';
+    detectBtn.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+      function success(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setLocation(lat, lng);
+        detectBtn.disabled = false;
+      },
+      function error(err) {
+        updateStatus('error');
+        detectBtn.innerHTML = '<i class="fas fa-crosshairs"></i> Réessayer';
+        detectBtn.disabled = false;
+        
+        let message = '';
+        switch(err.code) {
+          case err.PERMISSION_DENIED:
+            message = '❌ Permission refusée. Veuillez autoriser la géolocalisation dans les paramètres de votre navigateur.';
+            break;
+          case err.POSITION_UNAVAILABLE:
+            message = '⚠️ Position indisponible. Vérifiez votre connexion GPS.';
+            break;
+          case err.TIMEOUT:
+            message = '⏱️ Délai dépassé. Réessayez.';
+            break;
+          default:
+            message = '❌ Erreur inconnue lors de la détection de position.';
+        }
+        showAlert(message, 'danger');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }
+  
+  // Initialize with saved location
+  try{
+    const latValue = JSON.parse(document.getElementById('lat_json').textContent);
+    const lngValue = JSON.parse(document.getElementById('lng_json').textContent);
+    
+    if (typeof latValue === 'number' && typeof lngValue === 'number'){
+      setLocation(latValue, lngValue);
+      showAlert('✅ Position récupérée depuis votre adresse enregistrée', 'success');
+    } else {
+      showAlert('📍 Veuillez détecter votre position pour calculer les frais de livraison', 'warning');
+    }
+  }catch(_){
+    showAlert('📍 Veuillez détecter votre position pour calculer les frais de livraison', 'warning');
+  }
+  
+  // Event Listeners
+  if (detectBtn) {
+    detectBtn.addEventListener('click', detectLocation);
+  }
+  
+  if (showMapBtn) {
+    showMapBtn.addEventListener('click', toggleMap);
+  }
+  
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', function(){
+      if (shippingReady) {
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirmation...';
+        confirmBtn.disabled = true;
+        orderForm.submit();
+      } else {
+        showAlert('⚠️ Veuillez détecter votre position avant de confirmer', 'warning');
+        detectLocation();
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

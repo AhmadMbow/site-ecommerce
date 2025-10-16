@@ -1,0 +1,401 @@
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}Admin | Tableau de bord{% endblock %}
+{% block header %}Tableau de bord{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+  :root{
+    --gold: #ffc107;
+    --dark: #232526;
+    --light: #f8f9fa;
+    --radius: .75rem;
+    --shadow-sm: 0 6px 16px rgba(0,0,0,.06);
+    --shadow: 0 14px 30px rgba(0,0,0,.10);
+    --shadow-gold: 0 10px 24px rgba(255,193,7,.30);
+  }
+
+  body{
+    background: var(--light);
+    color: var(--dark);
+    font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+
+  /* Comfort interactions */
+  a, .btn, .card, .nav-link, .dropdown-item, .form-control, .badge, .table, .list-group-item, .fa, .bi {
+    transition: all .3s ease;
+  }
+
+  /* Headings accent */
+  h5, h4, h3{
+    font-weight: 700;
+    letter-spacing: .2px;
+    position: relative;
+    padding-left: .6rem;
+  }
+  h5::before, h4::before, h3::before{
+    content:"";
+    position:absolute; left:0; top:50%; transform: translateY(-50%);
+    width:4px; height:1.1em; border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,193,7,.9), rgba(255,193,7,.4));
+    box-shadow: 0 4px 10px rgba(255,193,7,.35);
+  }
+
+  /* Cards baseline */
+  .card{
+    border: 0 !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .card:hover{ transform: translateY(-4px); box-shadow: var(--shadow); }
+
+  /* Reveal on scroll */
+  .reveal{ opacity: 0; transform: translateY(10px); }
+  .reveal.in-view{ opacity: 1; transform: none; transition: opacity .6s ease, transform .6s ease; }
+
+  /* ========== Stat cards ========== */
+  .stat-card{
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  /* Gold accent bar */
+  .stat-card::before{
+    content:"";
+    position:absolute; left:0; top:14px; bottom:14px;
+    width: 5px; border-radius: 0 6px 6px 0;
+    background: linear-gradient(180deg, rgba(255,193,7,1), rgba(255,193,7,.45));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.25);
+  }
+  /* Soft icon glow background */
+  .stat-card::after{
+    content:"";
+    position:absolute; right:-40px; top:-40px; width: 140px; height: 140px;
+    background: radial-gradient(closest-side, rgba(255,193,7,.15), transparent 70%);
+    border-radius: 50%;
+    filter: blur(2px);
+    z-index: -1;
+  }
+  .stat-card .card-body{
+    padding: 1.05rem 1.1rem;
+  }
+  .stat-card .stat-label{
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: .8rem;
+    letter-spacing: .6px;
+  }
+  .stat-card .stat-value{
+    font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2rem);
+    font-weight: 700;
+    color: var(--dark);
+  }
+  .stat-card i{
+    color: var(--dark);
+    opacity: .75;
+  }
+  .stat-card:hover{
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-gold);
+  }
+  .stat-card:hover i{
+    transform: translateY(-2px) scale(1.06);
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(255,193,7,.35);
+  }
+
+  /* ========== Chart card ========== */
+  .chart-card .card-header{
+    background: #fff;
+    font-weight: 700;
+    border-bottom: 0;
+    position: relative;
+    padding: .85rem 1rem;
+  }
+  .chart-card .card-header::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), rgba(255,193,7,0));
+  }
+
+  /* ========== Top products ========== */
+  .top-products{
+    list-style: none;
+    counter-reset: tp;
+    padding-left: 0;
+  }
+  .top-products li{
+    position: relative;
+    padding: .5rem 0;
+    border-top: 1px solid rgba(0,0,0,.06);
+  }
+  .top-products li:first-child{ border-top: 0; }
+  .top-products li::before{
+    counter-increment: tp;
+    content: counter(tp);
+    display: inline-grid; place-items: center;
+    width: 1.4rem; height: 1.4rem; margin-right: .5rem;
+    border-radius: 50%;
+    background: rgba(255,193,7,.15);
+    color: var(--dark);
+    font-weight: 700; font-size: .85rem;
+  }
+  .top-products li:hover{
+    background: rgba(255,193,7,.06);
+    border-radius: .5rem;
+    padding-left: .35rem;
+  }
+
+  /* ========== Table latest orders ========== */
+  .table-modern thead th{
+    background: linear-gradient(0deg, rgba(255,193,7,.08), rgba(255,193,7,.14));
+    color: var(--dark);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: .8rem;
+    letter-spacing: .4px;
+    border-bottom: 0;
+  }
+  .table-modern tbody tr{
+    transition: background-color .25s ease, transform .2s ease, box-shadow .25s ease;
+  }
+  .table-modern tbody tr:nth-child(even){ background-color: rgba(0,0,0,.015); }
+  .table-modern tbody tr:hover{
+    background: rgba(255,193,7,.06);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0,0,0,.06);
+  }
+
+  /* Status badges (baseline, colors set via JS by status text) */
+  .status-badge{
+    border-radius: 999px;
+    padding: .35rem .6rem;
+    font-weight: 600;
+    border: 1px solid rgba(0,0,0,.06);
+    background: #fff;
+    color: var(--dark);
+  }
+
+  /* Inputs */
+  .form-control{
+    border-radius: .65rem;
+    border: 1px solid rgba(0,0,0,.12);
+  }
+  .form-control:focus{
+    border-color: var(--gold);
+    box-shadow: 0 0 0 .2rem rgba(255,193,7,.25);
+  }
+
+  /* Icons hover */
+  .fa, .bi{ opacity:.95; }
+  .fa:hover, .bi:hover{ opacity:1; color: var(--gold); text-shadow: 0 0 8px rgba(255,193,7,.4); transform: translateY(-1px); }
+
+  /* Responsive spacing */
+  @media (max-width: 991.98px){
+    .card .card-body{ padding: 1rem; }
+  }
+  @media (max-width: 575.98px){
+    .stat-card .card-body{ padding: .9rem; }
+    .top-products li{ padding: .45rem 0; }
+  }
+
+  /* Optional Dark mode */
+  @media (prefers-color-scheme: dark){
+    body{ background: #111416; color: #e9ecef; }
+    .card{ background: #1a1d20; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+    .card:hover{ box-shadow: 0 16px 34px rgba(0,0,0,.45); }
+    .stat-card .stat-value{ color: #fff; }
+    .stat-card .stat-label{ color: #c9cfd6; }
+    .chart-card .card-header{ background: #1a1d20; color: #fff; }
+    .top-products li{ border-top-color: rgba(255,255,255,.08); }
+    .table-modern thead th{ background: linear-gradient(0deg, rgba(255,193,7,.18), rgba(255,193,7,.22)); color:#fff; }
+    .table-modern tbody tr:nth-child(even){ background-color: rgba(255,255,255,.015); }
+    .status-badge{ background:#16181a; color:#e9ecef; border-color: rgba(255,255,255,.08); }
+    .form-control{ background:#16181a; color:#e9ecef; border-color: rgba(255,255,255,.12); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card shadow-sm stat-card reveal">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label small">Produits</div>
+          <div class="stat-value">{{ total_products }}</div>
+        </div>
+        <i class="fa-solid fa-box-open fa-2x"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card shadow-sm stat-card reveal">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label small">Commandes</div>
+          <div class="stat-value">{{ total_orders }}</div>
+        </div>
+        <i class="fa-solid fa-basket-shopping fa-2x"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card shadow-sm stat-card reveal">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label small">Utilisateurs</div>
+          <div class="stat-value">{{ total_users }}</div>
+        </div>
+        <i class="fa-solid fa-users fa-2x"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card shadow-sm stat-card reveal">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label small">Revenus</div>
+          <div class="stat-value">{{ revenue|floatformat:0 }} F</div>
+        </div>
+        <i class="fa-solid fa-coins fa-2x"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100 chart-card reveal">
+      <div class="card-header bg-white fw-semibold">Commandes (par jour)</div>
+      <div class="card-body"><canvas id="ordersChart" height="120"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100 reveal">
+      <div class="card-header bg-white fw-semibold">Top produits</div>
+      <div class="card-body">
+        <ol class="mb-0 top-products">
+          {% for p in top_products %}
+            <li class="mb-1 d-flex justify-content-between align-items-center">
+              <span class="me-2 flex-grow-1">{{ p.produit__nom }}</span>
+              <span class="text-muted">{{ p.qty }}</span>
+            </li>
+          {% empty %}
+            <div class="text-muted">Aucune donnée.</div>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-3 reveal">
+  <div class="card-header bg-white fw-semibold">Dernières commandes</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0 table-modern table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th class="text-end">Total (F)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in recent_orders %}
+          <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.user.get_full_name|default:c.user.username }}</td>
+            <td>{{ c.date_commande|date:"d/m/Y H:i" }}</td>
+            <td><span class="badge status-badge text-bg-light">{{ c.statut }}</span></td>
+            <td class="text-end">{{ c.total|default:'—' }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">Aucune commande.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Reveal on scroll
+  (function(){
+    const els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(el => el.classList.add('in-view'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+    }, { threshold: .15 });
+    els.forEach(el => io.observe(el));
+  })();
+
+  // Chart.js with soft animation and gradient fill
+  (function(){
+    const ctx = document.getElementById('ordersChart');
+    if (!ctx) return;
+    const labels = {{ chart_days|safe }};
+    const counts = {{ chart_counts|safe }};
+
+    const g = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
+    g.addColorStop(0, 'rgba(13,110,253,.35)');
+    g.addColorStop(1, 'rgba(13,110,253,0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: counts,
+          label: 'Commandes',
+          borderColor: '#0d6efd',
+          backgroundColor: g,
+          pointBackgroundColor: '#0d6efd',
+          pointRadius: 3,
+          tension: .35,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 900, easing: 'easeOutQuart' },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.06)' } }
+        }
+      }
+    });
+  })();
+
+  // Status badge coloring by text (no backend change)
+  (function(){
+    const map = [
+      { k: /livr(e|é)e?/i, cls: 'bg-primary-subtle text-primary-emphasis' },
+      { k: /pay(e|é)e?/i,   cls: 'bg-success-subtle text-success-emphasis' },
+      { k: /en cours/i,     cls: 'bg-info-subtle text-info-emphasis' },
+      { k: /en attente/i,   cls: 'bg-warning-subtle text-warning-emphasis' },
+      { k: /annul(e|é)e?/i, cls: 'bg-danger-subtle text-danger-emphasis' },
+      { k: /rembours(e|é)e?/i, cls: 'bg-secondary-subtle text-secondary-emphasis' }
+    ];
+    document.querySelectorAll('.status-badge').forEach(b => {
+      const t = (b.textContent || '').trim();
+      map.some(m => {
+        if (m.k.test(t)) { b.className = 'badge status-badge ' + m.cls; return true; }
+        return false;
+      });
+    });
+  })();
+</script>
+{% endblock %}

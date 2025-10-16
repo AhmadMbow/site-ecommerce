@@ -1,0 +1,1016 @@
+{% extends "livreur/base_livreur.html" %}
+
+{% block title %}Statistiques & Encaissements - DashLivr{% endblock %}
+{% block header %}Tableau de Bord Statistiques{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-warning: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --gradient-gold: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+
+  .stats-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Header Section */
+  .stats-header {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stats-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-date {
+    color: #6c757d;
+    font-size: 1rem;
+  }
+
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .kpi-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+  }
+
+  .kpi-card.success::before { background: var(--gradient-success); }
+  .kpi-card.warning::before { background: var(--gradient-warning); }
+  .kpi-card.info::before { background: var(--gradient-info); }
+  .kpi-card.gold::before { background: var(--gradient-gold); }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+
+  .kpi-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .kpi-icon.success { background: var(--gradient-success); }
+  .kpi-icon.warning { background: var(--gradient-warning); }
+  .kpi-icon.info { background: var(--gradient-info); }
+  .kpi-icon.gold { background: var(--gradient-gold); }
+
+  .kpi-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .kpi-trend.up {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .kpi-trend.neutral {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .kpi-content h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6c757d;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .kpi-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .kpi-value.success { color: #11998e; }
+  .kpi-value.warning { color: #f5576c; }
+  .kpi-value.info { color: #4facfe; }
+  .kpi-value.gold { color: #f7971e; }
+
+  .kpi-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+  }
+
+  /* Encaissement Section */
+  .encaissement-section {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-title i {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-gold);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .encaissement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .encaissement-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius);
+    padding: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .encaissement-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.1); opacity: 0.5; }
+  }
+
+  .encaissement-label {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .encaissement-amount {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin: 1rem 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+
+  .encaissement-detail {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .encaissement-card.alt-1 {
+    background: var(--gradient-success);
+  }
+
+  .encaissement-card.alt-2 {
+    background: var(--gradient-info);
+  }
+
+  .encaissement-card.alt-3 {
+    background: var(--gradient-warning);
+  }
+
+  /* Charts Section */
+  .charts-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .chart-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .chart-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Status Distribution */
+  .status-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .status-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .status-icon.pending { background: var(--gradient-warning); }
+  .status-icon.progress { background: var(--gradient-info); }
+  .status-icon.completed { background: var(--gradient-success); }
+
+  .status-details {
+    flex: 1;
+  }
+
+  .status-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .status-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+  }
+
+  .status-bar-container {
+    width: 100%;
+    height: 12px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .status-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .status-bar-fill.pending { background: var(--gradient-warning); }
+  .status-bar-fill.progress { background: var(--gradient-info); }
+  .status-bar-fill.completed { background: var(--gradient-success); }
+
+  /* Monthly Evolution */
+  .monthly-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 300px;
+    padding: 2rem 1rem 1rem;
+    background: linear-gradient(180deg, #f8f9fa 0%, white 100%);
+    border-radius: var(--radius-sm);
+  }
+
+  .month-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+  }
+
+  .month-bar-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .month-bar {
+    width: 60%;
+    background: var(--gradient-primary);
+    border-radius: 8px 8px 0 0;
+    min-height: 10px;
+    position: relative;
+    transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .month-bar:hover {
+    transform: scaleY(1.05);
+    filter: brightness(1.1);
+  }
+
+  .month-value {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #667eea;
+    white-space: nowrap;
+  }
+
+  .month-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+  }
+
+  .month-revenue {
+    font-size: 0.75rem;
+    color: #11998e;
+    font-weight: 600;
+  }
+
+  /* Performance Metrics */
+  .performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .performance-item {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .performance-item::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .performance-item:hover::before {
+    opacity: 1;
+  }
+
+  .performance-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  .performance-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Liste des commandes à encaisser */
+  .encaissement-list-section {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .encaissement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .encaissement-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, white 100%);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid;
+    transition: all 0.3s ease;
+  }
+
+  .encaissement-item:hover {
+    transform: translateX(10px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .encaissement-item.en-cours {
+    border-left-color: #4facfe;
+  }
+
+  .encaissement-item.livree {
+    border-left-color: #11998e;
+  }
+
+  .encaissement-item-info h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .encaissement-item-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+
+  .encaissement-item-amount {
+    text-align: right;
+  }
+
+  .montant-total {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+  }
+
+  .frais-livraison {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #11998e;
+  }
+
+  .badge-status {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .badge-status.en-cours {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
+
+  .badge-status.livree {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .charts-section {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stats-container {
+      padding: 1rem;
+    }
+
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .encaissement-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .monthly-chart {
+      overflow-x: auto;
+      padding: 1rem;
+    }
+
+    .month-bar {
+      width: 30px;
+    }
+
+    .stats-header {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .performance-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .kpi-card, .chart-card, .encaissement-card {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-container">
+  
+  <!-- Header -->
+  <div class="stats-header">
+    <div>
+      <h1><i class="fas fa-chart-line"></i> Tableau de Bord</h1>
+      <p class="stats-date"><i class="far fa-calendar"></i> {{ today|date:"l d F Y" }}</p>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <!-- Total Commandes -->
+    <div class="kpi-card info">
+      <div class="kpi-header">
+        <div class="kpi-icon info">
+          <i class="fas fa-box"></i>
+        </div>
+        {% if stats.count_all > 0 %}
+        <div class="kpi-trend neutral">
+          <i class="fas fa-equals"></i>
+          <span>Total</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="kpi-content">
+        <h3>Commandes Totales</h3>
+        <p class="kpi-value info">{{ stats.count_all }}</p>
+        <p class="kpi-subtitle">Toutes mes livraisons</p>
+      </div>
+    </div>
+
+    <!-- Commandes Livrées -->
+    <div class="kpi-card success">
+      <div class="kpi-header">
+        <div class="kpi-icon success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        {% if stats.completed > 0 %}
+        <div class="kpi-trend up">
+          <i class="fas fa-arrow-up"></i>
+          <span>{% widthratio stats.completed stats.count_all 100 %}%</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="kpi-content">
+        <h3>Livrées avec Succès</h3>
+        <p class="kpi-value success">{{ stats.completed }}</p>
+        <p class="kpi-subtitle">Mission accomplie !</p>
+      </div>
+    </div>
+
+    <!-- En Cours -->
+    <div class="kpi-card warning">
+      <div class="kpi-header">
+        <div class="kpi-icon warning">
+          <i class="fas fa-truck-loading"></i>
+        </div>
+        {% if stats.in_progress > 0 %}
+        <div class="kpi-trend neutral">
+          <i class="fas fa-sync-alt"></i>
+          <span>Actif</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="kpi-content">
+        <h3>En Cours de Livraison</h3>
+        <p class="kpi-value warning">{{ stats.in_progress }}</p>
+        <p class="kpi-subtitle">À terminer aujourd'hui</p>
+      </div>
+    </div>
+
+    <!-- Livrées Aujourd'hui -->
+    <div class="kpi-card gold">
+      <div class="kpi-header">
+        <div class="kpi-icon gold">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        {% if stats.delivered_today > 0 %}
+        <div class="kpi-trend up">
+          <i class="fas fa-fire"></i>
+          <span>Aujourd'hui</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="kpi-content">
+        <h3>Livrées Aujourd'hui</h3>
+        <p class="kpi-value gold">{{ stats.delivered_today }}</p>
+        <p class="kpi-subtitle">Performance du jour</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Encaissement Section -->
+  <div class="encaissement-section">
+    <h2 class="section-title">
+      <i class="fas fa-hand-holding-usd"></i>
+      Mes Encaissements
+    </h2>
+    
+    <div class="encaissement-grid">
+      <!-- Total à Encaisser -->
+      <div class="encaissement-card">
+        <div class="encaissement-label">
+          <i class="fas fa-wallet"></i> Total Gagné
+        </div>
+        <div class="encaissement-amount">{{ stats.revenue_total|floatformat:0 }} FCFA</div>
+        <div class="encaissement-detail">
+          <i class="fas fa-info-circle"></i>
+          {{ stats.completed }} livraisons × {{ stats.frais_livraison|floatformat:0 }} FCFA
+        </div>
+      </div>
+
+      <!-- Encaissement du Jour -->
+      <div class="encaissement-card alt-1">
+        <div class="encaissement-label">
+          <i class="fas fa-calendar-day"></i> Aujourd'hui
+        </div>
+        <div class="encaissement-amount">{{ stats.revenue_today|floatformat:0 }} FCFA</div>
+        <div class="encaissement-detail">
+          <i class="fas fa-check-double"></i>
+          {{ stats.delivered_today }} livraison(s) livrée(s)
+        </div>
+      </div>
+
+      <!-- Encaissement du Mois -->
+      <div class="encaissement-card alt-2">
+        <div class="encaissement-label">
+          <i class="fas fa-calendar-alt"></i> Ce Mois
+        </div>
+        <div class="encaissement-amount">{{ stats.revenue_this_month|floatformat:0 }} FCFA</div>
+        <div class="encaissement-detail">
+          <i class="fas fa-trophy"></i>
+          Performance mensuelle
+        </div>
+      </div>
+
+      <!-- Frais par Livraison -->
+      <div class="encaissement-card alt-3">
+        <div class="encaissement-label">
+          <i class="fas fa-money-bill-wave"></i> Frais Unitaire
+        </div>
+        <div class="encaissement-amount">{{ stats.frais_livraison|floatformat:0 }} FCFA</div>
+        <div class="encaissement-detail">
+          <i class="fas fa-shipping-fast"></i>
+          Par livraison réussie
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <!-- Status Distribution -->
+    <div class="chart-card">
+      <h3 class="chart-title">
+        <i class="fas fa-chart-pie"></i> Répartition par Statut
+      </h3>
+      <div class="status-distribution">
+        <!-- En Attente -->
+        <div class="status-item">
+          <div class="status-icon pending">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="status-details">
+            <div class="status-name">
+              <span>En Attente</span>
+              <span class="status-count">{{ stats.pending }}</span>
+            </div>
+            <div class="status-bar-container">
+              <div class="status-bar-fill pending" style="width: {% if stats.count_all > 0 %}{% widthratio stats.pending stats.count_all 100 %}%{% else %}0%{% endif %};"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- En Cours -->
+        <div class="status-item">
+          <div class="status-icon progress">
+            <i class="fas fa-truck"></i>
+          </div>
+          <div class="status-details">
+            <div class="status-name">
+              <span>En Cours</span>
+              <span class="status-count">{{ stats.in_progress }}</span>
+            </div>
+            <div class="status-bar-container">
+              <div class="status-bar-fill progress" style="width: {% if stats.count_all > 0 %}{% widthratio stats.in_progress stats.count_all 100 %}%{% else %}0%{% endif %};"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Livrées -->
+        <div class="status-item">
+          <div class="status-icon completed">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="status-details">
+            <div class="status-name">
+              <span>Livrées</span>
+              <span class="status-count">{{ stats.completed }}</span>
+            </div>
+            <div class="status-bar-container">
+              <div class="status-bar-fill completed" style="width: {% if stats.count_all > 0 %}{% widthratio stats.completed stats.count_all 100 %}%{% else %}0%{% endif %};"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Evolution -->
+    <div class="chart-card">
+      <h3 class="chart-title">
+        <i class="fas fa-chart-bar"></i> Évolution Mensuelle
+      </h3>
+      {% if monthly_stats %}
+      <div class="monthly-chart">
+        {% for month_data in monthly_stats %}
+        <div class="month-column">
+          <div class="month-bar-container">
+            <div class="month-bar" data-height="{{ month_data.count|default:0 }}">
+              <span class="month-value">{{ month_data.count }}</span>
+            </div>
+          </div>
+          <div class="month-label">{{ month_data.month|date:"M" }}</div>
+          <div class="month-revenue">{{ month_data.revenue|floatformat:0 }} F</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="text-align: center; color: #6c757d; padding: 2rem;">
+        <i class="fas fa-info-circle"></i> Aucune donnée disponible
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Performance Metrics -->
+  <div class="chart-card">
+    <h3 class="chart-title">
+      <i class="fas fa-tachometer-alt"></i> Indicateurs de Performance
+    </h3>
+    <div class="performance-grid">
+      <div class="performance-item">
+        <div class="performance-label">Taux de Réussite</div>
+        <div class="performance-value">
+          {% if stats.count_all > 0 %}
+            {% widthratio stats.completed stats.count_all 100 %}%
+          {% else %}
+            0%
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="performance-item">
+        <div class="performance-label">Commandes Actives</div>
+        <div class="performance-value">{{ stats.in_progress }}</div>
+      </div>
+
+      <div class="performance-item">
+        <div class="performance-label">Moyenne / Jour</div>
+        <div class="performance-value">
+          {% if stats.delivered_today > 0 %}
+            {{ stats.delivered_today }}
+          {% else %}
+            0
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="performance-item">
+        <div class="performance-label">Revenu / Livraison</div>
+        <div class="performance-value">{{ stats.frais_livraison|floatformat:0 }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des Commandes à Encaisser -->
+  {% if orders_to_collect %}
+  <div class="encaissement-list-section">
+    <h2 class="section-title">
+      <i class="fas fa-clipboard-list"></i>
+      Commandes à Encaisser
+    </h2>
+    <div class="encaissement-list">
+      {% for order in orders_to_collect %}
+      <div class="encaissement-item {% if order.statut == 'EN_COURS' %}en-cours{% else %}livree{% endif %}">
+        <div class="encaissement-item-info">
+          <h4>
+            <i class="fas fa-box"></i> Commande #{{ order.id }}
+            <span class="badge-status {% if order.statut == 'EN_COURS' %}en-cours{% else %}livree{% endif %}">
+              {{ order.get_statut_display }}
+            </span>
+          </h4>
+          <div class="encaissement-item-details">
+            <span><i class="fas fa-user"></i> {{ order.user.get_full_name|default:order.user.username }}</span>
+            <span><i class="far fa-calendar"></i> {{ order.date_commande|date:"d/m/Y H:i" }}</span>
+            {% if order.latitude and order.longitude %}
+            <span><i class="fas fa-map-marker-alt"></i> Position GPS</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="encaissement-item-amount">
+          <div class="montant-total">
+            Total: {{ order.total|floatformat:0 }} FCFA
+          </div>
+          <div class="frais-livraison">
+            <i class="fas fa-coins"></i> {{ stats.frais_livraison|floatformat:0 }} FCFA
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Animation des barres mensuelles
+  const monthBars = document.querySelectorAll('.month-bar[data-height]');
+  const maxHeight = Math.max(...Array.from(monthBars).map(bar => parseInt(bar.dataset.height) || 0));
+  
+  setTimeout(() => {
+    monthBars.forEach(bar => {
+      const value = parseInt(bar.dataset.height) || 0;
+      const heightPercent = maxHeight > 0 ? (value / maxHeight) * 100 : 0;
+      const minHeight = value > 0 ? 20 : 10; // Minimum 20% si valeur > 0
+      const finalHeight = Math.max(minHeight, heightPercent);
+      bar.style.height = finalHeight + '%';
+    });
+  }, 300);
+
+  // Compteur animé pour les KPI
+  const animateValue = (element, start, end, duration) => {
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+        current = end;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(current).toLocaleString('fr-FR');
+    }, 16);
+  };
+
+  // Animation des valeurs numériques au chargement
+  const kpiValues = document.querySelectorAll('.kpi-value, .encaissement-amount');
+  kpiValues.forEach(element => {
+    const text = element.textContent.trim();
+    const match = text.match(/[\d\s,]+/);
+    if (match) {
+      const value = parseInt(match[0].replace(/\s/g, '').replace(/,/g, ''));
+      if (!isNaN(value)) {
+        element.textContent = '0';
+        setTimeout(() => {
+          animateValue(element, 0, value, 1500);
+          // Re-add the currency after animation
+          setTimeout(() => {
+            if (text.includes('FCFA')) {
+              element.textContent = element.textContent + ' FCFA';
+            }
+          }, 1500);
+        }, 200);
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

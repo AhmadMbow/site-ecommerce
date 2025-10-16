@@ -1,0 +1,48 @@
+{% extends "adminpanel/base_admin.html" %}
+{% block title %}{% if mode == 'update' %}Modifier un livreur{% else %}Nouveau livreur{% endif %}{% endblock %}
+{% block header %}{% if mode == 'update' %}Modifier un livreur{% else %}Nouveau livreur{% endif %}{% endblock %}
+{% block content %}
+{% if mode == 'create' %}
+<form method="post" enctype="multipart/form-data" class="card">
+  <div class="card-body">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Nom d’utilisateur</label>{{ form.username }}</div>
+      <div class="col-md-6"><label class="form-label">Email</label>{{ form.email }}</div>
+      <div class="col-md-6"><label class="form-label">Prénom</label>{{ form.first_name }}</div>
+      <div class="col-md-6"><label class="form-label">Nom</label>{{ form.last_name }}</div>
+      <div class="col-md-6"><label class="form-label">Mot de passe</label>{{ form.password1 }}</div>
+      <div class="col-md-6"><label class="form-label">Confirmer le mot de passe</label>{{ form.password2 }}</div>
+      <div class="col-md-6"><label class="form-label">Téléphone</label>{{ form.phone }}</div>
+      <div class="col-md-6"><label class="form-label">Adresse</label>{{ form.address }}</div>
+      <div class="col-md-6"><label class="form-label">Photo</label>{{ form.photo }}</div>
+    </div>
+  </div>
+  <div class="card-footer d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'admin_livreurs_list' %}">Annuler</a>
+    <button class="btn btn-primary" type="submit">Enregistrer</button>
+  </div>
+</form>
+{% else %}
+<form method="post" enctype="multipart/form-data" class="card">
+  <div class="card-body">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Prénom</label>{{ uform.first_name }}</div>
+      <div class="col-md-6"><label class="form-label">Nom</label>{{ uform.last_name }}</div>
+      <div class="col-md-6"><label class="form-label">Email</label>{{ uform.email }}</div>
+      <div class="col-md-6">
+        <label class="form-label">Actif</label><div>{{ uform.is_active }}</div>
+      </div>
+      <div class="col-md-6"><label class="form-label">Téléphone</label>{{ pform.phone }}</div>
+      <div class="col-md-6"><label class="form-label">Adresse</label>{{ pform.address }}</div>
+      <div class="col-md-6"><label class="form-label">Photo</label>{{ pform.photo }}</div>
+    </div>
+  </div>
+  <div class="card-footer d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'admin_livreurs_list' %}">Annuler</a>
+    <button class="btn btn-primary" type="submit">Enregistrer</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

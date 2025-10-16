@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Donner un avis{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-3">Donner un avis</h1>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="mb-3">
+        <strong>Produit:</strong>
+        <span>{{ item.produit.nom }}</span>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label for="note" class="form-label">Note (1 à 5)</label>
+          <input type="number" name="note" id="note" class="form-control" min="1" max="5" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="commentaire" class="form-label">Commentaire (optionnel)</label>
+          <textarea name="commentaire" id="commentaire" class="form-control" rows="4" placeholder="Partagez votre avis..."></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Envoyer</button>
+          <a href="{% url 'mes_commandes' %}" class="btn btn-outline-secondary">Retour</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+</div>
+{% endblock %}

@@ -1,0 +1,943 @@
+{% extends "adminpanel/base_admin.html" %}
+{% load static %}
+{% block title %}{{ client.username }} | Détails Client{% endblock %}
+{% block header %}Détails du Client{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --card-shadow-hover: 0 8px 32px rgba(102, 126, 234, 0.2);
+    --radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+  }
+
+  /* Back Button Ultra */
+  .back-button-ultra {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: var(--transition);
+    box-shadow: var(--card-shadow);
+  }
+
+  .back-button-ultra:hover {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateX(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  /* Client Header */
+  .client-header-card {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .client-header-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--primary-gradient);
+  }
+
+  .client-header-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(102,126,234,0.1), transparent);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-30px, -30px) rotate(180deg); }
+  }
+
+  .client-name-ultra {
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Profile Card Ultra-Premium */
+  .profile-card-ultra {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    position: relative;
+    transition: var(--transition);
+  }
+
+  .profile-card-ultra:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .profile-header-ultra {
+    background: var(--primary-gradient);
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-header-ultra::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .avatar-wrapper-ultra {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .avatar-ultra {
+    width: 150px;
+    height: 150px;
+    border-radius: 1.5rem;
+    object-fit: cover;
+    border: 5px solid white;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: var(--transition);
+  }
+
+  .avatar-ultra:hover {
+    transform: scale(1.05) rotate(5deg);
+  }
+
+  .profile-username {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .profile-handle {
+    color: rgba(255,255,255,0.9);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .profile-body-ultra {
+    padding: 2rem;
+  }
+
+  .status-badge-detail {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .status-badge-detail.active {
+    background: var(--success-gradient);
+    color: white;
+  }
+
+  .status-badge-detail.inactive {
+    background: var(--danger-gradient);
+    color: white;
+  }
+
+  /* Stats Mini Cards */
+  .mini-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .mini-stat-card {
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    padding: 1rem;
+    border-radius: 0.75rem;
+    text-align: center;
+    border: 2px solid rgba(102,126,234,0.1);
+    transition: var(--transition);
+  }
+
+  .mini-stat-card:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-color: rgba(102,126,234,0.3);
+    transform: translateY(-3px);
+  }
+
+  .mini-stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #667eea;
+    margin-bottom: 0.25rem;
+  }
+
+  .mini-stat-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Info Card Ultra */
+  .info-card-ultra {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    transition: var(--transition);
+  }
+
+  .info-card-ultra:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .info-header-ultra {
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    padding: 1.5rem;
+    border-bottom: 2px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .info-header-ultra h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #1a1f26;
+    font-size: 1.25rem;
+  }
+
+  .info-header-ultra i {
+    font-size: 1.5rem;
+    color: #667eea;
+  }
+
+  .info-body-ultra {
+    padding: 2rem;
+  }
+
+  .info-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .info-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .info-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1f26;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    border-radius: 0.5rem;
+    border-left: 4px solid #667eea;
+  }
+
+  .info-value a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+
+  .info-value a:hover {
+    color: #764ba2;
+    transform: translateX(5px);
+  }
+
+  .info-empty {
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  /* Action Buttons Ultra */
+  .actions-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .action-btn-ultra {
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: var(--transition);
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .action-btn-ultra.primary {
+    background: var(--primary-gradient);
+    color: white;
+  }
+
+  .action-btn-ultra.success {
+    background: var(--success-gradient);
+    color: white;
+  }
+
+  .action-btn-ultra.warning {
+    background: var(--warning-gradient);
+    color: white;
+  }
+
+  .action-btn-ultra.danger {
+    background: var(--danger-gradient);
+    color: white;
+  }
+
+  .action-btn-ultra:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+
+  /* Timeline */
+  .timeline-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+
+  .timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .timeline-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #1a1f26;
+    font-size: 1.25rem;
+  }
+
+  .timeline-header i {
+    font-size: 1.5rem;
+    color: #667eea;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #667eea, #764ba2);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 2rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    background: white;
+    border: 3px solid #667eea;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+  }
+
+  .timeline-content {
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border-left: 4px solid #667eea;
+  }
+
+  .timeline-date {
+    font-size: 0.875rem;
+    color: #667eea;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-text {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animated {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .client-name-ultra {
+      font-size: 1.5rem;
+    }
+
+    .avatar-wrapper-ultra,
+    .avatar-ultra {
+      width: 120px;
+      height: 120px;
+    }
+
+    .info-row {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .mini-stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 py-4">
+
+  <!-- Back Button -->
+  <div class="mb-4 animated">
+    <a href="{% url 'admin_clients_list' %}" class="back-button-ultra">
+      <i class="bi bi-arrow-left"></i>
+      Retour à la liste des clients
+    </a>
+  </div>
+
+  <!-- Client Header -->
+  <div class="client-header-card animated" style="animation-delay: 0.1s;">
+    <div class="d-flex justify-content-between align-items-center position-relative" style="z-index: 1;">
+      <div>
+        <h1 class="client-name-ultra mb-2">
+          {{ client.get_full_name|default:client.username }}
+        </h1>
+        <p class="mb-0" style="color: #64748b; font-size: 1rem; font-weight: 600;">
+          <i class="bi bi-calendar-check me-2"></i>
+          Client depuis le {{ client.date_joined|date:"d F Y" }}
+        </p>
+      </div>
+      <div>
+        {% if client.is_active %}
+          <span class="status-badge-detail active">
+            <i class="bi bi-check-circle-fill"></i>
+            Compte Actif
+          </span>
+        {% else %}
+          <span class="status-badge-detail inactive">
+            <i class="bi bi-x-circle-fill"></i>
+            Compte Inactif
+          </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-lg-4">
+      <div class="profile-card-ultra animated" style="animation-delay: 0.2s;">
+        <div class="profile-header-ultra">
+          <div class="avatar-wrapper-ultra">
+            {% if profile and profile.photo %}
+              <img src="{{ profile.photo.url }}" 
+                   alt="{{ client.username }}" 
+                   class="avatar-ultra">
+            {% else %}
+              <img src="https://ui-avatars.com/api/?name={{ client.get_full_name|default:client.username|urlencode }}&background=667eea&color=fff&size=300&font-size=0.4&bold=true" 
+                   alt="{{ client.username }}" 
+                   class="avatar-ultra">
+            {% endif %}
+          </div>
+          <div class="profile-username">{{ client.get_full_name|default:client.username }}</div>
+          <div class="profile-handle">@{{ client.username }}</div>
+        </div>
+        
+        <div class="profile-body-ultra">
+          <div class="mini-stats-grid">
+            <div class="mini-stat-card">
+              <div class="mini-stat-value">{{ client.commande_set.count|default:0 }}</div>
+              <div class="mini-stat-label">Commandes</div>
+            </div>
+            <div class="mini-stat-card">
+              <div class="mini-stat-value">
+                {% if client.commande_set.exists %}
+                  {{ client.commande_set.first.total|default:0|floatformat:0 }}
+                {% else %}
+                  0
+                {% endif %}
+              </div>
+              <div class="mini-stat-label">Dernière</div>
+            </div>
+            <div class="mini-stat-card">
+              <div class="mini-stat-value">
+                {% if client.last_login %}
+                  {{ client.last_login|timesince }}
+                {% else %}
+                  Jamais
+                {% endif %}
+              </div>
+              <div class="mini-stat-label">Connexion</div>
+            </div>
+            <div class="mini-stat-card">
+              <div class="mini-stat-value">{{ client.date_joined|timesince }}</div>
+              <div class="mini-stat-label">Ancienneté</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="col-lg-8">
+      <div class="info-card-ultra animated" style="animation-delay: 0.3s;">
+        <div class="info-header-ultra">
+          <i class="bi bi-info-circle-fill"></i>
+          <h5>Informations Détaillées</h5>
+        </div>
+        
+        <div class="info-body-ultra">
+          <div class="info-row">
+            <div class="info-item">
+              <div class="info-label">
+                <i class="bi bi-envelope-fill" style="color: #667eea;"></i>
+                Adresse Email
+              </div>
+              <div class="info-value">
+                {% if client.email %}
+                  <a href="mailto:{{ client.email }}">
+                    <i class="bi bi-send-fill"></i>
+                    {{ client.email }}
+                  </a>
+                {% else %}
+                  <span class="info-empty">Non renseigné</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">
+                <i class="bi bi-telephone-fill" style="color: #10b981;"></i>
+                Téléphone
+              </div>
+              <div class="info-value" style="border-color: #10b981;">
+                {% if profile and profile.phone %}
+                  <a href="tel:{{ profile.phone }}" style="color: #10b981;">
+                    <i class="bi bi-phone-fill"></i>
+                    {{ profile.phone }}
+                  </a>
+                {% else %}
+                  <span class="info-empty">Non renseigné</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-item">
+              <div class="info-label">
+                <i class="bi bi-calendar-check" style="color: #3b82f6;"></i>
+                Date d'Inscription
+              </div>
+              <div class="info-value" style="border-color: #3b82f6;">
+                <i class="bi bi-calendar3"></i>
+                {{ client.date_joined|date:"d F Y à H:i" }}
+                <small style="color: #94a3b8; margin-left: 0.5rem;">({{ client.date_joined|timesince }})</small>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">
+                <i class="bi bi-clock-history" style="color: #f59e0b;"></i>
+                Dernière Connexion
+              </div>
+              <div class="info-value" style="border-color: #f59e0b;">
+                {% if client.last_login %}
+                  <i class="bi bi-clock"></i>
+                  {{ client.last_login|date:"d F Y à H:i" }}
+                  <small style="color: #94a3b8; margin-left: 0.5rem;">({{ client.last_login|timesince }})</small>
+                {% else %}
+                  <span class="info-empty">
+                    <i class="bi bi-dash-circle"></i>
+                    Jamais connecté
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {% if profile and profile.address %}
+            <div class="info-row">
+              <div class="info-item" style="grid-column: 1 / -1;">
+                <div class="info-label">
+                  <i class="bi bi-geo-alt-fill" style="color: #ef4444;"></i>
+                  Adresse Complète
+                </div>
+                <div class="info-value" style="border-color: #ef4444;">
+                  <i class="bi bi-house-fill"></i>
+                  {{ profile.address }}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if profile and profile.city %}
+            <div class="info-row">
+              <div class="info-item">
+                <div class="info-label">
+                  <i class="bi bi-building" style="color: #8b5cf6;"></i>
+                  Ville
+                </div>
+                <div class="info-value" style="border-color: #8b5cf6;">
+                  <i class="bi bi-geo"></i>
+                  {{ profile.city }}
+                </div>
+              </div>
+
+              {% if profile.postal_code %}
+                <div class="info-item">
+                  <div class="info-label">
+                    <i class="bi bi-mailbox" style="color: #06b6d4;"></i>
+                    Code Postal
+                  </div>
+                  <div class="info-value" style="border-color: #06b6d4;">
+                    <i class="bi bi-pin-map-fill"></i>
+                    {{ profile.postal_code }}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline-card animated" style="animation-delay: 0.4s;">
+        <div class="timeline-header">
+          <i class="bi bi-clock-history"></i>
+          <h5>Historique d'Activité</h5>
+        </div>
+        
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-date">
+                <i class="bi bi-calendar-event me-1"></i>
+                {{ client.date_joined|date:"d F Y" }}
+              </div>
+              <p class="timeline-text">
+                <strong>Inscription</strong> - Création du compte client
+              </p>
+            </div>
+          </div>
+
+          {% if client.last_login %}
+            <div class="timeline-item">
+              <div class="timeline-content">
+                <div class="timeline-date">
+                  <i class="bi bi-box-arrow-in-right me-1"></i>
+                  {{ client.last_login|date:"d F Y à H:i" }}
+                </div>
+                <p class="timeline-text">
+                  <strong>Dernière connexion</strong> - Activité récente
+                </p>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if client.commande_set.exists %}
+            <div class="timeline-item">
+              <div class="timeline-content">
+                <div class="timeline-date">
+                  <i class="bi bi-cart-check me-1"></i>
+                  {{ client.commande_set.first.date_commande|date:"d F Y" }}
+                </div>
+                <p class="timeline-text">
+                  <strong>Commandes</strong> - {{ client.commande_set.count }} commande{{ client.commande_set.count|pluralize }} passée{{ client.commande_set.count|pluralize }}
+                </p>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-date">
+                <i class="bi bi-check-circle me-1"></i>
+                Maintenant
+              </div>
+              <p class="timeline-text">
+                <strong>Statut</strong> - Compte {% if client.is_active %}actif et opérationnel{% else %}inactif{% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions-card animated" style="animation-delay: 0.5s;">
+    <div class="timeline-header" style="margin-bottom: 1.5rem;">
+      <i class="bi bi-lightning-charge-fill"></i>
+      <h5>Actions Rapides</h5>
+    </div>
+    
+    <div class="actions-grid">
+      {% if client.email %}
+        <a href="mailto:{{ client.email }}" class="action-btn-ultra primary">
+          <i class="bi bi-envelope-fill"></i>
+          Envoyer un Email
+        </a>
+      {% endif %}
+
+      <a href="{% url 'admin_client_toggle_active' client.id %}" 
+         class="action-btn-ultra {% if client.is_active %}warning{% else %}success{% endif %}"
+         onclick="return confirm('Voulez-vous {% if client.is_active %}désactiver{% else %}activer{% endif %} ce compte client ?')">
+        <i class="bi bi-{% if client.is_active %}ban{% else %}check-circle{% endif %}"></i>
+        {% if client.is_active %}Désactiver le Compte{% else %}Activer le Compte{% endif %}
+      </a>
+
+      <button class="action-btn-ultra primary" onclick="viewOrders()">
+        <i class="bi bi-cart-fill"></i>
+        Voir les Commandes
+      </button>
+
+      <button class="action-btn-ultra danger" onclick="showDeleteConfirm()">
+        <i class="bi bi-trash-fill"></i>
+        Supprimer le Client
+      </button>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // View orders function
+  function viewOrders() {
+    showNotification('Redirection vers les commandes...', 'info');
+    setTimeout(() => {
+      window.location.href = "{% url 'admin_orders' %}?client={{ client.id }}";
+    }, 1000);
+  }
+
+  // Delete confirmation
+  function showDeleteConfirm() {
+    if (confirm('⚠️ ATTENTION !\n\nÊtes-vous absolument certain de vouloir supprimer ce client ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n- Le compte client\n- Toutes ses commandes\n- Toutes ses données personnelles\n\nTapez "SUPPRIMER" pour confirmer.')) {
+      const confirmation = prompt('Tapez "SUPPRIMER" en majuscules pour confirmer :');
+      if (confirmation === 'SUPPRIMER') {
+        showNotification('Suppression en cours...', 'warning');
+        // Ajouter ici la logique de suppression
+        setTimeout(() => {
+          showNotification('Client supprimé avec succès', 'success');
+        }, 1500);
+      } else {
+        showNotification('Suppression annulée', 'info');
+      }
+    }
+  }
+
+  // Notification system
+  function showNotification(message, type = 'success') {
+    const colors = {
+      success: 'linear-gradient(135deg, #10b981, #059669)',
+      error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+      info: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+      warning: 'linear-gradient(135deg, #f59e0b, #d97706)'
+    };
+
+    const icons = {
+      success: 'check-circle-fill',
+      error: 'x-circle-fill',
+      info: 'info-circle-fill',
+      warning: 'exclamation-triangle-fill'
+    };
+
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: ${colors[type]};
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      animation: slideInRight 0.3s ease-out;
+    `;
+    
+    notification.innerHTML = `
+      <i class="bi bi-${icons[type]}" style="font-size: 1.25rem;"></i>
+      ${message}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-out';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  // Print profile
+  function printProfile() {
+    window.print();
+  }
+</script>
+
+<style>
+  @keyframes slideInRight {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+
+  @media print {
+    .back-button-ultra,
+    .actions-card {
+      display: none !important;
+    }
+  }
+</style>
+{% endblock %}

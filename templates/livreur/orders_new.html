@@ -1,0 +1,48 @@
+{% extends "livreur/base_livreur.html" %}
+
+{% block title %}Gestion des Commandes - DashLivr{% endblock %}
+{% block header %}Gestion des Commandes{% endblock %}
+
+{% block content %}
+<!-- Hero Stats Banner -->
+<div class="stats-banner">
+  <div class="stat-card stat-all">
+    <div class="stat-icon">
+      <i class="fas fa-boxes"></i>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Total</div>
+      <div class="stat-value">{{ stats.count_all }}</div>
+    </div>
+  </div>
+  
+  <div class="stat-card stat-pending">
+    <div class="stat-icon">
+      <i class="fas fa-clock"></i>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">En Attente</div>
+      <div class="stat-value">{{ stats.pending }}</div>
+    </div>
+  </div>
+  
+  <div class="stat-card stat-progress">
+    <div class="stat-icon">
+      <i class="fas fa-shipping-fast"></i>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">En Cours</div>
+      <div class="stat-value">{{ stats.in_progress }}</div>
+    </div>
+  </div>
+  
+  <div class="stat-card stat-completed">
+    <div class="stat-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="stat-content">
+      <div class="stat-label">Livrées</div>
+      <div class="stat-value">{{ stats.completed }}</div>
+    </div>
+  </div>
+</div>

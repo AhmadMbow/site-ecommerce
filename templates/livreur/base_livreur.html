@@ -1,0 +1,1460 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <meta name="theme-color" content="#667eea" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)" />
+  <meta name="description" content="DashLivr Pro - Dashboard professionnel de référence pour livreurs" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <title>{% block title %}DashLivr Pro | Tableau de bord livreur{% endblock %}</title>
+
+  <!-- Preconnect for Performance -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+  
+  <!-- Custom Styles -->
+  <style>
+    :root {
+      /* Colors */
+      --primary: #667eea;
+      --primary-dark: #5568d3;
+      --secondary: #764ba2;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      
+      /* Gradients */
+      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      --gradient-warning: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
+      --gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      
+      /* Light Theme */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+      --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
+      
+      /* Spacing */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --space-2xl: 3rem;
+      
+      /* Border Radius */
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      --radius-2xl: 1.5rem;
+      --radius-full: 9999px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Sizes */
+      --sidebar-width: 280px;
+      --sidebar-collapsed: 80px;
+      --header-height: 70px;
+      
+      /* Z-index */
+      --z-sidebar: 1000;
+      --z-header: 900;
+      --z-dropdown: 1100;
+      --z-modal: 1200;
+      --z-toast: 1300;
+    }
+    
+    [data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+      --shadow-xl: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      overflow-x: hidden;
+      transition: background-color var(--transition-base);
+    }
+    
+    /* Skip Link for Accessibility */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--primary);
+      color: white;
+      padding: var(--space-sm) var(--space-md);
+      text-decoration: none;
+      border-radius: 0 0 var(--radius-md) 0;
+      z-index: 10000;
+      transition: top var(--transition-fast);
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    /* App Layout */
+    .app {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: var(--z-sidebar);
+      transition: all var(--transition-base);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+    }
+    
+    .sidebar.collapsed .brand,
+    .sidebar.collapsed .nav-link span,
+    .sidebar.collapsed .driver-details {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .sidebar-header {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-lg);
+      border-bottom: 1px solid var(--border-color);
+      background: var(--gradient-primary);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sidebar-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+    
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      font-size: 1.5rem;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .logo i {
+      font-size: 1.8rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .brand {
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+      letter-spacing: -0.5px;
+    }
+    
+    .sidebar-toggle {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: all var(--transition-fast);
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+    }
+    
+    .sidebar-toggle:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
+    
+    /* Sidebar Navigation */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: var(--space-lg) var(--space-md);
+    }
+    
+    .sidebar-nav::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .sidebar-nav::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .sidebar-nav::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: var(--radius-full);
+    }
+    
+    .sidebar-nav ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-lg);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--gradient-primary);
+      transform: scaleY(0);
+      transition: transform var(--transition-fast);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    
+    .nav-link:hover {
+      background: var(--bg-tertiary);
+      color: var(--primary);
+      transform: translateX(5px);
+    }
+    
+    .nav-link:hover::before {
+      transform: scaleY(1);
+    }
+    
+    .nav-link.active {
+      background: var(--gradient-primary);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .nav-link.active::before {
+      transform: scaleY(1);
+      background: white;
+    }
+    
+    .nav-link i {
+      font-size: 1.2rem;
+      width: 24px;
+      text-align: center;
+      transition: transform var(--transition-fast);
+    }
+    
+    .nav-link:hover i,
+    .nav-link.active i {
+      transform: scale(1.2);
+    }
+    
+    .nav-link span {
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+      white-space: nowrap;
+    }
+    
+    /* Sidebar Footer */
+    .sidebar-footer {
+      padding: var(--space-lg);
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+    }
+    
+    .driver-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    
+    .driver-info:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .driver-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-full);
+      object-fit: cover;
+      border: 3px solid var(--primary);
+      box-shadow: 0 0 0 2px var(--bg-secondary);
+    }
+    
+    .driver-details {
+      flex: 1;
+      min-width: 0;
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+    }
+    
+    .driver-name {
+      display: block;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .driver-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: 0.85rem;
+      color: var(--success);
+      font-weight: 500;
+    }
+    
+    .driver-status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: var(--radius-full);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left var(--transition-base);
+    }
+    
+    .main-content.expanded {
+      margin-left: var(--sidebar-collapsed);
+    }
+    
+    /* Top Header */
+    .top-header {
+      height: var(--header-height);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-xl);
+      position: sticky;
+      top: 0;
+      z-index: var(--z-header);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(10px);
+      transition: all var(--transition-base);
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+    }
+    
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    
+    .mobile-menu-btn:hover {
+      background: var(--bg-tertiary);
+    }
+    
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      letter-spacing: -0.5px;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+    
+    /* Global Search */
+    .global-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .global-search i {
+      position: absolute;
+      left: var(--space-md);
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: color var(--transition-fast);
+    }
+    
+    .global-search input {
+      width: 300px;
+      padding: var(--space-sm) var(--space-md) var(--space-sm) 2.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-full);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+    
+    .global-search input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      width: 350px;
+    }
+    
+    .global-search input:focus + i {
+      color: var(--primary);
+    }
+    
+    /* Pill Button */
+    .pill-btn {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-size: 1.1rem;
+    }
+    
+    .pill-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--gradient-warning);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      min-width: 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+      animation: notification-pop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    @keyframes notification-pop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    /* Logout Button */
+    .btn-logout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-lg);
+      border: 2px solid var(--danger);
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    
+    .btn-logout:hover {
+      background: var(--danger);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-logout .label {
+      font-weight: 600;
+    }
+    
+    /* Container */
+    .container {
+      flex: 1;
+      padding: var(--space-xl);
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    /* Notifications Panel */
+    .notifications-panel {
+      position: fixed;
+      right: -400px;
+      top: 0;
+      bottom: 0;
+      width: 400px;
+      background: var(--bg-secondary);
+      box-shadow: var(--shadow-xl);
+      z-index: var(--z-dropdown);
+      transition: right var(--transition-base);
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-color);
+    }
+    
+    .notifications-panel.open {
+      right: 0;
+    }
+    
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-xl);
+      border-bottom: 1px solid var(--border-color);
+      background: var(--gradient-primary);
+      color: white;
+    }
+    
+    .panel-head strong {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    
+    .panel-head .pill-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+    
+    .panel-head .pill-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-lg);
+    }
+    
+    .notification-item {
+      display: flex;
+      gap: var(--space-md);
+      padding: var(--space-lg);
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-md);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+    
+    .notification-item:hover {
+      transform: translateX(-5px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .notification-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--gradient-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    
+    .notification-text {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .notification-text > div:first-child {
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .notification-text .muted {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    /* Toasts */
+    .toasts {
+      position: fixed;
+      top: var(--space-xl);
+      right: var(--space-xl);
+      z-index: var(--z-toast);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      max-width: 400px;
+    }
+    
+    .toast {
+      padding: var(--space-lg);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      border-left: 4px solid var(--primary);
+      transform: translateX(500px);
+      opacity: 0;
+      transition: all var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      font-weight: 500;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    
+    .toast.hide {
+      transform: translateX(500px);
+      opacity: 0;
+    }
+    
+    .toast.success { border-left-color: var(--success); }
+    .toast.warning { border-left-color: var(--warning); }
+    .toast.error, .toast.danger { border-left-color: var(--danger); }
+    .toast.info { border-left-color: var(--info); }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: var(--z-modal);
+    }
+    
+    .loading-overlay.active {
+      display: flex;
+    }
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: var(--radius-full);
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .sidebar.collapsed {
+        width: var(--sidebar-width);
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .main-content.expanded {
+        margin-left: 0;
+      }
+      
+      .mobile-menu-btn {
+        display: flex;
+      }
+      
+      .global-search input {
+        width: 200px;
+      }
+      
+      .global-search input:focus {
+        width: 250px;
+      }
+      
+      .btn-logout .label {
+        display: none;
+      }
+      
+      .notifications-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .top-header {
+        padding: 0 var(--space-lg);
+      }
+      
+      .page-title {
+        font-size: 1.25rem;
+      }
+      
+      .global-search {
+        display: none;
+      }
+      
+      .container {
+        padding: var(--space-lg);
+      }
+      
+      .toasts {
+        top: var(--space-lg);
+        right: var(--space-lg);
+        left: var(--space-lg);
+        max-width: none;
+      }
+    }
+    
+    /* Print Styles */
+    @media print {
+      .sidebar,
+      .top-header,
+      .notifications-panel,
+      .toasts {
+        display: none !important;
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+      }
+      
+      .container {
+        max-width: none !important;
+      }
+    }
+    
+    /* Accessibility */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* Focus Styles */
+    *:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    
+    button:focus,
+    a:focus {
+      outline-color: var(--primary);
+    }
+    
+    /* Selection */
+    ::selection {
+      background: var(--primary);
+      color: white;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: var(--radius-full);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+  
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <a href="#main" class="skip-link">Aller au contenu principal</a>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Navigation principale">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fas fa-shipping-fast"></i>
+          <span class="brand">DashLivr Pro</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Basculer la barre latérale" aria-expanded="true">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+
+      {% url 'livreur_dashboard' as URL_DASH %}
+      {% if not URL_DASH %}{% url 'dashboard_livreur' as URL_DASH %}{% endif %}
+      {% url 'livreur_orders' as URL_ORDERS %}
+      {% url 'livreur_map' as URL_MAP %}
+      {% url 'livreur_stats' as URL_STATS %}
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="{{ URL_DASH|default:'#' }}" class="nav-link {% block sb_active_dashboard %}active{% endblock %}" aria-current="{% block sb_aria_dashboard %}page{% endblock %}">
+              <i class="fas fa-home"></i>
+              <span>Tableau de bord</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ URL_ORDERS|default:'#' }}" class="nav-link {% block sb_active_orders %}{% endblock %}" aria-current="{% block sb_aria_orders %}false{% endblock %}">
+              <i class="fas fa-box"></i>
+              <span>Commandes</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ URL_MAP|default:'#' }}" class="nav-link {% block sb_active_map %}{% endblock %}" aria-current="{% block sb_aria_map %}false{% endblock %}">
+              <i class="fas fa-map-marked-alt"></i>
+              <span>Carte</span>
+            </a>
+          </li>
+          <li>
+            <a href="{{ URL_STATS|default:'#' }}" class="nav-link {% block sb_active_stats %}{% endblock %}" aria-current="{% block sb_aria_stats %}false{% endblock %}">
+              <i class="fas fa-chart-line"></i>
+              <span>Statistiques</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'livreur_profile' %}" class="nav-link {% block sb_active_profile %}{% endblock %}" aria-current="{% block sb_aria_profile %}false{% endblock %}">
+              <i class="fas fa-user-circle"></i>
+              <span>Profil</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="driver-info" role="button" tabindex="0" aria-label="Informations du livreur">
+          {% if profile and profile.photo %}
+            <img src="{{ profile.photo.url }}" alt="Photo de {{ user.get_full_name|default:user.username }}" class="driver-avatar">
+          {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=667eea&color=fff&size=64&font-size=0.4&bold=true" alt="Avatar" class="driver-avatar">
+          {% endif %}
+          <div class="driver-details">
+            <span class="driver-name">{{ user.get_full_name|default:user.username }}</span>
+            <span class="driver-status">En ligne</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main" role="main">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Ouvrir le menu" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h1 class="page-title">{% block header %}Tableau de bord{% endblock %}</h1>
+        </div>
+        <div class="header-right">
+          <div class="global-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="globalSearch" placeholder="Rechercher... (appuyez sur /)" aria-label="Recherche globale" />
+          </div>
+          <button class="pill-btn" id="themeToggle" title="Changer le thème (raccourci: t)" aria-label="Changer le thème">
+            <i class="fas fa-moon"></i>
+          </button>
+          <div class="notifications">
+            <button class="pill-btn" id="notificationBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" title="Notifications (raccourci: n)">
+              <i class="fas fa-bell"></i>
+              {% if notifications and notifications|length > 0 %}
+                <span class="notification-badge">{{ notifications|length }}</span>
+              {% endif %}
+            </button>
+          </div>
+          <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout" title="Se déconnecter">
+              <i class="fas fa-power-off"></i>
+              <span class="label">Déconnexion</span>
+            </button>
+          </form>
+        </div>
+      </header>
+
+      <div class="container">
+        {% block content %}
+        <!-- Contenu injecté par les pages -->
+        {% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <!-- Notifications Panel -->
+  <div id="notificationsPanel" class="notifications-panel" role="dialog" aria-modal="false" aria-labelledby="notificationsTitle">
+    <div class="panel-head">
+      <strong id="notificationsTitle">Notifications</strong>
+      <button id="closeNotifications" class="pill-btn small" aria-label="Fermer les notifications">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-body">
+      {% if notifications %}
+        {% for n in notifications %}
+          <div class="notification-item" role="article">
+            <div class="notification-icon">
+              <i class="fas {{ n.icon|default:'fa-info-circle' }}"></i>
+            </div>
+            <div class="notification-text">
+              <div>{{ n.text }}</div>
+              <div class="muted">{{ n.time }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-muted empty" style="text-align: center; padding: var(--space-2xl); color: var(--text-muted);">
+          <i class="fas fa-bell-slash" style="font-size: 3rem; margin-bottom: var(--space-md); opacity: 0.3;"></i>
+          <p>Aucune notification</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Toasts Container -->
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="toast {% if message.tags %}{{ message.tags }}{% endif %}" role="alert">
+          <i class="fas {% if 'success' in message.tags %}fa-check-circle{% elif 'warning' in message.tags %}fa-exclamation-triangle{% elif 'error' in message.tags or 'danger' in message.tags %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    // ========== Configuration ==========
+    const DASHLIVR_CONFIG = {
+      theme: {
+        key: 'dashlivr.theme.v2',
+        default: 'light'
+      },
+      sidebar: {
+        key: 'dashlivr.sidebar.v2',
+        default: true
+      },
+      search: {
+        debounce: 300,
+        minLength: 2
+      },
+      toast: {
+        duration: 4000,
+        animation: 300
+      }
+    };
+
+    // ========== Theme Management ==========
+    (function() {
+      const root = document.documentElement;
+      const key = DASHLIVR_CONFIG.theme.key;
+      const stored = localStorage.getItem(key) || DASHLIVR_CONFIG.theme.default;
+      
+      // Detect system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = stored || (prefersDark ? 'dark' : 'light');
+      
+      root.setAttribute('data-theme', initialTheme);
+      
+      const toggle = document.getElementById('themeToggle');
+      if (toggle) {
+        const updateIcon = () => {
+          const isDark = root.getAttribute('data-theme') === 'dark';
+          toggle.innerHTML = `<i class="fas fa-${isDark ? 'sun' : 'moon'}"></i>`;
+          toggle.setAttribute('aria-label', `Passer en mode ${isDark ? 'clair' : 'sombre'}`);
+          
+          // Update meta theme-color
+          const themeColor = isDark ? '#1a1a2e' : '#667eea';
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
+        };
+        
+        updateIcon();
+        
+        toggle.addEventListener('click', () => {
+          const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', newTheme);
+          localStorage.setItem(key, newTheme);
+          updateIcon();
+          
+          // Smooth transition
+          document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+          setTimeout(() => { document.body.style.transition = ''; }, 300);
+          
+          // Dispatch event for other components
+          window.dispatchEvent(new CustomEvent('dashlivr:theme-changed', { 
+            detail: { theme: newTheme } 
+          }));
+        });
+      }
+      
+      // Listen to system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem(key)) {
+          root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+          updateIcon();
+        }
+      });
+    })();
+
+    // ========== Sidebar Management ==========
+    (function() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.querySelector('.main-content');
+      const btn1 = document.getElementById('sidebarToggle');
+      const btn2 = document.getElementById('mobileMenuBtn');
+      const key = DASHLIVR_CONFIG.sidebar.key;
+
+      const isMobile = () => window.innerWidth <= 1024;
+
+      const updateIcons = (visible) => {
+        const icon = visible ? 'fa-times' : 'fa-bars';
+        const label = visible ? 'Fermer le menu' : 'Ouvrir le menu';
+        
+        [btn1, btn2].forEach(btn => {
+          if (btn) {
+            btn.innerHTML = `<i class="fas ${icon}"></i>`;
+            btn.setAttribute('aria-label', label);
+            btn.setAttribute('aria-expanded', visible);
+          }
+        });
+      };
+
+      const applySidebar = (visible) => {
+        if (isMobile()) {
+          sidebar?.classList.toggle('open', visible);
+          sidebar?.classList.remove('collapsed');
+          main?.classList.remove('expanded');
+        } else {
+          sidebar?.classList.toggle('collapsed', !visible);
+          sidebar?.classList.remove('open');
+          main?.classList.toggle('expanded', !visible);
+        }
+        updateIcons(visible);
+      };
+
+      const isVisible = () => {
+        const stored = localStorage.getItem(key);
+        return stored === null ? DASHLIVR_CONFIG.sidebar.default : stored === '1';
+      };
+
+      const setVisible = (visible) => {
+        localStorage.setItem(key, visible ? '1' : '0');
+        applySidebar(visible);
+      };
+
+      // Initialize
+      applySidebar(isVisible());
+      
+      // Handle resize with debounce
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => applySidebar(isVisible()), 150);
+      });
+
+      // Toggle handlers
+      const toggle = () => setVisible(!isVisible());
+      [btn1, btn2].forEach(btn => btn?.addEventListener('click', toggle));
+      
+      // Close sidebar on mobile when clicking outside
+      document.addEventListener('click', (e) => {
+        if (isMobile() && sidebar?.classList.contains('open')) {
+          if (!sidebar.contains(e.target) && 
+              !btn2?.contains(e.target) && 
+              !btn1?.contains(e.target)) {
+            setVisible(false);
+          }
+        }
+      });
+      
+      // Close on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobile() && sidebar?.classList.contains('open')) {
+          setVisible(false);
+        }
+      });
+    })();
+
+    // ========== Notifications Panel ==========
+    (function() {
+      const btn = document.getElementById('notificationBtn');
+      const panel = document.getElementById('notificationsPanel');
+      const closeBtn = document.getElementById('closeNotifications');
+      
+      if (!btn || !panel) return;
+
+      const toggle = () => {
+        const isOpen = panel.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen);
+        panel.setAttribute('aria-modal', isOpen);
+        
+        // Mark as read after opening
+        if (isOpen) {
+          setTimeout(() => {
+            const badge = btn.querySelector('.notification-badge');
+            badge?.remove();
+          }, 1000);
+        }
+      };
+      
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle();
+      });
+      
+      closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        panel.setAttribute('aria-modal', 'false');
+      });
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (panel.classList.contains('open') && 
+            !panel.contains(e.target) && 
+            e.target !== btn) {
+          panel.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+          panel.setAttribute('aria-modal', 'false');
+        }
+      });
+      
+      // Close on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && panel.classList.contains('open')) {
+          panel.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+          panel.setAttribute('aria-modal', 'false');
+        }
+      });
+    })();
+
+    // ========== Toast Messages ==========
+    (function() {
+      const container = document.getElementById('toasts');
+      if (!container) return;
+      
+      const toasts = [...container.children];
+      
+      // Animate in
+      toasts.forEach((toast, index) => {
+        setTimeout(() => toast.classList.add('show'), index * 100);
+      });
+      
+      // Auto-hide
+      setTimeout(() => {
+        toasts.forEach((toast, index) => {
+          setTimeout(() => toast.classList.add('hide'), index * 100);
+        });
+        setTimeout(() => container.innerHTML = '', DASHLIVR_CONFIG.toast.animation + 200);
+      }, DASHLIVR_CONFIG.toast.duration);
+    })();
+
+    // ========== Global Search ==========
+    (function() {
+      const input = document.getElementById('globalSearch');
+      if (!input) return;
+      
+      let searchTimeout;
+      
+      input.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          const query = e.target.value.trim();
+          if (query.length >= DASHLIVR_CONFIG.search.minLength) {
+            window.dispatchEvent(new CustomEvent('dashlivr:search', { 
+              detail: { query } 
+            }));
+            console.log('🔍 Searching for:', query);
+          }
+        }, DASHLIVR_CONFIG.search.debounce);
+      });
+      
+      // Clear on Escape
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          input.value = '';
+          input.blur();
+        }
+      });
+    })();
+
+    // ========== Keyboard Shortcuts ==========
+    (function() {
+      const shortcuts = {
+        '/': () => document.getElementById('globalSearch')?.focus(),
+        'Escape': () => document.activeElement?.blur(),
+        't': () => document.getElementById('themeToggle')?.click(),
+        'n': () => document.getElementById('notificationBtn')?.click(),
+        'h': () => window.location.href = "{{ URL_DASH }}",
+        'o': () => window.location.href = "{{ URL_ORDERS }}",
+        'm': () => window.location.href = "{{ URL_MAP }}",
+        's': () => window.location.href = "{{ URL_STATS }}",
+      };
+      
+      document.addEventListener('keydown', (e) => {
+        // Don't trigger if typing in input
+        if (e.target.matches('input, textarea, select')) {
+          if (e.key !== 'Escape') return;
+        }
+        
+        const handler = shortcuts[e.key];
+        if (handler) {
+          e.preventDefault();
+          handler();
+        }
+      });
+      
+      // Show shortcuts help on "?"
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '?' && !e.target.matches('input, textarea, select')) {
+          e.preventDefault();
+          const message = `
+🎹 Raccourcis clavier DashLivr Pro:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/       → Rechercher
+t       → Changer le thème
+n       → Notifications
+h       → Accueil
+o       → Commandes
+m       → Carte
+s       → Statistiques
+Esc     → Fermer/Annuler
+?       → Cette aide
+          `.trim();
+          alert(message);
+        }
+      });
+    })();
+
+    // ========== Loading Overlay ==========
+    window.showLoading = () => document.getElementById('loadingOverlay')?.classList.add('active');
+    window.hideLoading = () => document.getElementById('loadingOverlay')?.classList.remove('active');
+
+    // ========== Connection Status ==========
+    (function() {
+      const showToast = (message, type = 'info') => {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i><span>${message}</span>`;
+        document.getElementById('toasts')?.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+          toast.classList.add('hide');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      };
+      
+      window.addEventListener('online', () => {
+        console.log('🟢 Back online');
+        showToast('✅ Connexion rétablie', 'success');
+      });
+      
+      window.addEventListener('offline', () => {
+        console.log('🔴 Offline');
+        showToast('⚠️ Connexion perdue', 'warning');
+      });
+    })();
+
+    // ========== Smooth Scroll ==========
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        if (href !== '#') {
+          const target = document.querySelector(href);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    });
+
+    // ========== Performance Monitoring ==========
+    (function() {
+      if ('PerformanceObserver' in window) {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.entryType === 'navigation') {
+              const loadTime = Math.round(entry.loadEventEnd - entry.fetchStart);
+              console.log(`⚡ Page load time: ${loadTime}ms`);
+              
+              // Log to analytics if available
+              window.dispatchEvent(new CustomEvent('dashlivr:performance', {
+                detail: { loadTime, entry }
+              }));
+            }
+          }
+        });
+        observer.observe({ entryTypes: ['navigation'] });
+      }
+    })();
+
+    // ========== Dispatch Ready Event ==========
+    window.dispatchEvent(new Event('dashlivr:ready'));
+    console.log('✅ DashLivr Pro initialized');
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

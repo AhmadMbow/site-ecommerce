@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}OAuth Demo - Maryama Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 4rem 0;
+  }
+
+  .demo-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .demo-card {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .demo-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .demo-header h1 {
+    font-size: 2.5rem;
+    color: #232526;
+    margin-bottom: 1rem;
+  }
+
+  .demo-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+  }
+
+  .oauth-section {
+    margin-bottom: 3rem;
+  }
+
+  .oauth-section h2 {
+    font-size: 1.5rem;
+    color: #232526;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #ffc107;
+  }
+
+  .oauth-buttons {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .oauth-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .oauth-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .oauth-btn-google {
+    border-color: #db4437;
+    color: #db4437;
+  }
+
+  .oauth-btn-google:hover {
+    background: #db4437;
+    color: white;
+  }
+
+  .oauth-btn-facebook {
+    border-color: #1877f2;
+    color: #1877f2;
+  }
+
+  .oauth-btn-facebook:hover {
+    background: #1877f2;
+    color: white;
+  }
+
+  .oauth-btn i {
+    font-size: 1.5rem;
+  }
+
+  .oauth-btn-content {
+    flex: 1;
+  }
+
+  .oauth-btn-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .oauth-btn-desc {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+
+  .info-box {
+    background: #f8f9fa;
+    border-left: 4px solid #ffc107;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .info-box h3 {
+    font-size: 1.1rem;
+    color: #232526;
+    margin-bottom: 0.75rem;
+  }
+
+  .info-box ul {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .info-box li {
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .status-configured {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .code-block {
+    background: #232526;
+    color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-top: 1rem;
+  }
+
+  .code-block code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-container">
+  <div class="demo-card">
+    <div class="demo-header">
+      <h1>
+        <i class="fas fa-key"></i>
+        OAuth Configuration Demo
+      </h1>
+      <p>Test de l'intégration OAuth Google & Facebook</p>
+    </div>
+
+    {% if user.is_authenticated %}
+      <div class="info-box">
+        <h3>✅ Vous êtes connecté</h3>
+        <ul>
+          <li><strong>Utilisateur :</strong> {{ user.username }}</li>
+          <li><strong>Email :</strong> {{ user.email }}</li>
+          <li><strong>Nom complet :</strong> {{ user.get_full_name|default:"Non défini" }}</li>
+        </ul>
+        <div class="mt-3">
+          <a href="{% url 'logout' %}" class="btn btn-dark">Se déconnecter</a>
+        </div>
+      </div>
+    {% else %}
+      <div class="oauth-section">
+        <h2>Connexion via OAuth</h2>
+        
+        <div class="oauth-buttons">
+          <a href="{% provider_login_url 'google' %}" class="oauth-btn oauth-btn-google">
+            <i class="fab fa-google"></i>
+            <div class="oauth-btn-content">
+              <div class="oauth-btn-title">Continuer avec Google</div>
+              <div class="oauth-btn-desc">Connexion rapide et sécurisée</div>
+            </div>
+            <i class="fas fa-arrow-right"></i>
+          </a>
+
+          <a href="{% provider_login_url 'facebook' %}" class="oauth-btn oauth-btn-facebook">
+            <i class="fab fa-facebook-f"></i>
+            <div class="oauth-btn-content">
+              <div class="oauth-btn-title">Continuer avec Facebook</div>
+              <div class="oauth-btn-desc">Connexion avec votre compte Facebook</div>
+            </div>
+            <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="oauth-section">
+        <h2>Connexion traditionnelle</h2>
+        <a href="{% url 'login_short' %}" class="oauth-btn" style="border-color: #232526; color: #232526;">
+          <i class="fas fa-user"></i>
+          <div class="oauth-btn-content">
+            <div class="oauth-btn-title">Connexion classique</div>
+            <div class="oauth-btn-desc">Avec nom d'utilisateur et mot de passe</div>
+          </div>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    {% endif %}
+
+    <div class="info-box">
+      <h3>📋 État de la configuration OAuth</h3>
+      <ul>
+        <li>
+          <strong>Google OAuth :</strong> 
+          <span class="status-badge status-pending">En attente de configuration</span>
+        </li>
+        <li>
+          <strong>Facebook OAuth :</strong> 
+          <span class="status-badge status-pending">En attente de configuration</span>
+        </li>
+        <li>
+          <strong>Django-allauth :</strong> 
+          <span class="status-badge status-configured">Installé et configuré</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="info-box">
+      <h3>🔧 Configuration requise</h3>
+      <p>Pour activer complètement OAuth, suivez ces étapes :</p>
+      <ol>
+        <li>Obtenez vos identifiants OAuth sur :
+          <ul>
+            <li>Google : <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+            <li>Facebook : <a href="https://developers.facebook.com/" target="_blank">Facebook Developers</a></li>
+          </ul>
+        </li>
+        <li>Ajoutez les applications dans <a href="/admin/socialaccount/socialapp/">Django Admin</a></li>
+        <li>Consultez le guide : <code>OAUTH_SETUP_GUIDE.md</code></li>
+      </ol>
+    </div>
+
+    <div class="oauth-section">
+      <h2>🔗 URLs OAuth disponibles</h2>
+      <div class="code-block">
+        <code>
+          Google Login: {% provider_login_url 'google' %}<br>
+          Facebook Login: {% provider_login_url 'facebook' %}<br>
+          Social Connections: /accounts/social/connections/
+        </code>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a href="{% url 'boutique' %}" class="btn btn-primary">
+        <i class="fas fa-shopping-bag me-2"></i>
+        Retour à la boutique
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1258 @@
+{% extends "adminpanel/base_admin.html" %}
+{% load static %}
+{% block title %}{% if mode == 'update' %}Modifier le Produit{% else %}Nouveau Produit{% endif %} | Admin{% endblock %}
+{% block header %}{% if mode == 'update' %}Modifier le Produit{% else %}Nouveau Produit{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --card-shadow-hover: 0 8px 32px rgba(102, 126, 234, 0.2);
+    --radius: 1rem;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+  }
+
+  /* Page Header */
+  .form-header {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--primary-gradient);
+  }
+
+  .form-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(102,126,234,0.1), transparent);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-30px, -30px) rotate(180deg); }
+  }
+
+  .form-title {
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .form-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  /* Form Card */
+  .form-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .form-section {
+    padding: 2rem;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+    color: #667eea;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1f26;
+    margin: 0;
+  }
+
+  .section-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  /* Form Fields */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 700;
+    color: #1a1f26;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .label-required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 0.25rem;
+  }
+
+  .form-control,
+  .form-select,
+  textarea.form-control {
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    background: white;
+  }
+
+  .form-control:focus,
+  .form-select:focus,
+  textarea.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  }
+
+  .form-text {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-text i {
+    color: #667eea;
+  }
+
+  /* Image Upload */
+  .image-upload-area {
+    border: 3px dashed #e2e8f0;
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    cursor: pointer;
+    position: relative;
+  }
+
+  .image-upload-area:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+  }
+
+  .image-upload-area.dragover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+  }
+
+  .upload-icon {
+    font-size: 3rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+  }
+
+  .upload-text {
+    font-weight: 600;
+    color: #1a1f26;
+    margin-bottom: 0.5rem;
+  }
+
+  .upload-hint {
+    color: #94a3b8;
+    font-size: 0.875rem;
+  }
+
+  .image-preview {
+    margin-top: 1.5rem;
+    position: relative;
+    display: inline-block;
+  }
+
+  .image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: 3px solid white;
+  }
+
+  .image-preview-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--success-gradient);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  /* Stock Management */
+  .stock-card {
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    border: 2px solid rgba(102,126,234,0.2);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .stock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(102,126,234,0.1);
+  }
+
+  .stock-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1f26;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .stock-level {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+
+  .stock-level.high {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));
+    color: #059669;
+  }
+
+  .stock-level.medium {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.15));
+    color: #f59e0b;
+  }
+
+  .stock-level.low {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.15));
+    color: #dc2626;
+  }
+
+  .stock-input-group {
+    position: relative;
+  }
+
+  .stock-input {
+    padding-left: 3rem !important;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .stock-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 1.25rem;
+  }
+
+  .stock-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .stock-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+    cursor: pointer;
+  }
+
+  .stock-btn.decrease {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.15));
+    color: #dc2626;
+  }
+
+  .stock-btn.decrease:hover {
+    background: var(--danger-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+  }
+
+  .stock-btn.increase {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));
+    color: #059669;
+  }
+
+  .stock-btn.increase:hover {
+    background: var(--success-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+  }
+
+  .stock-alerts {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .stock-alert {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stock-alert.warning {
+    background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(217,119,6,0.1));
+    border: 2px solid rgba(245,158,11,0.3);
+  }
+
+  .stock-alert.info {
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.1));
+    border: 2px solid rgba(59,130,246,0.3);
+  }
+
+  .stock-alert-icon {
+    font-size: 1.5rem;
+  }
+
+  .stock-alert.warning .stock-alert-icon {
+    color: #f59e0b;
+  }
+
+  .stock-alert.info .stock-alert-icon {
+    color: #3b82f6;
+  }
+
+  .stock-alert-text {
+    flex: 1;
+  }
+
+  .stock-alert-title {
+    font-weight: 700;
+    color: #1a1f26;
+    margin-bottom: 0.25rem;
+  }
+
+  .stock-alert-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  /* Price Fields */
+  .price-input-group {
+    position: relative;
+  }
+
+  .price-input {
+    padding-left: 5rem !important;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .price-currency {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1rem;
+    z-index: 10;
+    pointer-events: none;
+    background: white;
+    padding-right: 0.5rem;
+  }
+
+  /* Categories Multi-Select */
+  .form-select[multiple] {
+    min-height: 200px;
+    padding: 0.5rem;
+  }
+
+  .form-select[multiple] option {
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+    cursor: pointer;
+  }
+
+  .form-select[multiple] option:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+  }
+
+  .form-select[multiple] option:checked {
+    background: var(--primary-gradient);
+    color: white;
+    font-weight: 600;
+  }
+
+  .badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  /* Action Buttons */
+  .form-actions {
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    background: rgba(0,0,0,0.05);
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-cancel:hover {
+    background: rgba(0,0,0,0.1);
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+  }
+
+  .btn-submit {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-save-continue {
+    background: var(--success-gradient);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-save-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Error Messages */
+  .field-errors {
+    background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.1));
+    border: 2px solid rgba(239,68,68,0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+    color: #dc2626;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animated {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-title {
+      font-size: 1.5rem;
+    }
+
+    .form-section {
+      padding: 1.5rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .btn-cancel,
+    .btn-submit,
+    .btn-save-continue {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Form Header -->
+<div class="form-header animated">
+  <div class="form-title">
+    <i class="bi bi-box-seam"></i>
+    {% if mode == 'update' %}Modifier le Produit{% else %}Créer un Nouveau Produit{% endif %}
+  </div>
+  <p class="form-subtitle">
+    {% if mode == 'update' %}
+      Modifiez les informations de ce produit et gérez son stock
+    {% else %}
+      Ajoutez un nouveau produit à votre catalogue avec ses informations complètes
+    {% endif %}
+  </p>
+</div>
+
+<form method="POST" enctype="multipart/form-data" id="productForm">
+  {% csrf_token %}
+  
+  <!-- Non-field Errors -->
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger animated" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {% for error in form.non_field_errors %}
+        {{ error }}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Basic Information Section -->
+  <div class="form-card animated" style="animation-delay: 0.1s;">
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-info-circle-fill"></i>
+        </div>
+        <div>
+          <h3 class="section-title">Informations Générales</h3>
+          <p class="section-description">Détails de base du produit</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Product Name -->
+        {% for field in form.visible_fields %}
+          {% if field.name == 'nom' %}
+            <div class="col-12">
+              <div class="form-group">
+                <label class="form-label label-required" for="{{ field.id_for_label }}">
+                  <i class="bi bi-tag-fill"></i>
+                  {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text">
+                    <i class="bi bi-info-circle"></i>
+                    {{ field.help_text }}
+                  </small>
+                {% endif %}
+                {% if field.errors %}
+                  <div class="field-errors">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Description -->
+        {% for field in form.visible_fields %}
+          {% if field.name == 'description' %}
+            <div class="col-12">
+              <div class="form-group">
+                <label class="form-label" for="{{ field.id_for_label }}">
+                  <i class="bi bi-text-paragraph"></i>
+                  {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text">
+                    <i class="bi bi-info-circle"></i>
+                    {{ field.help_text }}
+                  </small>
+                {% endif %}
+                {% if field.errors %}
+                  <div class="field-errors">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Category -->
+        {% for field in form.visible_fields %}
+          {% if field.name == 'categories' %}
+            <div class="col-12">
+              <div class="form-group">
+                <label class="form-label label-required" for="{{ field.id_for_label }}">
+                  <i class="bi bi-folder-fill"></i>
+                  {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text">
+                    <i class="bi bi-info-circle"></i>
+                    {{ field.help_text }}
+                  </small>
+                {% endif %}
+                {% if field.errors %}
+                  <div class="field-errors">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Price -->
+        {% for field in form.visible_fields %}
+          {% if field.name == 'prix' %}
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label label-required" for="{{ field.id_for_label }}">
+                  <i class="bi bi-currency-dollar"></i>
+                  {{ field.label }}
+                </label>
+                <div class="price-input-group">
+                  <span class="price-currency">FCFA</span>
+                  {{ field }}
+                </div>
+                {% if field.help_text %}
+                  <small class="form-text">
+                    <i class="bi bi-info-circle"></i>
+                    {{ field.help_text }}
+                  </small>
+                {% endif %}
+                {% if field.errors %}
+                  <div class="field-errors">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Promo Price -->
+        {% for field in form.visible_fields %}
+          {% if field.name == 'prix_promo' %}
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label" for="{{ field.id_for_label }}">
+                  <i class="bi bi-tag-fill"></i>
+                  {{ field.label }}
+                  <span class="badge bg-success ms-2">Optionnel</span>
+                </label>
+                <div class="price-input-group">
+                  <span class="price-currency" style="color: #10b981;">FCFA</span>
+                  {{ field }}
+                </div>
+                {% if field.help_text %}
+                  <small class="form-text">
+                    <i class="bi bi-info-circle"></i>
+                    {{ field.help_text }}
+                  </small>
+                {% endif %}
+                {% if field.errors %}
+                  <div class="field-errors">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Management Section -->
+  <div class="form-card animated" style="animation-delay: 0.2s;">
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-box2-fill"></i>
+        </div>
+        <div>
+          <h3 class="section-title">Gestion des Stocks</h3>
+          <p class="section-description">Gérez la quantité et le niveau de stock du produit</p>
+        </div>
+      </div>
+
+      <div class="stock-card">
+        <div class="stock-header">
+          <div class="stock-title">
+            <i class="bi bi-graph-up-arrow"></i>
+            Niveau de Stock
+          </div>
+          <div class="stock-level high" id="stockLevel">
+            <i class="bi bi-circle-fill"></i>
+            <span>Stock Élevé</span>
+          </div>
+        </div>
+
+        <!-- Stock Input -->
+        {% for field in form.visible_fields %}
+          {% if field.name == 'stock' %}
+            <div class="form-group">
+              <label class="form-label label-required" for="{{ field.id_for_label }}">
+                <i class="bi bi-boxes"></i>
+                {{ field.label }}
+              </label>
+              <div class="stock-input-group">
+                <i class="bi bi-box2-heart-fill stock-icon"></i>
+                {{ field }}
+              </div>
+              {% if field.help_text %}
+                <small class="form-text">
+                  <i class="bi bi-info-circle"></i>
+                  {{ field.help_text }}
+                </small>
+              {% endif %}
+              {% if field.errors %}
+                <div class="field-errors">
+                  <i class="bi bi-exclamation-circle-fill"></i>
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Quick Stock Buttons -->
+            <div class="stock-buttons">
+              <button type="button" class="stock-btn decrease" onclick="adjustStock(-10)">
+                <i class="bi bi-dash-circle-fill"></i>
+                -10
+              </button>
+              <button type="button" class="stock-btn decrease" onclick="adjustStock(-5)">
+                <i class="bi bi-dash-circle"></i>
+                -5
+              </button>
+              <button type="button" class="stock-btn increase" onclick="adjustStock(5)">
+                <i class="bi bi-plus-circle"></i>
+                +5
+              </button>
+              <button type="button" class="stock-btn increase" onclick="adjustStock(10)">
+                <i class="bi bi-plus-circle-fill"></i>
+                +10
+              </button>
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Stock Alerts -->
+        <div class="stock-alerts" id="stockAlerts"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Upload Section -->
+  <div class="form-card animated" style="animation-delay: 0.3s;">
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-image-fill"></i>
+        </div>
+        <div>
+          <h3 class="section-title">Image du Produit</h3>
+          <p class="section-description">Ajoutez une image attractive pour votre produit</p>
+        </div>
+      </div>
+
+      {% for field in form.visible_fields %}
+        {% if field.name == 'image' %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">
+              <i class="bi bi-upload"></i>
+              {{ field.label }}
+            </label>
+            
+            <div class="image-upload-area" id="imageUploadArea">
+              <div class="upload-icon">
+                <i class="bi bi-cloud-arrow-up-fill"></i>
+              </div>
+              <div class="upload-text">Cliquez ou glissez-déposez une image</div>
+              <div class="upload-hint">PNG, JPG ou JPEG (max. 5MB)</div>
+              {{ field }}
+            </div>
+
+            {% if field.help_text %}
+              <small class="form-text">
+                <i class="bi bi-info-circle"></i>
+                {{ field.help_text }}
+              </small>
+            {% endif %}
+            {% if field.errors %}
+              <div class="field-errors">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+
+            <!-- Image Preview -->
+            <div class="image-preview" id="imagePreview" style="display: none;">
+              <img id="previewImg" src="" alt="Aperçu">
+              <span class="image-preview-badge">
+                <i class="bi bi-check-circle-fill"></i>
+                Image Chargée
+              </span>
+            </div>
+
+            {% if mode == 'update' and produit.image %}
+              <div class="image-preview">
+                <img src="{{ produit.image.url }}" alt="{{ produit.nom }}">
+                <span class="image-preview-badge">
+                  <i class="bi bi-image-fill"></i>
+                  Image Actuelle
+                </span>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="form-actions animated" style="animation-delay: 0.4s;">
+    <a href="{% url 'admin_products' %}" class="btn-cancel">
+      <i class="bi bi-x-circle"></i>
+      Annuler
+    </a>
+    <button type="submit" name="save_continue" class="btn-save-continue">
+      <i class="bi bi-arrow-repeat"></i>
+      Enregistrer et Continuer
+    </button>
+    <button type="submit" class="btn-submit">
+      <i class="bi bi-check-circle-fill"></i>
+      Enregistrer
+    </button>
+  </div>
+</form>
+
+<script>
+  // Stock Management Functions
+  function adjustStock(amount) {
+    const stockInput = document.querySelector('input[name="stock"]');
+    if (stockInput) {
+      const currentValue = parseInt(stockInput.value) || 0;
+      const newValue = Math.max(0, currentValue + amount);
+      stockInput.value = newValue;
+      updateStockLevel(newValue);
+    }
+  }
+
+  function updateStockLevel(value) {
+    const stockLevel = document.getElementById('stockLevel');
+    const stockAlerts = document.getElementById('stockAlerts');
+    
+    if (!stockLevel || !stockAlerts) return;
+
+    // Update stock level badge
+    stockLevel.className = 'stock-level';
+    let levelText = '';
+    let levelClass = '';
+    let alerts = '';
+
+    if (value === 0) {
+      levelClass = 'low';
+      levelText = 'Rupture de Stock';
+      alerts = `
+        <div class="stock-alert warning">
+          <i class="bi bi-exclamation-triangle-fill stock-alert-icon"></i>
+          <div class="stock-alert-text">
+            <div class="stock-alert-title">Rupture de Stock</div>
+            <p class="stock-alert-description">Le produit est en rupture de stock. Réapprovisionnez immédiatement.</p>
+          </div>
+        </div>
+      `;
+    } else if (value < 5) {
+      levelClass = 'low';
+      levelText = 'Stock Critique';
+      alerts = `
+        <div class="stock-alert warning">
+          <i class="bi bi-exclamation-triangle-fill stock-alert-icon"></i>
+          <div class="stock-alert-text">
+            <div class="stock-alert-title">Stock Critique</div>
+            <p class="stock-alert-description">Le stock est très bas (${value} unités). Réapprovisionnez rapidement.</p>
+          </div>
+        </div>
+      `;
+    } else if (value < 20) {
+      levelClass = 'medium';
+      levelText = 'Stock Faible';
+      alerts = `
+        <div class="stock-alert warning">
+          <i class="bi bi-exclamation-circle-fill stock-alert-icon"></i>
+          <div class="stock-alert-text">
+            <div class="stock-alert-title">Stock Faible</div>
+            <p class="stock-alert-description">Le stock est faible (${value} unités). Prévoyez un réapprovisionnement.</p>
+          </div>
+        </div>
+      `;
+    } else {
+      levelClass = 'high';
+      levelText = 'Stock Élevé';
+      alerts = `
+        <div class="stock-alert info">
+          <i class="bi bi-check-circle-fill stock-alert-icon"></i>
+          <div class="stock-alert-text">
+            <div class="stock-alert-title">Stock Optimal</div>
+            <p class="stock-alert-description">Le niveau de stock est satisfaisant (${value} unités disponibles).</p>
+          </div>
+        </div>
+      `;
+    }
+
+    stockLevel.classList.add(levelClass);
+    stockLevel.innerHTML = `
+      <i class="bi bi-circle-fill"></i>
+      <span>${levelText}</span>
+    `;
+    stockAlerts.innerHTML = alerts;
+  }
+
+  // Image Upload Functions
+  const imageInput = document.querySelector('input[type="file"]');
+  const imageUploadArea = document.getElementById('imageUploadArea');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('previewImg');
+
+  if (imageInput && imageUploadArea) {
+    // Click to upload
+    imageUploadArea.addEventListener('click', () => {
+      imageInput.click();
+    });
+
+    // File selection
+    imageInput.addEventListener('change', (e) => {
+      handleFileSelect(e.target.files);
+    });
+
+    // Drag and drop
+    imageUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      imageUploadArea.classList.add('dragover');
+    });
+
+    imageUploadArea.addEventListener('dragleave', () => {
+      imageUploadArea.classList.remove('dragover');
+    });
+
+    imageUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      imageUploadArea.classList.remove('dragover');
+      handleFileSelect(e.dataTransfer.files);
+    });
+
+    // Prevent default behavior for entire page
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      document.body.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+  }
+
+  function handleFileSelect(files) {
+    if (files && files[0]) {
+      const file = files[0];
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showNotification('Veuillez sélectionner un fichier image', 'danger');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('L\'image ne doit pas dépasser 5MB', 'danger');
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        imagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Form Validation
+  document.getElementById('productForm').addEventListener('submit', (e) => {
+    const stockInput = document.querySelector('input[name="stock"]');
+    if (stockInput && stockInput.value === '') {
+      e.preventDefault();
+      showNotification('Veuillez entrer une quantité en stock', 'danger');
+      stockInput.focus();
+      return;
+    }
+  });
+
+  // Notification System
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} animated`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    notification.style.boxShadow = '0 8px 32px rgba(0,0,0,0.2)';
+    
+    const icon = type === 'success' ? 'check-circle-fill' : 
+                 type === 'danger' ? 'exclamation-triangle-fill' : 
+                 'info-circle-fill';
+    
+    notification.innerHTML = `
+      <i class="bi bi-${icon} me-2"></i>
+      ${message}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  // Keyboard Shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+S to save
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      document.getElementById('productForm').submit();
+    }
+  });
+
+  // Initialize stock level on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    const stockInput = document.querySelector('input[name="stock"]');
+    if (stockInput) {
+      const initialValue = parseInt(stockInput.value) || 0;
+      updateStockLevel(initialValue);
+      
+      // Monitor stock input changes
+      stockInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value) || 0;
+        updateStockLevel(value);
+      });
+    }
+
+    // Add classes to form fields
+    const inputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea, select');
+    inputs.forEach(input => {
+      if (!input.classList.contains('form-control') && !input.classList.contains('form-select')) {
+        if (input.tagName === 'SELECT') {
+          input.classList.add('form-select');
+        } else {
+          input.classList.add('form-control');
+        }
+      }
+      
+      // Add special classes for stock and price inputs
+      if (input.name === 'stock') {
+        input.classList.add('stock-input');
+      }
+      if (input.name === 'prix' || input.name === 'prix_promo') {
+        input.classList.add('price-input');
+      }
+    });
+
+    // Hide file input
+    if (imageInput) {
+      imageInput.style.display = 'none';
+    }
+
+    // Promo Price Validation
+    const prixInput = document.querySelector('input[name="prix"]');
+    const prixPromoInput = document.querySelector('input[name="prix_promo"]');
+    
+    if (prixInput && prixPromoInput) {
+      prixPromoInput.addEventListener('input', () => {
+        const prix = parseFloat(prixInput.value) || 0;
+        const promo = parseFloat(prixPromoInput.value) || 0;
+        
+        if (promo > 0 && promo >= prix) {
+          showNotification('Le prix promo doit être inférieur au prix normal', 'warning');
+          prixPromoInput.style.borderColor = '#f59e0b';
+        } else {
+          prixPromoInput.style.borderColor = '';
+        }
+        
+        // Show discount percentage
+        if (prix > 0 && promo > 0 && promo < prix) {
+          const discount = Math.round(((prix - promo) / prix) * 100);
+          const badge = document.createElement('div');
+          badge.className = 'promo-discount-badge';
+          badge.innerHTML = `<i class="bi bi-tag-fill"></i> -${discount}% de réduction`;
+          badge.style.cssText = `
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--success-gradient);
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+            animation: fadeInUp 0.3s ease-out;
+          `;
+          
+          // Remove existing badge if any
+          const existingBadge = prixPromoInput.parentElement.querySelector('.promo-discount-badge');
+          if (existingBadge) existingBadge.remove();
+          
+          prixPromoInput.parentElement.style.position = 'relative';
+          prixPromoInput.parentElement.appendChild(badge);
+        } else {
+          // Remove badge if promo is cleared
+          const existingBadge = prixPromoInput.parentElement.querySelector('.promo-discount-badge');
+          if (existingBadge) existingBadge.remove();
+        }
+      });
+      
+      // Trigger on page load if values exist
+      if (prixPromoInput.value) {
+        prixPromoInput.dispatchEvent(new Event('input'));
+      }
+    }
+
+    // Categories selection helper
+    const categoriesSelect = document.querySelector('select[name="categories"]');
+    if (categoriesSelect) {
+      categoriesSelect.addEventListener('change', () => {
+        const selectedCount = categoriesSelect.selectedOptions.length;
+        const helperText = categoriesSelect.parentElement.querySelector('.form-text');
+        if (helperText) {
+          if (selectedCount > 0) {
+            helperText.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> ${selectedCount} catégorie(s) sélectionnée(s)`;
+          } else {
+            helperText.innerHTML = `<i class="bi bi-info-circle"></i> Maintenez Ctrl pour sélectionner plusieurs catégories`;
+          }
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}

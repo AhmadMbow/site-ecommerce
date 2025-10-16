@@ -1,0 +1,832 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Évaluer votre livreur{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+  :root {
+    --gold: #ffc107;
+    --dark: #232526;
+    --light: #f8f9fa;
+    --success: #28a745;
+    --info: #17a2b8;
+    --danger: #dc3545;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow-sm: 0 6px 16px rgba(0,0,0,.06);
+    --shadow: 0 14px 30px rgba(0,0,0,.10);
+    --shadow-lg: 0 24px 48px rgba(0,0,0,.16);
+  }
+
+  body {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+
+  .review-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  /* En-tête avec informations du livreur */
+  .deliverer-header {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .deliverer-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--gold) 0%, #ffcd39 100%);
+  }
+
+  .deliverer-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .deliverer-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--gold);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+  }
+
+  .deliverer-avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold) 0%, #ffcd39 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+  }
+
+  .deliverer-details h3 {
+    margin: 0 0 .5rem 0;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .deliverer-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: .75rem;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: #6c757d;
+    font-size: .9rem;
+  }
+
+  .stat-item i {
+    color: var(--gold);
+  }
+
+  /* Carte de commande */
+  .order-info-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--success);
+  }
+
+  .order-info-card h5 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--dark);
+  }
+
+  .order-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: .5rem 0;
+    border-bottom: 1px solid #f1f3f5;
+  }
+
+  .order-detail:last-child {
+    border-bottom: none;
+  }
+
+  .order-detail .label {
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  .order-detail .value {
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  /* Formulaire d'évaluation */
+  .review-form-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+  }
+
+  .form-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .section-title i {
+    color: var(--gold);
+  }
+
+  /* Évaluation par étoiles */
+  .star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: .5rem;
+    padding: 1.5rem 0;
+  }
+
+  .star-rating input {
+    display: none;
+  }
+
+  .star-rating label {
+    font-size: 3rem;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all .3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.1));
+  }
+
+  .star-rating label:hover,
+  .star-rating label:hover ~ label,
+  .star-rating input:checked ~ label {
+    color: var(--gold);
+    transform: scale(1.1);
+  }
+
+  .star-rating input:checked ~ label {
+    animation: starPulse .5s ease;
+  }
+
+  @keyframes starPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  /* Prévisualisation de la note */
+  .rating-preview {
+    text-align: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(255,193,7,.1) 0%, rgba(255,205,57,.1) 100%);
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all .3s ease;
+  }
+
+  .rating-preview.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .rating-preview .selected-rating {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .rating-preview .rating-text {
+    color: #6c757d;
+    margin-top: .5rem;
+  }
+
+  /* Critères d'évaluation */
+  .criteria-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .criterion-item {
+    background: #f8f9fa;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    text-align: center;
+    transition: all .3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+
+  .criterion-item:hover {
+    background: rgba(255,193,7,.1);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+  }
+
+  .criterion-item input[type="checkbox"] {
+    display: none;
+  }
+
+  .criterion-item input[type="checkbox"]:checked + .criterion-content {
+    color: var(--gold);
+  }
+
+  .criterion-item input[type="checkbox"]:checked + .criterion-content i {
+    transform: scale(1.2);
+  }
+
+  .criterion-content i {
+    font-size: 2rem;
+    margin-bottom: .5rem;
+    color: #6c757d;
+    transition: all .3s ease;
+  }
+
+  .criterion-content .criterion-label {
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--dark);
+  }
+
+  /* Zone de commentaire */
+  .comment-area {
+    position: relative;
+  }
+
+  .comment-area textarea {
+    border: 2px solid #e9ecef;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    resize: vertical;
+    min-height: 150px;
+    transition: all .3s ease;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .comment-area textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 .2rem rgba(255,193,7,.25);
+  }
+
+  .char-counter {
+    position: absolute;
+    bottom: .75rem;
+    right: 1rem;
+    color: #6c757d;
+    font-size: .85rem;
+    font-weight: 600;
+    background: white;
+    padding: .25rem .5rem;
+    border-radius: 999px;
+  }
+
+  .char-counter.warning {
+    color: #dc3545;
+  }
+
+  /* Bouton de soumission */
+  .submit-btn {
+    background: linear-gradient(135deg, var(--gold) 0%, #ffcd39 100%);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 1rem 2rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--dark);
+    width: 100%;
+    cursor: pointer;
+    transition: all .3s ease;
+    box-shadow: 0 4px 12px rgba(255,193,7,.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+    transition: left .5s ease;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255,193,7,.4);
+  }
+
+  .submit-btn:hover::before {
+    left: 100%;
+  }
+
+  .submit-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Suggestions */
+  .suggestions {
+    background: #f8f9fa;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .suggestions h6 {
+    font-weight: 600;
+    margin-bottom: .75rem;
+    color: var(--dark);
+  }
+
+  .suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+
+  .suggestion-chip {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 999px;
+    padding: .5rem 1rem;
+    cursor: pointer;
+    transition: all .25s ease;
+    font-size: .9rem;
+  }
+
+  .suggestion-chip:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--dark);
+    transform: translateY(-2px);
+  }
+
+  /* Messages de validation */
+  .validation-message {
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+    display: none;
+    animation: slideIn .3s ease;
+  }
+
+  .validation-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+  }
+
+  .validation-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .review-container {
+      margin: 1rem auto;
+    }
+
+    .deliverer-header {
+      padding: 1.5rem;
+    }
+
+    .deliverer-info {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .deliverer-stats {
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .star-rating label {
+      font-size: 2rem;
+    }
+
+    .criteria-group {
+      grid-template-columns: 1fr;
+    }
+
+    .review-form-card {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Animation d'entrée */
+  .fade-in {
+    animation: fadeIn .5s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-container fade-in">
+  <!-- En-tête avec info du livreur -->
+  <div class="deliverer-header">
+    <div class="deliverer-info">
+      {% if livreur.userprofile.avatar %}
+        <img src="{{ livreur.userprofile.avatar.url }}" alt="{{ livreur.get_full_name }}" class="deliverer-avatar">
+      {% else %}
+        <div class="deliverer-avatar-placeholder">
+          {{ livreur.first_name.0|default:livreur.username.0|upper }}
+        </div>
+      {% endif %}
+      
+      <div class="deliverer-details">
+        <h3>
+          <i class="fas fa-truck me-2"></i>
+          {{ livreur.get_full_name|default:livreur.username }}
+        </h3>
+        <p class="text-muted mb-2">Votre livreur pour la commande #{{ commande.id }}</p>
+        
+        <div class="deliverer-stats">
+          <div class="stat-item">
+            <i class="fas fa-star"></i>
+            <span>
+              {% if livreur.note_moyenne %}
+                {{ livreur.note_moyenne|floatformat:1 }}/5
+              {% else %}
+                Nouveau livreur
+              {% endif %}
+            </span>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-box"></i>
+            <span>
+              {% if livreur.nombre_livraisons %}
+                {{ livreur.nombre_livraisons }} livraison{{ livreur.nombre_livraisons|pluralize }}
+              {% else %}
+                Première livraison
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informations de la commande -->
+  <div class="order-info-card">
+    <h5><i class="fas fa-shopping-bag me-2"></i>Détails de votre commande</h5>
+    <div class="order-detail">
+      <span class="label">Numéro de commande</span>
+      <span class="value">#{{ commande.id }}</span>
+    </div>
+    <div class="order-detail">
+      <span class="label">Date de commande</span>
+      <span class="value">{{ commande.date_commande|date:"d/m/Y à H:i" }}</span>
+    </div>
+    <div class="order-detail">
+      <span class="label">Montant total</span>
+      <span class="value">{{ commande.total }} FCFA</span>
+    </div>
+    <div class="order-detail">
+      <span class="label">Nombre d'articles</span>
+      <span class="value">{{ commande.items.count }} article{{ commande.items.count|pluralize }}</span>
+    </div>
+  </div>
+
+  <!-- Formulaire d'évaluation -->
+  <div class="review-form-card">
+    <div class="validation-message" id="validationMessage"></div>
+
+    <form method="POST" id="reviewForm">
+      {% csrf_token %}
+      
+      <!-- Note globale -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-star"></i>
+          <span>Note globale</span>
+          <span class="text-danger">*</span>
+        </div>
+        
+        <div class="star-rating" id="starRating">
+          {% for i in "54321" %}
+            <input type="radio" id="star{{ i }}" name="note" value="{{ i }}" required>
+            <label for="star{{ i }}">★</label>
+          {% endfor %}
+        </div>
+
+        <div class="rating-preview" id="ratingPreview">
+          <div class="selected-rating">
+            <span id="ratingValue">0</span>/5
+          </div>
+          <div class="rating-text" id="ratingText">Sélectionnez une note</div>
+        </div>
+      </div>
+
+      <!-- Critères d'évaluation -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-clipboard-check"></i>
+          <span>Points forts (optionnel)</span>
+        </div>
+        
+        <div class="criteria-group">
+          <label class="criterion-item">
+            <input type="checkbox" name="criteria" value="ponctuel">
+            <div class="criterion-content">
+              <div><i class="fas fa-clock"></i></div>
+              <div class="criterion-label">Ponctuel</div>
+            </div>
+          </label>
+          
+          <label class="criterion-item">
+            <input type="checkbox" name="criteria" value="aimable">
+            <div class="criterion-content">
+              <div><i class="fas fa-smile"></i></div>
+              <div class="criterion-label">Aimable</div>
+            </div>
+          </label>
+          
+          <label class="criterion-item">
+            <input type="checkbox" name="criteria" value="professionnel">
+            <div class="criterion-content">
+              <div><i class="fas fa-user-tie"></i></div>
+              <div class="criterion-label">Professionnel</div>
+            </div>
+          </label>
+          
+          <label class="criterion-item">
+            <input type="checkbox" name="criteria" value="soigne">
+            <div class="criterion-content">
+              <div><i class="fas fa-box-open"></i></div>
+              <div class="criterion-label">Colis soigné</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Commentaire -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-comment-alt"></i>
+          <span>Votre commentaire (optionnel)</span>
+        </div>
+        
+        <div class="comment-area">
+          <textarea 
+            name="commentaire" 
+            id="commentaire" 
+            class="form-control" 
+            placeholder="Partagez votre expérience avec ce livreur... (max 500 caractères)"
+            maxlength="500"></textarea>
+          <div class="char-counter" id="charCounter">0/500</div>
+        </div>
+
+        <!-- Suggestions de commentaires -->
+        <div class="suggestions">
+          <h6><i class="fas fa-lightbulb me-2"></i>Suggestions :</h6>
+          <div class="suggestion-chips">
+            <div class="suggestion-chip" data-text="Livraison rapide et efficace !">Rapide ⚡</div>
+            <div class="suggestion-chip" data-text="Très professionnel et courtois.">Professionnel 👔</div>
+            <div class="suggestion-chip" data-text="Colis en parfait état.">Colis intact 📦</div>
+            <div class="suggestion-chip" data-text="Excellente communication.">Bonne comm. 💬</div>
+            <div class="suggestion-chip" data-text="Je recommande vivement !">Recommandé ⭐</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton de soumission -->
+      <button type="submit" class="submit-btn" id="submitBtn" disabled>
+        <i class="fas fa-paper-plane me-2"></i>
+        Envoyer mon évaluation
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('reviewForm');
+  const starRating = document.getElementById('starRating');
+  const ratingPreview = document.getElementById('ratingPreview');
+  const ratingValue = document.getElementById('ratingValue');
+  const ratingText = document.getElementById('ratingText');
+  const commentaire = document.getElementById('commentaire');
+  const charCounter = document.getElementById('charCounter');
+  const submitBtn = document.getElementById('submitBtn');
+  const validationMessage = document.getElementById('validationMessage');
+  const suggestionChips = document.querySelectorAll('.suggestion-chip');
+
+  const ratingTexts = {
+    5: '⭐ Excellent !',
+    4: '👍 Très bien',
+    3: '😊 Bien',
+    2: '😐 Moyen',
+    1: '😞 Décevant'
+  };
+
+  // Gestion de la sélection des étoiles
+  const starInputs = starRating.querySelectorAll('input[type="radio"]');
+  starInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      const value = this.value;
+      ratingValue.textContent = value;
+      ratingText.textContent = ratingTexts[value];
+      ratingPreview.classList.add('visible');
+      
+      // Activer le bouton si une note est sélectionnée
+      submitBtn.disabled = false;
+      
+      // Animation des étoiles
+      const labels = starRating.querySelectorAll('label');
+      labels.forEach(label => {
+        label.style.transform = 'scale(1)';
+      });
+      
+      setTimeout(() => {
+        labels.forEach(label => {
+          label.style.transform = '';
+        });
+      }, 200);
+    });
+  });
+
+  // Compteur de caractères
+  commentaire.addEventListener('input', function() {
+    const length = this.value.length;
+    charCounter.textContent = `${length}/500`;
+    
+    if (length > 450) {
+      charCounter.classList.add('warning');
+    } else {
+      charCounter.classList.remove('warning');
+    }
+  });
+
+  // Suggestions de commentaires
+  suggestionChips.forEach(chip => {
+    chip.addEventListener('click', function() {
+      const text = this.dataset.text;
+      const currentText = commentaire.value.trim();
+      
+      if (currentText) {
+        commentaire.value = currentText + ' ' + text;
+      } else {
+        commentaire.value = text;
+      }
+      
+      // Mettre à jour le compteur
+      commentaire.dispatchEvent(new Event('input'));
+      
+      // Animation
+      this.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        this.style.transform = '';
+      }, 150);
+    });
+  });
+
+  // Validation du formulaire
+  form.addEventListener('submit', function(e) {
+    const selectedRating = starRating.querySelector('input[type="radio"]:checked');
+    
+    if (!selectedRating) {
+      e.preventDefault();
+      showValidationMessage('Veuillez sélectionner une note avant d\'envoyer.', 'error');
+      return false;
+    }
+    
+    // Animation du bouton
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Envoi en cours...';
+    submitBtn.disabled = true;
+  });
+
+  // Fonction pour afficher les messages de validation
+  function showValidationMessage(message, type) {
+    validationMessage.textContent = message;
+    validationMessage.className = `validation-message ${type}`;
+    validationMessage.style.display = 'block';
+    
+    // Scroll vers le message
+    validationMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    if (type === 'error') {
+      setTimeout(() => {
+        validationMessage.style.display = 'none';
+      }, 5000);
+    }
+  }
+
+  // Animation des critères
+  const criteriaItems = document.querySelectorAll('.criterion-item');
+  criteriaItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const checkbox = this.querySelector('input[type="checkbox"]');
+      checkbox.checked = !checkbox.checked;
+      
+      // Animation
+      if (checkbox.checked) {
+        this.style.background = 'rgba(255,193,7,.15)';
+        this.style.borderColor = 'var(--gold)';
+      } else {
+        this.style.background = '';
+        this.style.borderColor = '';
+      }
+    });
+  });
+
+  // Précharger les critères sélectionnés dans le commentaire
+  const criteriaCheckboxes = document.querySelectorAll('input[name="criteria"]');
+  criteriaCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      if (this.checked && !commentaire.value.trim()) {
+        const criteriaTexts = {
+          'ponctuel': 'Livraison ponctuelle',
+          'aimable': 'Livreur très aimable',
+          'professionnel': 'Très professionnel',
+          'soigne': 'Colis bien soigné'
+        };
+        
+        const text = criteriaTexts[this.value];
+        if (text) {
+          const currentText = commentaire.value.trim();
+          const selectedCriteria = Array.from(criteriaCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => criteriaTexts[cb.value])
+            .join(', ');
+          
+          commentaire.value = selectedCriteria + '.';
+          commentaire.dispatchEvent(new Event('input'));
+        }
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
