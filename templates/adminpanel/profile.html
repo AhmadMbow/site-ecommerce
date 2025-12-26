@@ -1,143 +1,686 @@
 {% extends "adminpanel/base_admin.html" %}
 {% block title %}Mon profil | Admin{% endblock %}
 {% block header %}Mon profil{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --gold: #ffc107;
+    --gold-dark: #e6ac00;
+    --dark: #232526;
+    --dark-light: #414345;
+  }
+
+  .profile-container {
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Profile Card */
+  .profile-card {
+    background: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .profile-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  .profile-card-header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-card-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,193,7,0.1) 0%, transparent 50%);
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .avatar-wrapper {
+    position: relative;
+    display: inline-block;
+    z-index: 1;
+  }
+
+  .avatar-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  }
+
+  .avatar-wrapper:hover .avatar-img {
+    transform: scale(1.05);
+    border-color: var(--gold);
+  }
+
+  .avatar-badge {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 32px;
+    height: 32px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(255,193,7,0.4);
+    border: 3px solid var(--dark);
+  }
+
+  .profile-name {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-email {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .meta-item {
+    text-align: center;
+  }
+
+  .meta-value {
+    color: var(--gold);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .meta-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .profile-card-body {
+    padding: 1.5rem;
+  }
+
+  /* Photo Upload */
+  .photo-upload {
+    border: 2px dashed rgba(0,0,0,0.1);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #fafbfc;
+  }
+
+  .photo-upload:hover {
+    border-color: var(--gold);
+    background: rgba(255,193,7,0.05);
+  }
+
+  .photo-upload i {
+    font-size: 1.5rem;
+    color: var(--dark-light);
+    margin-bottom: 0.5rem;
+  }
+
+  .photo-upload:hover i {
+    color: var(--gold);
+  }
+
+  .photo-upload-text {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  .photo-upload input[type="file"] {
+    display: none;
+  }
+
+  /* Action Buttons in Card */
+  .profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-profile-action {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #fff;
+    color: var(--dark);
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-profile-action i {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+
+  .btn-profile-action:hover {
+    border-color: var(--gold);
+    background: rgba(255,193,7,0.05);
+    transform: translateX(4px);
+  }
+
+  .btn-profile-action:hover i {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  /* Info Cards */
+  .info-card {
+    background: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .info-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  .info-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .info-card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .info-card-title::before {
+    content: '';
+    width: 4px;
+    height: 1.2em;
+    background: linear-gradient(180deg, var(--gold), var(--gold-dark));
+    border-radius: 2px;
+  }
+
+  .info-card-badge {
+    background: linear-gradient(135deg, var(--dark), var(--dark-light));
+    color: var(--gold);
+    padding: 0.35rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .info-card-body {
+    padding: 1.5rem;
+  }
+
+  /* Form Styling */
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label-custom {
+    display: block;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .form-label-custom .required {
+    color: #ef4444;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #fafbfc;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--dark);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(35,37,38,0.08);
+  }
+
+  .form-input:hover {
+    border-color: rgba(0,0,0,0.2);
+  }
+
+  .form-help {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.35rem;
+  }
+
+  .form-error {
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 0.35rem;
+  }
+
+  /* Submit Section */
+  .submit-section {
+    background: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.04);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .submit-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  .submit-info i {
+    color: var(--gold);
+  }
+
+  .submit-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, var(--dark), var(--dark-light));
+    color: #fff;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(35,37,38,0.25);
+  }
+
+  .btn-save:active {
+    transform: translateY(0);
+  }
+
+  .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: #fff;
+    color: var(--dark);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 0.75rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-cancel:hover {
+    border-color: var(--dark);
+    background: #f8fafc;
+  }
+
+  /* Alert Styling */
+  .alert-custom {
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #059669;
+  }
+
+  .alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+  }
+
+  .alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #2563eb;
+  }
+
+  /* Responsive */
+  @media (max-width: 991.98px) {
+    .profile-card-header {
+      padding: 1.5rem;
+    }
+    
+    .avatar-img {
+      width: 100px;
+      height: 100px;
+    }
+    
+    .profile-name {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .submit-section {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .submit-actions {
+      width: 100%;
+      flex-direction: column;
+    }
+    
+    .btn-save, .btn-cancel {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-{% if messages %}
-  <div class="mb-3">
-    {% for m in messages %}
-      <div class="alert alert-{{ m.tags|default:'info' }} py-2 my-0">{{ m }}</div>
-    {% endfor %}
-  </div>
-{% endif %}
-
-<form id="adminProfileForm" method="post" enctype="multipart/form-data" class="row g-4" novalidate>
-  {% csrf_token %}
-
-  {% if user_form and user_form.non_field_errors %}
-    <div class="col-12">{% for e in user_form.non_field_errors %}<div class="alert alert-danger py-2 my-1">{{ e }}</div>{% endfor %}</div>
-  {% endif %}
-  {% if profile_form and profile_form.non_field_errors %}
-    <div class="col-12">{% for e in profile_form.non_field_errors %}<div class="alert alert-danger py-2 my-1">{{ e }}</div>{% endfor %}</div>
+<div class="profile-container">
+  {% if messages %}
+    <div class="mb-4">
+      {% for m in messages %}
+        <div class="alert-custom alert-{{ m.tags|default:'info' }}">
+          <i class="fa-solid {% if m.tags == 'success' %}fa-check-circle{% elif m.tags == 'danger' or m.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+          {{ m }}
+        </div>
+      {% endfor %}
+    </div>
   {% endif %}
 
-  <!-- Résumé + avatar -->
-  <div class="col-12 col-lg-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold">Profil</div>
-      <div class="card-body">
-        <div class="d-flex align-items-center gap-3 mb-3">
-          <div class="position-relative">
-            {% if profile and profile.photo %}
-              <img id="avatarPreview" src="{{ profile.photo.url }}" alt="Avatar" class="rounded-circle" style="width:96px;height:96px;object-fit:cover;border:2px solid #e9ecef;">
+  <form id="adminProfileForm" method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if user_form and user_form.non_field_errors %}
+      <div class="mb-4">
+        {% for e in user_form.non_field_errors %}
+          <div class="alert-custom alert-danger">
+            <i class="fa-solid fa-exclamation-circle"></i>
+            {{ e }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if profile_form and profile_form.non_field_errors %}
+      <div class="mb-4">
+        {% for e in profile_form.non_field_errors %}
+          <div class="alert-custom alert-danger">
+            <i class="fa-solid fa-exclamation-circle"></i>
+            {{ e }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="row g-4">
+      <!-- Colonne gauche - Profil Card -->
+      <div class="col-12 col-lg-4">
+        <div class="profile-card">
+          <div class="profile-card-header">
+            <div class="avatar-wrapper">
+              {% if profile and profile.photo %}
+                <img id="avatarPreview" src="{{ profile.photo.url }}" alt="Avatar" class="avatar-img">
+              {% else %}
+                <img id="avatarPreview" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=ffc107&color=232526&size=120" alt="Avatar" class="avatar-img">
+              {% endif %}
+              <div class="avatar-badge">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+            </div>
+            <div class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+            <div class="profile-email">{{ request.user.email|default:"—" }}</div>
+            <div class="profile-meta">
+              <div class="meta-item">
+                <div class="meta-value">{{ request.user.last_login|date:"d/m/Y"|default:"—" }}</div>
+                <div class="meta-label">Dernière connexion</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-value">{{ request.user.date_joined|date:"M Y"|default:"—" }}</div>
+                <div class="meta-label">Membre depuis</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="profile-card-body">
+            {% if profile_form and profile_form.photo %}
+              <label class="photo-upload" for="{{ profile_form.photo.id_for_label }}">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <div class="photo-upload-text">Cliquez pour changer la photo</div>
+                <div class="photo-upload-text" style="font-size: 0.75rem; color: #94a3b8;">PNG/JPG, max 2 Mo</div>
+                {{ profile_form.photo }}
+              </label>
+              {% for e in profile_form.photo.errors %}
+                <div class="form-error">{{ e }}</div>
+              {% endfor %}
+            {% endif %}
+
+            <div class="profile-actions mt-4">
+              <a class="btn-profile-action" href="{% url 'admin_change_password' %}">
+                <i class="fa-solid fa-key"></i>
+                <span>Changer le mot de passe</span>
+              </a>
+              <a class="btn-profile-action" href="{% url 'admin_dashboard' %}">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Retour au tableau de bord</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite - Informations -->
+      <div class="col-12 col-lg-8">
+        <!-- Informations du compte -->
+        <div class="info-card mb-4">
+          <div class="info-card-header">
+            <div class="info-card-title">Informations du compte</div>
+            <span class="info-card-badge">ADMIN</span>
+          </div>
+          <div class="info-card-body">
+            {% if user_form %}
+              <div class="row g-3">
+                {% for field in user_form.visible_fields %}
+                  <div class="col-12 col-md-6">
+                    <div class="form-group">
+                      <label class="form-label-custom" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="required">*</span>{% endif %}
+                      </label>
+                      {{ field }}
+                      {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+                      {% for e in field.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
             {% else %}
-              <img id="avatarPreview" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=0D6EFD&color=fff&size=96" alt="Avatar" class="rounded-circle" style="width:96px;height:96px;object-fit:cover;border:2px solid #e9ecef;">
+              <div class="text-muted">Aucun champ de compte.</div>
             {% endif %}
           </div>
-          <div>
-            <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</div>
-            <div class="text-muted small">{{ request.user.email|default:"—" }}</div>
-            <div class="text-muted small">Dernière connexion: {{ request.user.last_login|date:"d/m/Y H:i"|default:"—" }}</div>
-          </div>
         </div>
 
-        {% if profile_form and profile_form.photo %}
-          <div class="mb-3">
-            <label class="form-label" for="{{ profile_form.photo.id_for_label }}">Changer la photo</label>
-            {{ profile_form.photo }}
-            {% for e in profile_form.photo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-            <div class="form-text">PNG/JPG, max 2 Mo.</div>
+        <!-- Détails du profil -->
+        <div class="info-card">
+          <div class="info-card-header">
+            <div class="info-card-title">Détails du profil</div>
           </div>
-        {% endif %}
-
-        <div class="d-grid gap-2">
-          <a class="btn btn-outline-secondary btn-sm" href="{% url 'admin_change_password' %}">
-            <i class="fa-solid fa-key me-1"></i> Changer le mot de passe
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Informations du compte -->
-  <div class="col-12 col-lg-8">
-    <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between">
-        <span>Informations du compte</span>
-        <span class="badge bg-light text-dark">Admin</span>
-      </div>
-      <div class="card-body">
-        {% if user_form %}
-          <div class="row g-3">
-            {% for field in user_form.visible_fields %}
-              <div class="col-12 col-md-6">
-                <label class="form-label" for="{{ field.id_for_label }}">
-                  {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
-                </label>
-                {{ field }}
-                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-                {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          <div class="info-card-body">
+            {% if profile_form %}
+              <div class="row g-3">
+                {% for field in profile_form.visible_fields %}
+                  {% if field.name != 'photo' %}
+                    <div class="col-12 col-md-6">
+                      <div class="form-group">
+                        <label class="form-label-custom" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                          {% if field.field.required %}<span class="required">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+                        {% for e in field.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endfor %}
               </div>
-            {% endfor %}
+            {% else %}
+              <div class="text-muted">Aucun champ de profil.</div>
+            {% endif %}
           </div>
-        {% else %}
-          <div class="text-muted">Aucun champ de compte.</div>
-        {% endif %}
+        </div>
       </div>
     </div>
 
-    <div class="card shadow-sm mt-4">
-      <div class="card-header bg-white fw-semibold">Détails du profil</div>
-      <div class="card-body">
-        {% if profile_form %}
-          <div class="row g-3">
-            {% for field in profile_form.visible_fields %}
-              {% if field.name != 'photo' %}
-                <div class="col-12 col-md-6">
-                  <label class="form-label" for="{{ field.id_for_label }}">
-                    {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
-                  </label>
-                  {{ field }}
-                  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-                  {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted">Aucun champ de profil.</div>
-        {% endif %}
+    <!-- Section de soumission -->
+    <div class="submit-section mt-4">
+      <div class="submit-info">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>Les modifications seront appliquées immédiatement après l'enregistrement.</span>
+      </div>
+      <div class="submit-actions">
+        <a class="btn-cancel" href="{% url 'admin_dashboard' %}">
+          <i class="fa-solid fa-xmark"></i>
+          Annuler
+        </a>
+        <button class="btn-save" type="submit">
+          <i class="fa-solid fa-check"></i>
+          Enregistrer les modifications
+        </button>
       </div>
     </div>
-  </div>
-
-  <!-- Boutons d'action -->
-  <div class="col-12">
-    <div class="d-flex gap-2">
-      <button class="btn btn-primary" type="submit">
-        <i class="fa-regular fa-floppy-disk me-1"></i> Enregistrer les modifications
-      </button>
-      <a class="btn btn-outline-secondary" href="{% url 'admin_dashboard' %}">Annuler</a>
-    </div>
-  </div>
-</form>
+  </form>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
   (function() {
+    // Preview de l'avatar
     const fileInput = document.querySelector('input[type="file"][name$="photo"]');
     const preview = document.getElementById('avatarPreview');
+    const uploadLabel = document.querySelector('.photo-upload');
 
     if (fileInput && preview) {
       fileInput.addEventListener('change', () => {
         const f = fileInput.files && fileInput.files[0];
         if (f && /^image\//.test(f.type)) {
           preview.src = URL.createObjectURL(f);
+          if (uploadLabel) {
+            uploadLabel.style.borderColor = '#10b981';
+            uploadLabel.style.background = 'rgba(16, 185, 129, 0.05)';
+          }
         }
       });
     }
+
+    // Ajouter la classe form-input aux champs de formulaire
+    document.querySelectorAll('.info-card input, .info-card select, .info-card textarea').forEach(el => {
+      el.classList.add('form-input');
+    });
+
+    // Animation d'entrée des cartes
+    const cards = document.querySelectorAll('.profile-card, .info-card, .submit-section');
+    cards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        card.style.transition = 'all 0.5s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, 100 + (index * 100));
+    });
   })();
 </script>
 {% endblock %}

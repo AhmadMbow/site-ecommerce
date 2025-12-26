@@ -1,24 +1,317 @@
 {% extends "adminpanel/base_admin.html" %}
+{% load static %}
 {% block title %}{% if mode == 'update' %}Modifier une catégorie{% else %}Nouvelle catégorie{% endif %}{% endblock %}
 {% block header %}{% if mode == 'update' %}Modifier une catégorie{% else %}Nouvelle catégorie{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .category-form-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    overflow: hidden;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .form-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    color: white;
+    text-align: center;
+  }
+
+  .form-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .form-header p {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+
+  .form-body {
+    padding: 2rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    color: #1a1f26;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group .form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .form-group .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+  }
+
+  /* Image Upload */
+  .image-upload-wrapper {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+    cursor: pointer;
+  }
+
+  .image-upload-wrapper:hover {
+    border-color: #667eea;
+    background: rgba(102,126,234,0.05);
+  }
+
+  .image-upload-wrapper.has-image {
+    border-style: solid;
+    border-color: #667eea;
+    background: white;
+  }
+
+  .image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .upload-icon {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  .upload-text {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .upload-text strong {
+    color: #667eea;
+  }
+
+  .image-input {
+    display: none;
+  }
+
+  .current-image-wrapper {
+    margin-bottom: 1rem;
+  }
+
+  .current-image-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+  }
+
+  .btn-remove-image {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+
+  .btn-remove-image:hover {
+    background: #ef4444;
+    color: white;
+  }
+
+  .form-footer {
+    padding: 1.5rem 2rem;
+    background: #f9fafb;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    background: white;
+    color: #6b7280;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-cancel:hover {
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  .btn-submit {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<form method="post" class="card">
-  <div class="card-body">
+<div class="category-form-card">
+  <div class="form-header">
+    <h2>
+      <i class="bi bi-{% if mode == 'update' %}pencil-square{% else %}plus-circle{% endif %} me-2"></i>
+      {% if mode == 'update' %}Modifier la catégorie{% else %}Nouvelle catégorie{% endif %}
+    </h2>
+    <p>{% if mode == 'update' %}Modifiez les informations de cette catégorie{% else %}Remplissez les informations pour créer une nouvelle catégorie{% endif %}</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {% if form.non_field_errors %}{% for e in form.non_field_errors %}<div class="text-danger mb-2">{{ e }}</div>{% endfor %}{% endif %}
-    <div class="row g-3">
-      {% for field in form.visible_fields %}
-        <div class="col-md-6">
-          <label class="form-label">{{ field.label }}</label>
-          {{ field }}
-          {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-        </div>
+    
+    {% if form.non_field_errors %}
+      {% for e in form.non_field_errors %}
+        <div class="alert alert-danger m-3">{{ e }}</div>
       {% endfor %}
+    {% endif %}
+
+    <div class="form-body">
+      <!-- Nom -->
+      <div class="form-group">
+        <label for="id_nom">
+          <i class="bi bi-tag me-1"></i> Nom de la catégorie
+        </label>
+        {{ form.nom }}
+        {% for e in form.nom.errors %}
+          <div class="text-danger small mt-1">{{ e }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="id_description">
+          <i class="bi bi-text-left me-1"></i> Description
+        </label>
+        {{ form.description }}
+        {% for e in form.description.errors %}
+          <div class="text-danger small mt-1">{{ e }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Image -->
+      <div class="form-group">
+        <label>
+          <i class="bi bi-image me-1"></i> Image de la catégorie
+        </label>
+        
+        <div class="image-upload-wrapper {% if category and category.image %}has-image{% endif %}" id="imageUploadWrapper" onclick="document.getElementById('id_image').click()">
+          {% if category and category.image %}
+            <div class="current-image-wrapper">
+              <p class="current-image-label">Image actuelle :</p>
+              <img src="{{ category.image.url }}" alt="{{ category.nom }}" class="image-preview" id="imagePreview">
+            </div>
+          {% else %}
+            <img src="" alt="Aperçu" class="image-preview" id="imagePreview" style="display: none;">
+          {% endif %}
+          
+          <div id="uploadPlaceholder" {% if category and category.image %}style="display: none;"{% endif %}>
+            <i class="bi bi-cloud-arrow-up upload-icon"></i>
+            <p class="upload-text">
+              <strong>Cliquez pour télécharger</strong> ou glissez-déposez<br>
+              <small>PNG, JPG, WEBP (max. 2MB)</small>
+            </p>
+          </div>
+        </div>
+
+        <input type="file" name="image" id="id_image" class="image-input" accept="image/*" onchange="previewImage(this)">
+        
+        {% if category and category.image %}
+          <button type="button" class="btn-remove-image" onclick="removeImage()">
+            <i class="bi bi-trash"></i> Supprimer l'image
+          </button>
+          <input type="hidden" name="remove_image" id="removeImageInput" value="">
+        {% endif %}
+
+        {% for e in form.image.errors %}
+          <div class="text-danger small mt-1">{{ e }}</div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
-  <div class="card-footer d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'admin_categories' %}">Annuler</a>
-    <button class="btn btn-primary" type="submit">Enregistrer</button>
-  </div>
-</form>
+
+    <div class="form-footer">
+      <a class="btn-cancel" href="{% url 'admin_categories' %}">
+        <i class="bi bi-x-lg me-1"></i> Annuler
+      </a>
+      <button class="btn-submit" type="submit">
+        <i class="bi bi-check-lg me-1"></i> Enregistrer
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function previewImage(input) {
+  const preview = document.getElementById('imagePreview');
+  const placeholder = document.getElementById('uploadPlaceholder');
+  const wrapper = document.getElementById('imageUploadWrapper');
+
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+      wrapper.classList.add('has-image');
+    }
+    
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function removeImage() {
+  const preview = document.getElementById('imagePreview');
+  const placeholder = document.getElementById('uploadPlaceholder');
+  const wrapper = document.getElementById('imageUploadWrapper');
+  const input = document.getElementById('id_image');
+  const removeInput = document.getElementById('removeImageInput');
+
+  preview.src = '';
+  preview.style.display = 'none';
+  placeholder.style.display = 'block';
+  wrapper.classList.remove('has-image');
+  input.value = '';
+  
+  if (removeInput) {
+    removeInput.value = '1';
+  }
+}
+</script>
 {% endblock %}

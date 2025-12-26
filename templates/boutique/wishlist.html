@@ -1,431 +1,680 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Ma Liste de Souhaits - Maryama Shop{% endblock %}
+{% block title %}Ma Liste de Souhaits - SadibouShop{% endblock %}
 
 {% block extra_css %}
 <style>
+  /* ===== VARIABLES GLOBALES ===== */
   :root {
-    --color-gold: #ffc107;
-    --color-dark: #232526;
-    --color-light: #f8f9fa;
-    --radius: 16px;
+    --dark: #232526;
+    --dark-2: #1a1c1d;
+    --dark-gradient: linear-gradient(135deg, #232526 0%, #414345 100%);
+    --gold: #ffc107;
+    --gold-light: #ffda6a;
+    --gold-gradient: linear-gradient(135deg, #ffc107 0%, #ffda6a 100%);
+    --success: #10b981;
+    --danger: #ef4444;
+    --radius: 20px;
+    --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
   body {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
     min-height: 100vh;
   }
 
-  .wishlist-header {
-    background: linear-gradient(135deg, var(--color-dark) 0%, #414345 100%);
+  /* ===== HEADER PREMIUM ===== */
+  .wishlist-hero {
+    background: var(--dark-gradient);
     color: white;
-    padding: 4rem 0 3rem;
-    margin-bottom: 3rem;
+    padding: 4rem 0 5rem;
     position: relative;
     overflow: hidden;
   }
 
-  .wishlist-header::before {
+  .wishlist-hero::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.5;
+    inset: 0;
+    background: 
+      url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffc107' fill-opacity='0.03'%3E%3Cpath d='M0 0h80v80H0V0zm20 20h20v20H20V20zm20 20h20v20H40V40z'/%3E%3C/g%3E%3C/svg%3E"),
+      linear-gradient(135deg, rgba(255,193,7,0.05) 0%, rgba(255,193,7,0.02) 100%);
+    animation: patternMove 30s linear infinite;
   }
 
-  .wishlist-header h1 {
+  @keyframes patternMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 80px 80px; }
+  }
+
+  .wishlist-hero::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 80%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,193,7,0.1) 0%, transparent 70%);
+    animation: glow 15s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+    50% { transform: translate(-20%, -20%); opacity: 0.8; }
+  }
+
+  .hero-content {
     position: relative;
     z-index: 1;
-    margin: 0;
-    font-weight: 700;
-    font-size: 2.5rem;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
   }
 
-  .wishlist-header .subtitle {
-    position: relative;
-    z-index: 1;
-    opacity: 0.9;
-    font-size: 1.1rem;
+  .hero-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    animation: heartbeat 2s ease-in-out infinite;
   }
 
-  .wishlist-stats {
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.05); }
+  }
+
+  .hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 2.5rem;
+  }
+
+  /* ===== STATS CARDS ===== */
+  .stats-grid {
     display: flex;
-    gap: 2rem;
     justify-content: center;
-    margin-top: 2rem;
+    gap: 1.5rem;
     flex-wrap: wrap;
   }
 
-  .stat-item {
-    text-align: center;
-    padding: 1rem 2rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius);
+  .stat-card {
+    background: rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,193,7,0.2);
+    border-radius: 16px;
+    padding: 1.5rem 2.5rem;
+    text-align: center;
+    transition: var(--transition);
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.2s; }
+  .stat-card:nth-child(2) { animation-delay: 0.4s; }
+  .stat-card:nth-child(3) { animation-delay: 0.6s; }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255,193,7,0.15);
+    border-color: rgba(255,193,7,0.4);
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--gold-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.3rem;
+    color: var(--dark);
   }
 
   .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-gold);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--gold);
     display: block;
+    line-height: 1;
+    margin-bottom: 0.25rem;
   }
 
   .stat-label {
     font-size: 0.9rem;
-    opacity: 0.9;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
-  .wishlist-container {
+  /* ===== MAIN CONTAINER ===== */
+  .wishlist-main {
     max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 1rem 4rem;
+    margin: -3rem auto 4rem;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
   }
 
-  .wishlist-controls {
+  /* ===== CONTROLS BAR ===== */
+  .controls-bar {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
     flex-wrap: wrap;
     gap: 1rem;
   }
 
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .filter-badge {
+    background: var(--gold);
+    color: var(--dark);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-control {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-clear {
+    background: white;
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+
+  .btn-clear:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239,68,68,0.3);
+  }
+
+  .btn-add-all {
+    background: var(--gold-gradient);
+    color: var(--dark);
+  }
+
+  .btn-add-all:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255,193,7,0.4);
+  }
+
+  /* ===== WISHLIST GRID ===== */
   .wishlist-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 2rem;
-    margin-bottom: 3rem;
   }
 
-  .wishlist-item {
+  /* ===== PRODUCT CARD PREMIUM ===== */
+  .product-card {
     background: white;
     border-radius: var(--radius);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    position: relative;
     overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    transition: var(--transition);
+    position: relative;
+    animation: cardSlideIn 0.6s ease forwards;
+    opacity: 0;
   }
 
-  .wishlist-item:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  @keyframes cardSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
-  .item-image {
+  .product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+  }
+
+  .product-image-wrapper {
     position: relative;
-    overflow: hidden;
     aspect-ratio: 1;
-    background: var(--color-light);
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   }
 
-  .item-image img {
+  .product-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s ease;
   }
 
-  .wishlist-item:hover .item-image img {
+  .product-card:hover .product-image {
     transform: scale(1.1);
   }
 
+  /* Image Overlay */
+  .image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%);
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .product-card:hover .image-overlay {
+    opacity: 1;
+  }
+
+  /* Quick View Button */
+  .quick-view-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: white;
+    color: var(--dark);
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    opacity: 0;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 5;
+  }
+
+  .product-card:hover .quick-view-btn {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .quick-view-btn:hover {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  /* Remove Button */
   .remove-btn {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
+    background: white;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     z-index: 10;
+    font-size: 1rem;
+    color: #64748b;
   }
 
   .remove-btn:hover {
-    background: #dc3545;
+    background: var(--danger);
     color: white;
-    transform: scale(1.1);
+    transform: scale(1.15) rotate(90deg);
+    box-shadow: 0 8px 25px rgba(239,68,68,0.4);
   }
 
-  .item-badge {
+  /* Badges */
+  .product-badges {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    background: var(--color-gold);
-    color: var(--color-dark);
-    padding: 0.4rem 0.8rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     z-index: 10;
   }
 
-  .item-details {
+  .badge {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-promo {
+    background: var(--danger);
+    color: white;
+  }
+
+  .badge-new {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  /* Product Details */
+  .product-details {
     padding: 1.5rem;
   }
 
-  .item-title {
-    font-size: 1.1rem;
+  .product-category {
+    font-size: 0.8rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: var(--color-dark);
+  }
+
+  .product-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.75rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.4;
   }
 
-  .item-price {
-    display: flex;
+  .product-availability {
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--success);
+    font-weight: 500;
     margin-bottom: 1rem;
+    padding: 0.4rem 0.8rem;
+    background: rgba(16,185,129,0.1);
+    border-radius: 999px;
   }
 
-  .current-price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-dark);
+  .product-availability i {
+    font-size: 0.75rem;
   }
 
-  .old-price {
+  .product-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .price-current {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--dark);
+  }
+
+  .price-old {
     font-size: 1rem;
-    color: #6c757d;
+    color: #94a3b8;
     text-decoration: line-through;
   }
 
-  .item-actions {
+  .price-discount {
+    font-size: 0.85rem;
+    color: var(--danger);
+    font-weight: 700;
+    background: rgba(239,68,68,0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+  }
+
+  /* Action Buttons */
+  .product-actions {
     display: flex;
-    gap: 0.5rem;
-  }
-
-  .btn-add-cart {
-    flex: 1;
-    background: var(--color-dark);
-    color: white;
-    border: none;
-    padding: 0.75rem;
-    border-radius: calc(var(--radius) / 2);
-    font-weight: 600;
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-
-  .btn-add-cart:hover {
-    background: var(--color-gold);
-    color: var(--color-dark);
-    transform: translateY(-2px);
+    gap: 0.75rem;
   }
 
   .btn-view {
-    padding: 0.75rem 1rem;
-    background: var(--color-light);
+    flex: 1;
+    background: var(--dark-gradient);
+    color: white;
     border: none;
-    border-radius: calc(var(--radius) / 2);
-    color: var(--color-dark);
-    transition: all 0.3s ease;
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-view::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,193,7,0.3), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-view:hover::before {
+    left: 100%;
   }
 
   .btn-view:hover {
-    background: var(--color-dark);
-    color: white;
+    background: var(--gold-gradient);
+    color: var(--dark);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255,193,7,0.3);
   }
 
+  /* ===== EMPTY STATE PREMIUM ===== */
   .empty-state {
     text-align: center;
     padding: 6rem 2rem;
     background: white;
     border-radius: var(--radius);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  }
+
+  .empty-icon-wrapper {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 2rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  .empty-icon-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 3px dashed var(--gold);
+    opacity: 0.3;
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   .empty-icon {
-    font-size: 6rem;
-    color: #dee2e6;
-    margin-bottom: 2rem;
+    font-size: 4rem;
+    color: var(--gold);
   }
 
-  .empty-state h3 {
-    font-size: 1.8rem;
-    color: var(--color-dark);
+  .empty-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dark);
     margin-bottom: 1rem;
   }
 
-  .empty-state p {
+  .empty-text {
     font-size: 1.1rem;
-    color: #6c757d;
-    margin-bottom: 2rem;
+    color: #64748b;
+    margin-bottom: 2.5rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .btn-shop {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    background: var(--color-gold);
-    color: var(--color-dark);
-    padding: 1rem 2rem;
-    border-radius: calc(var(--radius) / 2);
-    font-weight: 600;
+    gap: 0.75rem;
+    background: var(--gold-gradient);
+    color: var(--dark);
+    padding: 1.25rem 2.5rem;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 1.1rem;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: var(--transition);
+    box-shadow: 0 10px 30px rgba(255,193,7,0.3);
   }
 
   .btn-shop:hover {
-    background: var(--color-dark);
-    color: white;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255,193,7,0.4);
+    color: var(--dark);
   }
 
-  .loading-skeleton {
-    animation: pulse 1.5s ease-in-out infinite;
+  .btn-shop i {
+    font-size: 1.2rem;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  /* ===== SKELETON LOADING ===== */
+  .skeleton-card {
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
   }
 
-  .availability {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: #28a745;
-    margin-bottom: 1rem;
+  .skeleton-image {
+    aspect-ratio: 1;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 
-  .availability i {
-    font-size: 0.8rem;
+  .skeleton-content {
+    padding: 1.5rem;
   }
 
-  @media (max-width: 768px) {
-    .wishlist-header h1 {
-      font-size: 2rem;
-    }
-
-    .wishlist-grid {
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1rem;
-    }
-
-    .wishlist-stats {
-      gap: 1rem;
-    }
-
-    .stat-item {
-      padding: 0.75rem 1.5rem;
-    }
-
-    .stat-value {
-      font-size: 1.5rem;
-    }
+  .skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
   }
 
-  /* Custom Modal Styles */
+  .skeleton-line.short {
+    width: 60%;
+  }
+
+  .skeleton-line.price {
+    height: 24px;
+    width: 40%;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ===== CUSTOM MODAL ===== */
   .custom-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    animation: fadeIn 0.2s ease-out;
-  }
-
-  .custom-modal {
-    background: white;
-    border-radius: 20px;
-    padding: 0;
-    max-width: 450px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    overflow: hidden;
-  }
-
-  .modal-header {
-    background: linear-gradient(135deg, #232526 0%, #414345 100%);
-    color: white;
-    padding: 2rem;
-    text-align: center;
-  }
-
-  .modal-header i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    display: block;
-    color: #ffc107;
-  }
-
-  .modal-header h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
-
-  .modal-body {
-    padding: 2rem;
-    text-align: center;
-    color: #374151;
-    font-size: 1.1rem;
-    line-height: 1.6;
-  }
-
-  .modal-footer {
-    padding: 1.5rem 2rem;
-    background: #f9fafb;
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-  }
-
-  .modal-btn {
-    padding: 0.75rem 2rem;
-    border: none;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-width: 120px;
-  }
-
-  .modal-btn-primary {
-    background: linear-gradient(135deg, #232526 0%, #414345 100%);
-    color: white;
-  }
-
-  .modal-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(35, 37, 38, 0.3);
-  }
-
-  .modal-btn-secondary {
-    background: white;
-    color: #6b7280;
-    border: 2px solid #e5e7eb;
-  }
-
-  .modal-btn-secondary:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    animation: fadeIn 0.3s ease;
+    padding: 1rem;
   }
 
   @keyframes fadeIn {
@@ -433,14 +682,203 @@
     to { opacity: 1; }
   }
 
-  @keyframes slideUp {
+  .custom-modal {
+    background: white;
+    border-radius: var(--radius);
+    max-width: 450px;
+    width: 100%;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+  }
+
+  @keyframes modalSlideIn {
     from {
-      transform: translateY(50px);
       opacity: 0;
+      transform: translateY(-50px) scale(0.9);
     }
     to {
-      transform: translateY(0);
       opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .modal-header {
+    background: var(--dark-gradient);
+    color: white;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .modal-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffc107' fill-opacity='0.05'%3E%3Cpath d='M0 0h40v40H0V0zm10 10h10v10H10V10z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .modal-icon {
+    position: relative;
+    z-index: 1;
+    width: 70px;
+    height: 70px;
+    background: var(--gold-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.8rem;
+    color: var(--dark);
+  }
+
+  .modal-title {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .modal-body {
+    padding: 2rem;
+    text-align: center;
+    color: #475569;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  .modal-footer {
+    padding: 1.5rem 2rem 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .modal-btn {
+    padding: 0.9rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    min-width: 130px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .modal-btn-primary {
+    background: var(--dark-gradient);
+    color: white;
+  }
+
+  .modal-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(35,37,38,0.3);
+  }
+
+  .modal-btn-secondary {
+    background: white;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+  }
+
+  .modal-btn-secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .wishlist-hero {
+      padding: 3rem 0 4rem;
+    }
+
+    .hero-icon {
+      font-size: 3rem;
+    }
+
+    .hero-title {
+      font-size: 2rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+    }
+
+    .stats-grid {
+      gap: 1rem;
+    }
+
+    .stat-card {
+      padding: 1rem 1.5rem;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+    }
+
+    .wishlist-main {
+      margin-top: -2rem;
+    }
+
+    .controls-bar {
+      flex-direction: column;
+      padding: 1.25rem;
+    }
+
+    .controls-left {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-control {
+      flex: 1;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .wishlist-grid {
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .empty-state {
+      padding: 4rem 1.5rem;
+    }
+
+    .empty-icon-wrapper {
+      width: 120px;
+      height: 120px;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+    }
+
+    .empty-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .wishlist-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+      flex-direction: column;
+    }
+
+    .modal-btn {
+      width: 100%;
     }
   }
 </style>
@@ -448,65 +886,70 @@
 
 {% block content %}
 {% csrf_token %}
-<!-- Header -->
-<div class="wishlist-header">
-  <div class="container text-center">
-    <h1>
-      <i class="fas fa-heart me-3"></i>
-      Ma Liste de Souhaits
-    </h1>
-    <p class="subtitle mt-2">Vos produits préférés en un seul endroit</p>
+
+<!-- Hero Section -->
+<div class="wishlist-hero">
+  <div class="hero-content">
+    <div class="hero-icon">💝</div>
+    <h1 class="hero-title">Ma Liste de Souhaits</h1>
+    <p class="hero-subtitle">Retrouvez tous vos coups de cœur en un seul endroit</p>
     
-    <div class="wishlist-stats">
-      <div class="stat-item">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-heart"></i>
+        </div>
         <span class="stat-value" id="totalItems">0</span>
         <span class="stat-label">Produits</span>
       </div>
-      <div class="stat-item">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-tags"></i>
+        </div>
         <span class="stat-value" id="totalValue">0</span>
-        <span class="stat-label">Valeur totale (FCFA)</span>
+        <span class="stat-label">FCFA Total</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-percent"></i>
+        </div>
+        <span class="stat-value" id="totalSavings">0</span>
+        <span class="stat-label">Économies</span>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Main Content -->
-<div class="wishlist-container">
-  <!-- Controls -->
-  <div class="wishlist-controls">
-    <div>
-      <button class="btn btn-outline-dark" onclick="clearAllWishlist()">
-        <i class="fas fa-trash me-2"></i>
-        Vider la liste
-      </button>
+<div class="wishlist-main">
+  <!-- Controls Bar -->
+  <div class="controls-bar" id="controlsBar">
+    <div class="controls-left">
+      <div class="filter-badge">
+        <i class="fas fa-heart"></i>
+        <span id="itemCount">0 articles</span>
+      </div>
     </div>
-    <div>
-      <button class="btn btn-dark" onclick="addAllToCart()">
-        <i class="fas fa-cart-plus me-2"></i>
-        Tout ajouter au panier
+    <div class="controls-right">
+      <button class="btn-control btn-clear" onclick="clearAllWishlist()">
+        <i class="fas fa-trash-alt"></i>
+        Vider
       </button>
     </div>
   </div>
 
   <!-- Wishlist Grid -->
   <div class="wishlist-grid" id="wishlistGrid">
-    <!-- Loading skeletons -->
-    <div class="wishlist-item loading-skeleton" style="display: none;">
-      <div class="item-image" style="background: #dee2e6;"></div>
-      <div class="item-details">
-        <div style="height: 20px; background: #dee2e6; border-radius: 4px; margin-bottom: 10px;"></div>
-        <div style="height: 30px; background: #dee2e6; border-radius: 4px;"></div>
-      </div>
-    </div>
+    <!-- Products will be loaded here -->
   </div>
 
   <!-- Empty State -->
   <div class="empty-state" id="emptyState" style="display: none;">
-    <div class="empty-icon">
-      <i class="fas fa-heart-broken"></i>
+    <div class="empty-icon-wrapper">
+      <i class="fas fa-heart-broken empty-icon"></i>
     </div>
-    <h3>Votre liste de souhaits est vide</h3>
-    <p>Découvrez nos produits et ajoutez vos favoris ici</p>
+    <h3 class="empty-title">Votre liste est vide</h3>
+    <p class="empty-text">Explorez notre boutique et ajoutez vos produits préférés à votre liste de souhaits</p>
     <a href="{% url 'boutique' %}" class="btn-shop">
       <i class="fas fa-shopping-bag"></i>
       Découvrir la boutique
@@ -525,24 +968,28 @@
     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
     const grid = document.getElementById('wishlistGrid');
     const emptyState = document.getElementById('emptyState');
+    const controlsBar = document.getElementById('controlsBar');
     
     if (wishlist.length === 0) {
       grid.style.display = 'none';
       emptyState.style.display = 'block';
-      updateStats(0, 0);
+      controlsBar.style.display = 'none';
+      updateStats(0, 0, 0);
       return;
     }
 
     grid.style.display = 'grid';
     emptyState.style.display = 'none';
+    controlsBar.style.display = 'flex';
     
-    // Show loading skeletons
-    grid.innerHTML = Array(wishlist.length).fill(0).map(() => `
-      <div class="wishlist-item loading-skeleton">
-        <div class="item-image" style="background: #dee2e6;"></div>
-        <div class="item-details">
-          <div style="height: 20px; background: #dee2e6; border-radius: 4px; margin-bottom: 10px;"></div>
-          <div style="height: 30px; background: #dee2e6; border-radius: 4px;"></div>
+    // Show skeleton loading
+    grid.innerHTML = Array(wishlist.length).fill(0).map((_, i) => `
+      <div class="skeleton-card" style="animation-delay: ${i * 0.1}s">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line price"></div>
         </div>
       </div>
     `).join('');
@@ -555,6 +1002,7 @@
       const doc = parser.parseFromString(html, 'text/html');
       
       let totalValue = 0;
+      let totalSavings = 0;
       const items = [];
 
       wishlist.forEach(productId => {
@@ -569,6 +1017,10 @@
             
             const finalPrice = promoPrice ? parseFloat(promoPrice) : price;
             totalValue += finalPrice;
+            
+            if (promoPrice) {
+              totalSavings += (price - parseFloat(promoPrice));
+            }
 
             items.push({
               id: productId,
@@ -583,47 +1035,53 @@
       });
 
       renderWishlistItems(items);
-      updateStats(items.length, totalValue);
+      updateStats(items.length, totalValue, totalSavings);
 
     } catch (error) {
       console.error('Error loading wishlist:', error);
-      grid.innerHTML = '<p class="text-center text-danger">Erreur lors du chargement de la liste</p>';
+      grid.innerHTML = '<div class="empty-state"><p class="text-center text-danger">Erreur lors du chargement</p></div>';
     }
   }
 
   function renderWishlistItems(items) {
     const grid = document.getElementById('wishlistGrid');
     
-    grid.innerHTML = items.map(item => `
-      <div class="wishlist-item" data-product-id="${item.id}">
-        <div class="item-image">
-          ${item.promoPrice ? '<span class="item-badge">Promo</span>' : ''}
-          <img src="${item.image}" alt="${item.name}">
-          <button class="remove-btn" onclick="removeFromWishlist('${item.id}')">
+    grid.innerHTML = items.map((item, index) => `
+      <div class="product-card" data-product-id="${item.id}" style="animation-delay: ${index * 0.1}s">
+        <div class="product-image-wrapper">
+          <div class="product-badges">
+            ${item.promoPrice ? '<span class="badge badge-promo">Promo</span>' : ''}
+          </div>
+          <img src="${item.image}" alt="${item.name}" class="product-image">
+          <div class="image-overlay"></div>
+          <a href="/produit/${item.id}/" class="quick-view-btn">
+            <i class="fas fa-eye"></i>
+            Voir détails
+          </a>
+          <button class="remove-btn" onclick="removeFromWishlist('${item.id}')" title="Retirer">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="item-details">
-          <h3 class="item-title">${item.name}</h3>
-          <div class="availability">
+        <div class="product-details">
+          <div class="product-category">SadibouShop</div>
+          <h3 class="product-title">${item.name}</h3>
+          <div class="product-availability">
             <i class="fas fa-check-circle"></i>
-            Disponible
+            En stock
           </div>
-          <div class="item-price">
+          <div class="product-pricing">
             ${item.promoPrice ? `
-              <span class="current-price">${item.promoPrice} FCFA</span>
-              <span class="old-price">${item.price} FCFA</span>
+              <span class="price-current">${parseInt(item.promoPrice).toLocaleString('fr-FR')} FCFA</span>
+              <span class="price-old">${item.price.toLocaleString('fr-FR')} FCFA</span>
+              <span class="price-discount">-${Math.round((1 - item.promoPrice/item.price) * 100)}%</span>
             ` : `
-              <span class="current-price">${item.price} FCFA</span>
+              <span class="price-current">${item.price.toLocaleString('fr-FR')} FCFA</span>
             `}
           </div>
-          <div class="item-actions">
-            <button class="btn-add-cart" onclick="addToCartFromWishlist('${item.id}')">
-              <i class="fas fa-cart-plus me-2"></i>
-              Ajouter
-            </button>
+          <div class="product-actions">
             <a href="/produit/${item.id}/" class="btn-view">
               <i class="fas fa-eye"></i>
+              Voir le produit
             </a>
           </div>
         </div>
@@ -631,9 +1089,11 @@
     `).join('');
   }
 
-  function updateStats(count, value) {
+  function updateStats(count, value, savings) {
     document.getElementById('totalItems').textContent = count;
     document.getElementById('totalValue').textContent = value.toLocaleString('fr-FR');
+    document.getElementById('totalSavings').textContent = savings.toLocaleString('fr-FR');
+    document.getElementById('itemCount').textContent = count + (count > 1 ? ' articles' : ' article');
     
     // Update navbar badge
     if (typeof window.updateWishlistBadge === 'function') {
@@ -649,10 +1109,9 @@
       wishlist.splice(index, 1);
       localStorage.setItem('wishlist', JSON.stringify(wishlist));
       
-      // Remove item with animation
       const item = document.querySelector(`[data-product-id="${productId}"]`);
       if (item) {
-        item.style.transform = 'scale(0)';
+        item.style.transform = 'scale(0.8) rotateX(30deg)';
         item.style.opacity = '0';
         setTimeout(() => {
           loadWishlist();
@@ -681,17 +1140,17 @@
     );
   }
 
-  async function addToCartFromWishlist(productId) {
-    const btn = document.querySelector(`[data-product-id="${productId}"] .btn-add-cart`);
+  async function addToCartFromWishlist(productId, btn) {
+    if (!btn) {
+      btn = document.querySelector(`[data-product-id="${productId}"] .btn-cart`);
+    }
     if (!btn) return;
     
-    // Change button state
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-      // Correct URL with product ID
       const url = `/panier/ajouter/${productId}/`;
       const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                         document.cookie.match(/csrftoken=([^;]+)/)?.[1];
@@ -703,52 +1162,30 @@
           'X-CSRFToken': csrftoken,
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: new URLSearchParams({
-          'quantite': '1'
-        })
+        body: new URLSearchParams({ 'quantite': '1' })
       });
       
       if (response.ok) {
-        // Try to parse JSON response
-        let data = {};
-        try {
-          data = await response.json();
-        } catch (e) {
-          // If not JSON, that's ok
-          console.log('Response is not JSON');
-        }
+        btn.innerHTML = '<i class="fas fa-check"></i> Ajouté !';
+        btn.classList.add('added');
         
-        // Success - Update button
-        btn.innerHTML = '<i class="fas fa-check me-2"></i> Ajouté';
-        btn.style.background = '#28a745';
-        btn.style.borderColor = '#28a745';
-        btn.style.color = 'white';
-        
-        // Update cart badge - try multiple methods
         if (typeof window.updateCartBadge === 'function') {
-          // Fetch cart count
           try {
             const countResponse = await fetch('/cart-count/');
             const countData = await countResponse.json();
             if (countData.cart_count !== undefined) {
               window.updateCartBadge(countData.cart_count);
             }
-          } catch (e) {
-            console.log('Could not update cart badge');
-          }
+          } catch (e) {}
         }
         
-        // Show beautiful toast notification
         showToast('Produit ajouté au panier !', 'success');
         
-        // Reset button after 2 seconds
         setTimeout(() => {
           btn.innerHTML = originalHTML;
-          btn.style.background = '';
-          btn.style.borderColor = '';
-          btn.style.color = '';
+          btn.classList.remove('added');
           btn.disabled = false;
-        }, 2000);
+        }, 2500);
       } else {
         throw new Error('Erreur ' + response.status);
       }
@@ -778,16 +1215,14 @@
         
         showToast(`Ajout de ${wishlist.length} produits en cours...`, 'info');
         
-        // Add all products to cart
         for (const productId of wishlist) {
           try {
-            await addToCartFromWishlist(productId);
+            const btn = document.querySelector(`[data-product-id="${productId}"] .btn-cart`);
+            await addToCartFromWishlist(productId, btn);
             successCount++;
-            // Small delay between additions
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 400));
           } catch (error) {
             failCount++;
-            console.error(`Failed to add product ${productId}:`, error);
           }
         }
         
@@ -803,7 +1238,6 @@
 
   // Custom Confirmation Modal
   function showConfirmModal(title, message, icon, onConfirm) {
-    // Remove existing modal if any
     const existingModal = document.querySelector('.custom-modal-overlay');
     if (existingModal) existingModal.remove();
     
@@ -812,19 +1246,21 @@
     modal.innerHTML = `
       <div class="custom-modal">
         <div class="modal-header">
-          <i class="fas fa-${icon}"></i>
-          <h3>${title}</h3>
+          <div class="modal-icon">
+            <i class="fas fa-${icon}"></i>
+          </div>
+          <h3 class="modal-title">${title}</h3>
         </div>
         <div class="modal-body">
           ${message}
         </div>
         <div class="modal-footer">
           <button class="modal-btn modal-btn-secondary" onclick="this.closest('.custom-modal-overlay').remove()">
-            <i class="fas fa-times me-2"></i>
+            <i class="fas fa-times"></i>
             Annuler
           </button>
           <button class="modal-btn modal-btn-primary" id="confirmBtn">
-            <i class="fas fa-check me-2"></i>
+            <i class="fas fa-check"></i>
             Confirmer
           </button>
         </div>
@@ -833,20 +1269,15 @@
     
     document.body.appendChild(modal);
     
-    // Handle confirm button click
     document.getElementById('confirmBtn').addEventListener('click', () => {
       modal.remove();
       if (onConfirm) onConfirm();
     });
     
-    // Close on overlay click
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.remove();
-      }
+      if (e.target === modal) modal.remove();
     });
     
-    // Close on Escape key
     const escapeHandler = (e) => {
       if (e.key === 'Escape') {
         modal.remove();
@@ -856,9 +1287,8 @@
     document.addEventListener('keydown', escapeHandler);
   }
 
-  // Beautiful Toast Notification System
+  // Toast Notification System
   function showToast(message, type = 'info') {
-    // Remove existing toasts
     document.querySelectorAll('.wishlist-toast').forEach(t => t.remove());
     
     const toast = document.createElement('div');
@@ -874,7 +1304,7 @@
     const colors = {
       success: '#10b981',
       error: '#ef4444',
-      info: '#3b82f6',
+      info: '#ffc107',
       warning: '#f59e0b'
     };
     
@@ -895,108 +1325,86 @@
       background: white;
       color: #1f2937;
       padding: 0;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+      border-radius: 16px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
       z-index: 10000;
       min-width: 320px;
-      max-width: 500px;
-      animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      max-width: 450px;
+      animation: toastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       overflow: hidden;
     `;
     
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes slideInRight {
-        from {
-          transform: translateX(400px);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
+      @keyframes toastSlideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
       }
-      
-      @keyframes slideOutRight {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(400px);
-          opacity: 0;
-        }
+      @keyframes toastSlideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
       }
-      
       .wishlist-toast::before {
         content: '';
         position: absolute;
         left: 0;
         top: 0;
         bottom: 0;
-        width: 4px;
+        width: 5px;
         background: ${colors[type]};
       }
-      
       .wishlist-toast .toast-content {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 16px 20px;
+        gap: 14px;
+        padding: 18px 22px;
         flex: 1;
       }
-      
       .wishlist-toast .toast-content i {
-        font-size: 20px;
+        font-size: 22px;
         color: ${colors[type]};
         flex-shrink: 0;
       }
-      
       .wishlist-toast .toast-content span {
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 15px;
+        font-weight: 600;
         line-height: 1.4;
       }
-      
       .wishlist-toast .toast-close {
         background: transparent;
         border: none;
         color: #9ca3af;
         font-size: 14px;
-        padding: 16px;
+        padding: 18px;
         cursor: pointer;
         transition: all 0.2s;
         flex-shrink: 0;
       }
-      
       .wishlist-toast .toast-close:hover {
         color: #1f2937;
         background: #f3f4f6;
       }
-      
       @media (max-width: 640px) {
         .wishlist-toast {
-          left: 10px;
-          right: 10px;
-          min-width: auto;
+          left: 10px !important;
+          right: 10px !important;
+          min-width: auto !important;
         }
       }
     `;
     
-    if (!document.getElementById('toast-styles')) {
-      style.id = 'toast-styles';
+    if (!document.getElementById('toast-styles-v2')) {
+      style.id = 'toast-styles-v2';
       document.head.appendChild(style);
     }
     
     document.body.appendChild(toast);
     
-    // Auto remove after 4 seconds
     setTimeout(() => {
-      toast.style.animation = 'slideOutRight 0.3s ease-in';
+      toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
       setTimeout(() => toast.remove(), 300);
     }, 4000);
   }

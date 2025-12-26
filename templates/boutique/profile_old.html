@@ -1,0 +1,978 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mon profil{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+  :root {
+    --gold: #ffc107;
+    --gold-light: #ffcd39;
+    --dark: #232526;
+    --dark-light: #414345;
+    --light: #f8f9fa;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-lg: 18px;
+    --shadow-sm: 0 6px 16px rgba(0,0,0,.06);
+    --shadow: 0 14px 30px rgba(0,0,0,.10);
+    --shadow-lg: 0 24px 48px rgba(0,0,0,.16);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    background: #f5f6fa;
+    min-height: 100vh;
+  }
+
+  .container.py-4 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+
+  /* Header style cohérent avec mes_commandes */
+  .profile-header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+  }
+
+  .profile-header h3 {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+
+  .profile-header .subtitle {
+    opacity: 0.85;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Stat cards dans le header */
+  .stat-card {
+    background: rgba(255,255,255,.1);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    text-align: center;
+    transition: transform .2s ease, background .2s ease;
+  }
+
+  .stat-card:hover {
+    background: rgba(255,255,255,.15);
+    transform: translateY(-4px);
+  }
+
+  .stat-card .number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .stat-card .label {
+    font-size: .85rem;
+    opacity: .9;
+  }
+
+  /* Navigation tabs */
+  .nav-tabs {
+    border: 0;
+    background: white;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-tabs .nav-link {
+    border: 2px solid #e9ecef;
+    border-radius: 999px;
+    color: var(--dark);
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    transition: var(--transition);
+    background: white;
+  }
+
+  .nav-tabs .nav-link:hover {
+    border-color: var(--gold);
+    background: rgba(255, 193, 7, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .nav-tabs .nav-link.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--dark);
+    box-shadow: 0 8px 16px rgba(255,193,7,.3);
+  }
+
+  .nav-tabs .nav-link i { margin-right: 0.5rem; }
+
+  /* Cards */
+  .card {
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: white;
+    transition: var(--transition);
+    overflow: hidden;
+  }
+
+  .card:hover { 
+    transform: translateY(-4px); 
+    box-shadow: var(--shadow); 
+  }
+
+  .card-title {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f1f3f5;
+  }
+
+  .card-title i { color: var(--gold); }
+  .card-body { padding: 1.5rem; }
+
+  /* Buttons */
+  .btn {
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    border: 2px solid transparent;
+  }
+
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,.15); }
+  
+  .btn-primary { 
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%); 
+    color: var(--dark); 
+    border-color: var(--gold);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    color: var(--dark);
+  }
+  
+  .btn-dark { 
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%); 
+    color: white; 
+  }
+  
+  .btn-outline-dark { 
+    border: 2px solid var(--dark); 
+    color: var(--dark); 
+    background: transparent; 
+  }
+  .btn-outline-dark:hover { background: var(--dark); color: white; }
+  
+  .btn-outline-danger { 
+    border: 2px solid var(--danger); 
+    color: var(--danger); 
+    background: transparent; 
+  }
+  .btn-outline-danger:hover { background: var(--danger); color: white; }
+
+  /* Badge */
+  .badge {
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .badge.bg-dark { background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%) !important; }
+  .badge.bg-secondary { background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important; }
+  .badge.bg-success { background: linear-gradient(135deg, var(--success) 0%, #34ce57 100%) !important; }
+
+  /* Avatar */
+  .avatar-container { position: relative; display: inline-block; }
+
+  .avatar-preview {
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    object-fit: cover;
+  }
+
+  .avatar-preview:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--gold);
+  }
+
+  /* Profile preview card */
+  .profile-preview-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .profile-preview-card .avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--gold);
+    box-shadow: 0 8px 24px rgba(255,193,7,.3);
+    object-fit: cover;
+    margin-bottom: 1rem;
+  }
+
+  .profile-preview-card h4 {
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.25rem;
+  }
+
+  .profile-preview-card .email {
+    color: #6c757d;
+    font-size: 0.95rem;
+  }
+
+  /* Form styles */
+  .form-control, .form-select {
+    border-radius: var(--radius-sm);
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+    background: white;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0.2rem rgba(255,193,7,.25);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .form-label i { color: var(--gold); font-size: 0.85rem; }
+
+  /* List group */
+  .list-group-item {
+    border: 1px solid #f1f3f5;
+    border-radius: var(--radius-sm) !important;
+    margin-bottom: 0.5rem;
+    transition: var(--transition);
+    background: white;
+    padding: 1rem 1.25rem;
+  }
+
+  .list-group-item:hover {
+    background: rgba(255,193,7,.05);
+    border-color: var(--gold);
+    transform: translateX(4px);
+  }
+
+  /* Drop zone pour avatar */
+  .drop-zone {
+    border: 3px dashed #e9ecef;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    background: #f8f9fa;
+  }
+
+  .drop-zone.dragover {
+    border-color: var(--gold);
+    background: rgba(255,193,7,.1);
+    transform: scale(1.02);
+  }
+
+  .drop-zone:hover {
+    border-color: var(--gold);
+    background: rgba(255,193,7,.05);
+  }
+
+  .drop-zone i.fa-cloud-upload-alt {
+    font-size: 2.5rem;
+    color: var(--gold);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  /* Address cards */
+  .address-card {
+    background: white;
+    border: 1px solid #f1f3f5;
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: var(--transition);
+    height: 100%;
+  }
+
+  .address-card:hover {
+    border-color: var(--gold);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+  }
+
+  .address-card.default {
+    border-left: 4px solid var(--gold);
+  }
+
+  /* Order items */
+  .order-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #f1f3f5;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+    background: white;
+    transition: var(--transition);
+  }
+
+  .order-item:hover {
+    background: #f8f9fa;
+    border-color: var(--gold);
+    transform: translateX(4px);
+  }
+
+  /* Security section */
+  .security-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #f1f3f5;
+  }
+
+  .security-item:last-child {
+    border-bottom: none;
+  }
+
+  /* Support card */
+  .support-card {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .support-card .icon-circle {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(255,193,7,.4);
+  }
+
+  .support-card .icon-circle i {
+    font-size: 1.75rem;
+    color: var(--dark);
+  }
+
+  .support-card h5 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .support-card p {
+    opacity: 0.85;
+    font-size: 0.9rem;
+  }
+
+  .support-card .btn {
+    background: var(--gold);
+    color: var(--dark);
+    border-color: var(--gold);
+    margin-top: 1rem;
+  }
+
+  .support-card .btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h5 {
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  .empty-state p {
+    color: #adb5bd;
+  }
+
+  /* Loading spinner */
+  .spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .spinner-overlay.active { display: flex; }
+
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade { animation: fadeIn 0.4s ease; }
+  .animate-slide { animation: slideUp 0.4s ease; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .profile-header { padding: 1.5rem; }
+    .nav-tabs { flex-direction: column; padding: 0.75rem; }
+    .nav-tabs .nav-link { width: 100%; text-align: center; margin-bottom: 0.5rem; }
+    .btn { width: 100%; margin-bottom: 0.5rem; }
+    .card-footer .d-flex { flex-direction: column !important; }
+    .card-footer .btn { width: 100% !important; }
+    .stat-card { margin-bottom: 1rem; }
+  }
+
+  @media (max-width: 576px) {
+    .container.py-4 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+    .card-body { padding: 1rem !important; }
+    .profile-header h3 { font-size: 1.25rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="spinner-overlay" id="loadingSpinner">
+  <div class="spinner"></div>
+</div>
+
+<div class="container py-4 animate-fade">
+  <!-- Header avec stats -->
+  <div class="profile-header">
+    <div class="row align-items-center">
+      <div class="col-md-6 mb-3 mb-md-0">
+        <h3><i class="fas fa-user-circle me-2"></i>Mon Profil</h3>
+        <p class="subtitle mb-0">Gérez vos informations personnelles et vos préférences</p>
+      </div>
+      <div class="col-md-6">
+        <div class="row g-3">
+          <div class="col-4">
+            <div class="stat-card">
+              <div class="number">{{ recent_orders|length }}</div>
+              <div class="label">Commandes</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-card">
+              <div class="number">{{ adresses|length }}</div>
+              <div class="label">Adresses</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-card">
+              <div class="number">{{ user.date_joined|timesince|truncatewords:1 }}</div>
+              <div class="label">Membre</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-compte" type="button">
+        <i class="fas fa-user"></i> Compte
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-adresses" type="button">
+        <i class="fas fa-map-marked-alt"></i> Adresses
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-commandes" type="button">
+        <i class="fas fa-box"></i> Commandes
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-securite" type="button">
+        <i class="fas fa-shield-alt"></i> Sécurité
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Tab Compte -->
+    <div class="tab-pane fade show active animate-slide" id="tab-compte">
+      <div class="row g-4">
+        <!-- Formulaire -->
+        <div class="col-lg-7">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-edit"></i> Informations personnelles</h5>
+              <form method="post" enctype="multipart/form-data" id="profileForm">
+                {% csrf_token %}
+                
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-user"></i> Nom d'utilisateur</label>
+                    {{ user_form.username }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                    {{ user_form.email }}
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-id-card"></i> Prénom</label>
+                    {{ user_form.first_name }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-id-card"></i> Nom</label>
+                    {{ user_form.last_name }}
+                  </div>
+                </div>
+
+                {% for field in profile_form %}
+                  {% if field.name != 'avatar' and field.name != 'latitude' and field.name != 'longitude' %}
+                    <div class="mb-3">
+                      <label class="form-label">
+                        <i class="fas fa-{% if 'phone' in field.name or 'telephone' in field.name %}phone{% elif 'adresse' in field.name or 'address' in field.name %}home{% else %}info-circle{% endif %}"></i>
+                        {{ field.label }}
+                      </label>
+                      {{ field }}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+
+                <div class="mb-4">
+                  <label class="form-label"><i class="fas fa-camera"></i> Photo de profil</label>
+                  <div class="drop-zone" id="avatarDropZone">
+                    <div class="avatar-container mb-2">
+                      <img class="avatar-preview" src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" alt="Avatar" width="80" height="80" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=ffc107&color=232526&size=80&bold=true';">
+                    </div>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p class="mb-1 fw-bold small">Cliquez ou glissez-déposez</p>
+                    <small class="text-muted">PNG, JPG jusqu'à 5MB</small>
+                    <input id="id_avatar_file" type="file" name="avatar" accept="image/*" class="visually-hidden">
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aperçu et support -->
+        <div class="col-lg-5">
+          <div class="card mb-4">
+            <div class="card-body p-0">
+              <div class="profile-preview-card">
+                <img class="avatar-large avatar-preview" src="{% if profile.avatar %}{{ profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" alt="Avatar" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=ffc107&color=232526&size=120&bold=true';">
+                <h4>{{ user.get_full_name|default:user.username }}</h4>
+                <p class="email mb-3">{{ user.email }}</p>
+                <span class="badge bg-dark">
+                  <i class="fas fa-calendar-alt me-1"></i> Membre depuis {{ user.date_joined|date:"M Y" }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="support-card">
+            <div class="icon-circle">
+              <i class="fas fa-headset"></i>
+            </div>
+            <h5>Besoin d'aide ?</h5>
+            <p class="mb-0">Notre équipe est disponible 24/7 pour vous assister</p>
+            <a href="{% url 'contact_support' %}" class="btn">
+              <i class="fas fa-paper-plane me-2"></i>Contacter le Support
+            </a>
+            <small class="d-block mt-2 opacity-75">Temps de réponse moyen: < 2h</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Adresses -->
+    <div class="tab-pane fade animate-slide" id="tab-adresses">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h5 class="mb-0"><i class="fas fa-map-marked-alt text-warning me-2"></i>Mes adresses de livraison</h5>
+        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#adresse-form">
+          <i class="fas fa-plus me-2"></i>Nouvelle adresse
+        </button>
+      </div>
+
+      <div id="adresse-form" class="collapse mb-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-map-marker-alt"></i> Ajouter une adresse</h5>
+            <form method="post" id="addressForm">
+              {% csrf_token %}
+              <input type="hidden" name="_section" value="adresse_create">
+              
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label"><i class="fas fa-home"></i> {{ address_form.ligne1.label }}</label>
+                  {{ address_form.ligne1 }}
+                </div>
+                <div class="col-12">
+                  <label class="form-label"><i class="fas fa-building"></i> {{ address_form.ligne2.label }}</label>
+                  {{ address_form.ligne2 }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fas fa-city"></i> {{ address_form.ville.label }}</label>
+                  {{ address_form.ville }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fas fa-map"></i> {{ address_form.region.label }}</label>
+                  {{ address_form.region }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fas fa-mail-bulk"></i> {{ address_form.code_postal.label }}</label>
+                  {{ address_form.code_postal }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label"><i class="fas fa-flag"></i> {{ address_form.pays.label }}</label>
+                  {{ address_form.pays }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label"><i class="fas fa-phone"></i> {{ address_form.telephone.label }}</label>
+                  {{ address_form.telephone }}
+                </div>
+              </div>
+
+              <input type="hidden" id="adresse_latitude" name="latitude">
+              <input type="hidden" id="adresse_longitude" name="longitude">
+
+              <div class="mt-4">
+                <button class="btn btn-primary w-100" type="submit">
+                  <i class="fas fa-save me-2"></i>Enregistrer l'adresse
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {% if adresses %}
+        <div class="row g-3">
+          {% for adr in adresses %}
+          <div class="col-md-6">
+            <div class="address-card {% if adr.is_default %}default{% endif %}">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h6 class="mb-0 fw-bold">
+                  <i class="fas fa-location-dot text-warning me-2"></i>{{ adr.nom|default:"Adresse" }}
+                </h6>
+                {% if adr.is_default %}
+                  <span class="badge bg-dark"><i class="fas fa-star me-1"></i>Par défaut</span>
+                {% endif %}
+              </div>
+              <div class="small text-muted">
+                {% if adr.destinataire %}<div class="mb-2"><i class="fas fa-user me-2"></i>{{ adr.destinataire }}</div>{% endif %}
+                <div class="mb-2"><i class="fas fa-home me-2"></i>{{ adr.ligne1 }}{% if adr.ligne2 %}, {{ adr.ligne2 }}{% endif %}</div>
+                <div class="mb-2"><i class="fas fa-city me-2"></i>{{ adr.ville }}{% if adr.region %}, {{ adr.region }}{% endif %}{% if adr.code_postal %}, {{ adr.code_postal }}{% endif %}</div>
+                <div class="mb-2"><i class="fas fa-flag me-2"></i>{{ adr.pays }}</div>
+                {% if adr.telephone %}<div><i class="fas fa-phone me-2"></i>{{ adr.telephone }}</div>{% endif %}
+              </div>
+              <div class="d-flex gap-2 mt-3 pt-3 border-top">
+                {% if not adr.is_default %}
+                <form method="post" action="{% url 'adresse_defaut' adr.id %}" class="flex-grow-1">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-dark btn-sm w-100" type="submit">
+                    <i class="fas fa-star me-1"></i>Par défaut
+                  </button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url 'adresse_supprimer' adr.id %}" onsubmit="return confirm('Supprimer cette adresse ?');">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger btn-sm" type="submit"><i class="fas fa-trash"></i></button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="empty-state">
+            <i class="fas fa-map-marked-alt"></i>
+            <h5>Aucune adresse enregistrée</h5>
+            <p>Ajoutez votre première adresse de livraison</p>
+            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#adresse-form">
+              <i class="fas fa-plus me-2"></i>Ajouter une adresse
+            </button>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Tab Commandes -->
+    <div class="tab-pane fade animate-slide" id="tab-commandes">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h5 class="mb-0"><i class="fas fa-shopping-bag text-warning me-2"></i>Mes dernières commandes</h5>
+        <a href="{% url 'mes_commandes' %}" class="btn btn-outline-dark btn-sm">
+          <i class="fas fa-list me-1"></i>Voir tout
+        </a>
+      </div>
+      
+      {% if recent_orders %}
+        <div class="card">
+          <div class="card-body p-0">
+            {% for c in recent_orders %}
+              <div class="order-item {% if not forloop.last %}border-bottom{% endif %}">
+                <div class="flex-grow-1">
+                  <h6 class="mb-1 fw-bold">
+                    <i class="fas fa-receipt text-warning me-2"></i>Commande #{{ c.id }}
+                  </h6>
+                  <small class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    {% if c.date_commande %}{{ c.date_commande|date:"d/m/Y à H:i" }}
+                    {% elif c.created_at %}{{ c.created_at|date:"d/m/Y à H:i" }}
+                    {% elif c.created %}{{ c.created|date:"d/m/Y à H:i" }}
+                    {% else %}{{ c.pk|date:"d/m/Y" }}{% endif %}
+                  </small>
+                </div>
+                <span class="badge {% if c.statut == 'LIVREE' or c.status == 'LIVREE' %}bg-success{% elif c.statut == 'EN_COURS' or c.status == 'EN_COURS' %}bg-info{% elif c.statut == 'ANNULEE' or c.status == 'ANNULEE' %}bg-secondary{% else %}bg-warning text-dark{% endif %}">
+                  {% if c.get_statut_display %}{{ c.get_statut_display }}
+                  {% elif c.get_status_display %}{{ c.get_status_display }}
+                  {% elif c.statut %}{{ c.statut }}
+                  {% elif c.status %}{{ c.status }}
+                  {% else %}En attente{% endif %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="text-center mt-4">
+          <a class="btn btn-dark" href="{% url 'mes_commandes' %}">
+            <i class="fas fa-list me-2"></i>Voir toutes mes commandes
+          </a>
+        </div>
+      {% else %}
+        <div class="card">
+          <div class="empty-state">
+            <i class="fas fa-shopping-cart"></i>
+            <h5>Aucune commande récente</h5>
+            <p>Vous n'avez pas encore passé de commande</p>
+            <a class="btn btn-primary" href="{% url 'boutique' %}">
+              <i class="fas fa-shopping-bag me-2"></i>Découvrir la boutique
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Tab Sécurité -->
+    <div class="tab-pane fade animate-slide" id="tab-securite">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-shield-alt"></i> Sécurité du compte</h5>
+              
+              <div class="security-item">
+                <div>
+                  <i class="fas fa-check-circle text-success me-2"></i>
+                  <span class="fw-bold">Email vérifié</span>
+                  <small class="d-block text-muted">{{ user.email }}</small>
+                </div>
+                <span class="badge bg-success">Actif</span>
+              </div>
+
+              <div class="security-item">
+                <div>
+                  <i class="fas fa-lock text-warning me-2"></i>
+                  <span class="fw-bold">Mot de passe</span>
+                  <small class="d-block text-muted">Dernière modification: inconnue</small>
+                </div>
+                <a href="{% url 'change_password' %}" class="btn btn-outline-dark btn-sm">
+                  <i class="fas fa-key me-1"></i>Modifier
+                </a>
+              </div>
+
+              <div class="security-item">
+                <div>
+                  <i class="fas fa-user-shield text-info me-2"></i>
+                  <span class="fw-bold">Connexion</span>
+                  <small class="d-block text-muted">Dernière connexion: {{ user.last_login|date:"d/m/Y à H:i"|default:"Non disponible" }}</small>
+                </div>
+                <span class="badge bg-success">Sécurisé</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-sign-out-alt"></i> Session</h5>
+              <p class="text-muted mb-3">Vous pouvez vous déconnecter de votre compte à tout moment.</p>
+              <a href="{% url 'logout' %}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-2"></i>Se déconnecter
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card" style="background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(40,167,69,0.05));">
+            <div class="card-body text-center">
+              <div style="width: 60px; height: 60px; margin: 0 auto 1rem; background: linear-gradient(135deg, var(--success), #34ce57); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-shield-check fa-lg text-white"></i>
+              </div>
+              <h6 class="fw-bold">Compte sécurisé</h6>
+              <p class="small text-muted mb-0">Votre compte est protégé et vos données sont en sécurité.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const spinner = document.getElementById('loadingSpinner');
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => { 
+    form.addEventListener('submit', () => spinner.classList.add('active')); 
+  });
+
+  // Avatar drag & drop
+  (function() {
+    const dropZone = document.getElementById('avatarDropZone');
+    const input = document.getElementById('id_avatar_file');
+    if (!dropZone || !input) return;
+    
+    dropZone.addEventListener('click', function(e) { 
+      if (!e.target.closest('img')) { input.click(); } 
+    });
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { 
+      dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false); 
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => { 
+      dropZone.addEventListener(eventName, () => { dropZone.classList.add('dragover'); }, false); 
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => { 
+      dropZone.addEventListener(eventName, () => { dropZone.classList.remove('dragover'); }, false); 
+    });
+    
+    dropZone.addEventListener('drop', function(e) { 
+      const dt = e.dataTransfer; 
+      const files = dt.files; 
+      if (files.length) { input.files = files; handleFiles(files); } 
+    });
+    
+    input.addEventListener('change', function(e) { 
+      if (this.files && this.files[0]) { handleFiles(this.files); } 
+    });
+    
+    function handleFiles(files) {
+      const file = files[0];
+      if (!file.type.startsWith('image/')) { alert('Veuillez sélectionner une image valide.'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('L\'image ne doit pas dépasser 5MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = function(ev) { 
+        document.querySelectorAll('.avatar-preview').forEach(img => { 
+          img.src = ev.target.result; 
+          img.classList.add('animate-fade'); 
+        }); 
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    document.querySelectorAll('.avatar-preview').forEach(img => { 
+      img.addEventListener('click', () => { input.click(); }); 
+      img.style.cursor = 'pointer'; 
+    });
+  })();
+
+  // Animation on scroll
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+  const observer = new IntersectionObserver(function(entries) { 
+    entries.forEach(entry => { 
+      if (entry.isIntersecting) { 
+        entry.target.classList.add('animate-slide'); 
+        observer.unobserve(entry.target); 
+      } 
+    }); 
+  }, observerOptions);
+  document.querySelectorAll('.card, .address-card').forEach(el => { observer.observe(el); });
+
+  // Toast de succès
+  if (window.location.search.includes('success')) {
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+    toast.style.zIndex = '9999';
+    toast.style.borderRadius = '10px';
+    toast.style.boxShadow = '0 8px 24px rgba(40,167,69,.3)';
+    toast.innerHTML = '<i class="fas fa-check-circle me-2"></i>Modifications enregistrées !';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+});
+</script>
+{% endblock %}

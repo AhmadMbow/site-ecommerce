@@ -35,7 +35,13 @@
       <div class="order-header">
         <div>
           <h5 class="order-id">Commande #{{ order.id }}</h5>
-          <p class="order-client">{{ order.user.get_full_name|default:order.user.username }}</p>
+          <p class="order-client">
+            {% if order.user %}
+              {{ order.user.get_full_name|default:order.user.username }}
+            {% else %}
+              {{ order.prenom }} {{ order.nom }}
+            {% endif %}
+          </p>
         </div>
         <span class="order-status status-{{ order.statut|lower }}">
           {{ order.get_statut_display|default:order.statut }}

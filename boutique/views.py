@@ -2704,7 +2704,7 @@ Pour ne plus recevoir nos emails, repondez a ce message avec "STOP".
                 
             except Exception as e:
                 error_count += 1
-                print(f"Erreur envoi a {client.email}: {str(e)}")
+                # Erreur ignorée silencieusement pour éviter problèmes Unicode
         
         return JsonResponse({
             'success': True,

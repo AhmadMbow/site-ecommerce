@@ -1,0 +1,1075 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mes commandes{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+  :root {
+    --gold: #ffc107;
+    --dark: #232526;
+    --light: #f8f9fa;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow-sm: 0 6px 16px rgba(0,0,0,.06);
+    --shadow: 0 14px 30px rgba(0,0,0,.10);
+    --shadow-lg: 0 24px 48px rgba(0,0,0,.16);
+  }
+
+  body {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  }
+
+  .container.mt-4 {
+    margin-top: 2rem !important;
+  }
+
+  /* Header avec statistiques */
+  .orders-header {
+    background: linear-gradient(135deg, var(--dark) 0%, #414345 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,.1);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    text-align: center;
+    transition: transform .2s ease, background .2s ease;
+  }
+
+  .stat-card:hover {
+    background: rgba(255,255,255,.15);
+    transform: translateY(-4px);
+  }
+
+  .stat-card .number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .stat-card .label {
+    font-size: .85rem;
+    opacity: .9;
+  }
+
+  /* Filtres */
+  .filters-bar {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .filter-btn {
+    border: 2px solid #e9ecef;
+    border-radius: 999px;
+    padding: .5rem 1rem;
+    background: white;
+    color: var(--dark);
+    font-weight: 600;
+    transition: all .25s ease;
+    cursor: pointer;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: var(--dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(255,193,7,.3);
+  }
+
+  .search-box {
+    border-radius: var(--radius-sm);
+    border: 2px solid #e9ecef;
+    padding: .6rem 1rem;
+    transition: all .25s ease;
+  }
+
+  .search-box:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 .2rem rgba(255,193,7,.25);
+  }
+
+  /* Cartes de commande */
+  .order-card {
+    background: white;
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+
+  .order-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+  }
+
+  .order-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+
+  .order-id {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .order-date {
+    color: #6c757d;
+    font-size: .9rem;
+  }
+
+  /* Badge statut amélioré */
+  .badge-status {
+    font-weight: 600;
+    padding: .5rem 1rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    letter-spacing: .3px;
+  }
+
+  .badge-livree {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(40,167,69,.3);
+  }
+
+  .badge-en-cours {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(23,162,184,.3);
+  }
+
+  .badge-en-attente {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%);
+    color: var(--dark);
+    box-shadow: 0 4px 12px rgba(255,193,7,.3);
+  }
+
+  .badge-annulee {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108,117,125,.3);
+  }
+
+  /* Timeline de statut */
+  .status-timeline {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    position: relative;
+  }
+
+  .status-timeline::before {
+    content: '';
+    position: absolute;
+    top: 1rem;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 0;
+  }
+
+  .timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+    flex: 1;
+  }
+
+  .timeline-dot {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .5rem;
+    transition: all .3s ease;
+  }
+
+  .timeline-step.active .timeline-dot {
+    background: var(--gold);
+    border-color: var(--gold);
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(255,193,7,.4);
+  }
+
+  .timeline-step.completed .timeline-dot {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .timeline-label {
+    font-size: .75rem;
+    color: #6c757d;
+    text-align: center;
+  }
+
+  .timeline-step.active .timeline-label {
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  /* Détails de la commande */
+  .order-body {
+    padding: 1.5rem;
+  }
+
+  .order-summary {
+    background: rgba(255,193,7,.05);
+    border-left: 4px solid var(--gold);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .order-items {
+    margin-top: 1rem;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #f1f3f5;
+    border-radius: var(--radius-sm);
+    margin-bottom: .75rem;
+    transition: all .25s ease;
+    background: white;
+  }
+
+  .item-row:hover {
+    background: #f8f9fa;
+    border-color: var(--gold);
+    transform: translateX(4px);
+  }
+
+  .product-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 8px rgba(0,0,0,.08);
+    flex-shrink: 0;
+  }
+
+  .product-info {
+    flex: 1;
+    padding: 0 1rem;
+  }
+
+  .product-name {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: .25rem;
+  }
+
+  .product-quantity {
+    color: #6c757d;
+    font-size: .9rem;
+  }
+
+  .product-price {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 1.1rem;
+  }
+
+  /* Actions */
+  .action-btn {
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    padding: .5rem 1rem;
+    transition: all .25s ease;
+    border: 2px solid transparent;
+  }
+
+  .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,.15);
+  }
+
+  .btn-review {
+    background: linear-gradient(135deg, var(--gold) 0%, #ffcd39 100%);
+    color: var(--dark);
+    border-color: var(--gold);
+  }
+
+  .btn-review:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-track {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+    border-color: #17a2b8;
+  }
+
+  /* Section livreur */
+  .deliverer-section {
+    background: #f8f9fa;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-top: 1rem;
+    border-top: 2px solid #e9ecef;
+  }
+
+  /* État vide */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-state i {
+    font-size: 5rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h4 {
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: .5rem;
+  }
+
+  .empty-state p {
+    color: #adb5bd;
+  }
+
+  /* Bouton d'annulation */
+  .btn-cancel-order {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .5rem 1.5rem;
+    font-weight: 600;
+    transition: all .3s ease;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+  }
+
+  .btn-cancel-order:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(220, 53, 69, 0.3);
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    color: white;
+  }
+
+  .btn-cancel-order:active {
+    transform: translateY(0);
+  }
+
+  .btn-cancel-order i {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .orders-header {
+      padding: 1.5rem;
+    }
+
+    .stat-card .number {
+      font-size: 1.5rem;
+    }
+
+    .filters-bar {
+      padding: 1rem;
+    }
+
+    .filter-btn {
+      font-size: .85rem;
+      padding: .4rem .8rem;
+      margin-bottom: .5rem;
+    }
+
+    .order-header {
+      padding: 1rem;
+    }
+
+    .order-body {
+      padding: 1rem;
+    }
+
+    .item-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .75rem;
+    }
+
+    .product-thumb {
+      width: 100%;
+      height: 200px;
+    }
+
+    .product-info {
+      padding: 0;
+      width: 100%;
+    }
+
+    .status-timeline {
+      flex-wrap: wrap;
+    }
+
+    .timeline-step {
+      min-width: 50%;
+      margin-bottom: 1rem;
+    }
+
+    .timeline-label {
+      font-size: .7rem;
+    }
+  }
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    .order-card {
+      background: #1a1d20;
+      border-color: rgba(255,255,255,.08);
+    }
+
+    .order-header {
+      background: linear-gradient(135deg, #2d3035 0%, #1a1d20 100%);
+    }
+
+    .filters-bar {
+      background: #1a1d20;
+    }
+
+    .item-row {
+      background: #2d3035;
+      border-color: rgba(255,255,255,.08);
+    }
+
+    .item-row:hover {
+      background: #343a40;
+    }
+
+    .search-box {
+      background: #2d3035;
+      color: #e9ecef;
+      border-color: rgba(255,255,255,.12);
+    }
+
+    .filter-btn {
+      background: #2d3035;
+      color: #e9ecef;
+      border-color: rgba(255,255,255,.12);
+    }
+
+    .deliverer-section {
+      background: #2d3035;
+      border-color: rgba(255,255,255,.12);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container mt-4">
+  <!-- Header avec stats -->
+  <div class="orders-header">
+    <h1 class="mb-4"><i class="fas fa-shopping-bag me-2"></i> Mes commandes</h1>
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number">{{ commandes|length }}</div>
+          <div class="label">Total</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number">{{ commandes_livrees|default:0 }}</div>
+          <div class="label">Livrées</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number">{{ commandes_en_cours|default:0 }}</div>
+          <div class="label">En cours</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="number">{{ commandes_en_attente|default:0 }}</div>
+          <div class="label">En attente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-bar">
+    <div class="row g-3 align-items-center">
+      <div class="col-md-8">
+        <div class="d-flex flex-wrap gap-2">
+          <button class="filter-btn active" data-filter="all">
+            <i class="fas fa-list me-1"></i> Toutes
+          </button>
+          <button class="filter-btn" data-filter="LIVREE">
+            <i class="fas fa-check-circle me-1"></i> Livrées
+          </button>
+          <button class="filter-btn" data-filter="EN_COURS">
+            <i class="fas fa-truck me-1"></i> En cours
+          </button>
+          <button class="filter-btn" data-filter="EN_ATTENTE">
+            <i class="fas fa-clock me-1"></i> En attente
+          </button>
+          <button class="filter-btn" data-filter="ANNULEE">
+            <i class="fas fa-times-circle me-1"></i> Annulées
+          </button>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <input type="text" class="form-control search-box" id="searchOrders" 
+               placeholder="Rechercher une commande...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des commandes -->
+  {% if commandes %}
+    <div class="orders-list">
+      {% for c in commandes %}
+        <div class="order-card" data-status="{{ c.statut }}" data-order-id="#{{ c.id }}">
+          <div class="order-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+              <div>
+                <div class="order-id">#{{ c.id }}</div>
+                <div class="order-date">
+                  <i class="far fa-calendar-alt me-1"></i> 
+                  {{ c.date_commande|date:"d/m/Y à H:i" }}
+                </div>
+              </div>
+              <div>
+                {% if c.statut == 'LIVREE' %}
+                  <span class="badge badge-status badge-livree">
+                    <i class="fas fa-check-circle me-1"></i> Livrée
+                  </span>
+                {% elif c.statut == 'EN_COURS' %}
+                  <span class="badge badge-status badge-en-cours">
+                    <i class="fas fa-truck me-1"></i> En cours
+                  </span>
+                {% elif c.statut == 'EN_ATTENTE' %}
+                  <span class="badge badge-status badge-en-attente">
+                    <i class="fas fa-clock me-1"></i> En attente
+                  </span>
+                {% elif c.statut == 'ANNULEE' %}
+                  <span class="badge badge-status badge-annulee">
+                    <i class="fas fa-times-circle me-1"></i> Annulée
+                  </span>
+                {% else %}
+                  <span class="badge badge-status">{{ c.statut }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Timeline de statut -->
+            <div class="status-timeline">
+              <div class="timeline-step {% if c.statut in 'EN_ATTENTE,EN_COURS,LIVREE' %}completed{% endif %}">
+                <div class="timeline-dot">
+                  <i class="fas fa-shopping-cart" style="font-size: .75rem;"></i>
+                </div>
+                <div class="timeline-label">Commandée</div>
+              </div>
+              <div class="timeline-step {% if c.statut in 'EN_COURS,LIVREE' %}completed{% elif c.statut == 'EN_ATTENTE' %}active{% endif %}">
+                <div class="timeline-dot">
+                  <i class="fas fa-box" style="font-size: .75rem;"></i>
+                </div>
+                <div class="timeline-label">Préparation</div>
+              </div>
+              <div class="timeline-step {% if c.statut == 'LIVREE' %}completed{% elif c.statut == 'EN_COURS' %}active{% endif %}">
+                <div class="timeline-dot">
+                  <i class="fas fa-truck" style="font-size: .75rem;"></i>
+                </div>
+                <div class="timeline-label">Livraison</div>
+              </div>
+              <div class="timeline-step {% if c.statut == 'LIVREE' %}completed active{% endif %}">
+                <div class="timeline-dot">
+                  <i class="fas fa-check" style="font-size: .75rem;"></i>
+                </div>
+                <div class="timeline-label">Livrée</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-body">
+            <!-- Résumé de la commande -->
+            <div class="order-summary">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <strong><i class="fas fa-box me-2"></i> {{ c.items.count }} article{{ c.items.count|pluralize }}</strong>
+                </div>
+                <div>
+                  <strong style="font-size: 1.25rem;">{{ c.total }} FCFA</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Articles de la commande -->
+            <div class="order-items">
+              <h6 class="mb-3"><i class="fas fa-list me-2"></i> Articles commandés</h6>
+              {% for item in c.items.all %}
+                <div class="item-row">
+                  {% if item.produit.image %}
+                    <img class="product-thumb" src="{{ item.produit.image.url }}" alt="{{ item.produit.nom }}">
+                  {% else %}
+                    <div class="product-thumb bg-light d-flex align-items-center justify-content-center">
+                      <i class="fas fa-image text-muted fa-2x"></i>
+                    </div>
+                  {% endif %}
+                  <div class="product-info">
+                    <div class="product-name">{{ item.produit.nom }}</div>
+                    <div class="product-quantity">
+                      <i class="fas fa-cubes me-1"></i> Quantité: {{ item.quantite }}
+                      <span class="ms-2 text-muted">{{ item.prix_unitaire }} FCFA /unité</span>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="product-price">{{ item.prix_total }} FCFA</div>
+                    {% if c.statut == 'LIVREE' %}
+                      <a href="{% url 'noter_produit' item.produit.id %}" class="btn btn-sm action-btn btn-review mt-2">
+                        <i class="fas fa-star me-1"></i> Laisser un avis
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              {% empty %}
+                <div class="text-muted text-center py-3">Aucun article.</div>
+              {% endfor %}
+            </div>
+
+            <!-- Section livreur -->
+            {% if c.livreur %}
+              <div class="deliverer-section">
+                <h6 class="mb-2"><i class="fas fa-user-tie me-2"></i> Informations livreur</h6>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <strong>{{ c.livreur.get_full_name|default:c.livreur.username }}</strong>
+                  </div>
+                  <div>
+                    {% if c.statut == 'LIVREE' %}
+                      {% if not c.livreur_avis_donne %}
+                        <a href="{% url 'donner_avis_livreur' c.id %}" class="btn btn-sm action-btn btn-track">
+                          <i class="fas fa-comment-dots me-1"></i> Noter le livreur
+                        </a>
+                      {% else %}
+                        <span class="badge bg-success">
+                          <i class="fas fa-check me-1"></i> Avis donné
+                        </span>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+            
+            <!-- Bouton d'annulation -->
+            {% if c.statut == 'EN_ATTENTE' %}
+              <div class="cancel-section mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-sm btn-cancel-order" data-order-id="{{ c.id }}">
+                    <i class="fas fa-times-circle me-1"></i> Annuler la commande
+                  </button>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h4>Aucune commande</h4>
+      <p>Vous n'avez pas encore passé de commande.</p>
+      <a href="{% url 'boutique' %}" class="btn btn-dark mt-3">
+        <i class="fas fa-shopping-bag me-2"></i> Commencer mes achats
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Filtrage des commandes
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const orderCards = document.querySelectorAll('.order-card');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Update active state
+      filterBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+
+      const filter = this.dataset.filter;
+
+      orderCards.forEach(card => {
+        if (filter === 'all' || card.dataset.status === filter) {
+          card.style.display = 'block';
+          setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, 10);
+        } else {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(-10px)';
+          setTimeout(() => {
+            card.style.display = 'none';
+          }, 300);
+        }
+      });
+    });
+  });
+
+  // Recherche
+  const searchInput = document.getElementById('searchOrders');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+
+      orderCards.forEach(card => {
+        const orderId = card.dataset.orderId.toLowerCase();
+        const text = card.textContent.toLowerCase();
+
+        if (orderId.includes(query) || text.includes(query)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Animation au scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  orderCards.forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(card);
+  });
+
+  // Gestion de l'annulation de commande
+  const cancelButtons = document.querySelectorAll('.btn-cancel-order');
+  
+  cancelButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const orderId = this.dataset.orderId;
+      showCancelModal(orderId);
+    });
+  });
+});
+
+// Modale de confirmation d'annulation
+function showCancelModal(orderId) {
+  const modal = document.createElement('div');
+  modal.className = 'custom-modal-overlay';
+  modal.innerHTML = `
+    <div class="custom-modal">
+      <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+        <i class="fas fa-exclamation-triangle" style="color: white;"></i>
+        <h3>Annuler la commande</h3>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir annuler la commande <strong>#${orderId}</strong> ?</p>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" onclick="this.closest('.custom-modal-overlay').remove()">
+          <i class="fas fa-times me-2"></i>
+          Non, garder
+        </button>
+        <button class="modal-btn modal-btn-danger" onclick="cancelOrder(${orderId})">
+          <i class="fas fa-check me-2"></i>
+          Oui, annuler
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Styles pour la modale
+  const style = document.createElement('style');
+  style.textContent = `
+    .custom-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .custom-modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .modal-header i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 2rem;
+      text-align: center;
+      color: #374151;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .modal-footer {
+      padding: 1.5rem 2rem;
+      background: #f9fafb;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .modal-btn {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 120px;
+    }
+
+    .modal-btn-danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    .modal-btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    .modal-btn-secondary {
+      background: white;
+      color: #6b7280;
+      border: 2px solid #e5e7eb;
+    }
+
+    .modal-btn-secondary:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  `;
+
+  if (!document.getElementById('cancel-modal-styles')) {
+    style.id = 'cancel-modal-styles';
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(modal);
+
+  // Fermeture sur clic extérieur
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+
+  // Fermeture avec Escape
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+}
+
+// Fonction d'annulation
+async function cancelOrder(orderId) {
+  // Fermer la modale
+  document.querySelector('.custom-modal-overlay')?.remove();
+
+  // Afficher un loader
+  showToast('Annulation en cours...', 'info');
+
+  try {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                      document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+
+    const response = await fetch(`/commande/${orderId}/annuler/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('Commande annulée avec succès !', 'success');
+      // Recharger la page après 1 seconde
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast(data.error || 'Erreur lors de l\'annulation', 'error');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showToast('Erreur lors de l\'annulation de la commande', 'error');
+  }
+}
+
+// Toast notification
+function showToast(message, type = 'info') {
+  document.querySelectorAll('.order-toast').forEach(t => t.remove());
+  
+  const toast = document.createElement('div');
+  toast.className = 'order-toast';
+  
+  const icons = {
+    success: 'fa-check-circle',
+    error: 'fa-exclamation-circle',
+    info: 'fa-info-circle'
+  };
+  
+  const colors = {
+    success: '#10b981',
+    error: '#ef4444',
+    info: '#3b82f6'
+  };
+  
+  toast.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <i class="fas ${icons[type]}" style="color: ${colors[type]}; font-size: 20px;"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    color: #1f2937;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    z-index: 10000;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease-out;
+    border-left: 4px solid ${colors[type]};
+  `;
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  `;
+  if (!document.getElementById('toast-animation')) {
+    style.id = 'toast-animation';
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOutRight 0.3s ease-in';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+</script>
+{% endblock %}

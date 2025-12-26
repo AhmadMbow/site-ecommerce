@@ -1,0 +1,27 @@
+📤 FICHIERS À UPLOADER SUR NAMECHEAP
+====================================
+
+1. FICHIERS MODIFIÉS (obligatoire):
+   ├── .htaccess
+   └── staticfiles/ (TOUT LE DOSSIER)
+
+2. ALTERNATIVE - Upload via archive:
+   └── staticfiles.tar.gz (puis extraire sur le serveur)
+
+3. STRUCTURE FINALE SUR LE SERVEUR:
+   /home/afjqtuev/sadiboushop.com/
+   ├── staticfiles/
+   │   ├── admin/
+   │   ├── css/
+   │   ├── js/
+   │   └── images/
+   ├── .htaccess
+   ├── passenger_wsgi.py
+   └── ...
+
+4. APRÈS L'UPLOAD:
+   □ Vérifier permissions (755 pour dossiers, 644 pour fichiers)
+   □ Redémarrer l'app dans "Setup Python App"
+   □ Vider le cache du navigateur
+   □ Tester: https://sadiboushop.com
+

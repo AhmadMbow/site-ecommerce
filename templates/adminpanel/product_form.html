@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
   :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-gradient: linear-gradient(135deg, #ffc107 0%, #232526 100%);
     --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
     --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -18,7 +18,7 @@
   }
 
   body {
-    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    background: linear-gradient(135deg, rgba(255,193,7,0.02), rgba(118,75,162,0.02));
   }
 
   /* Page Header */
@@ -49,7 +49,7 @@
     right: -10%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(102,126,234,0.1), transparent);
+    background: radial-gradient(circle, rgba(35,37,38,0.08), transparent);
     border-radius: 50%;
     animation: float 15s ease-in-out infinite;
   }
@@ -113,8 +113,8 @@
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
-    color: #667eea;
+    background: linear-gradient(135deg, rgba(35,37,38,0.12), rgba(118,75,162,0.15));
+    color: #232526;
   }
 
   .section-title {
@@ -166,7 +166,7 @@
   .form-select:focus,
   textarea.form-control:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #232526;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   }
 
@@ -180,7 +180,7 @@
   }
 
   .form-text i {
-    color: #667eea;
+    color: #232526;
   }
 
   /* Image Upload */
@@ -190,24 +190,24 @@
     padding: 2rem;
     text-align: center;
     transition: var(--transition);
-    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    background: linear-gradient(135deg, rgba(255,193,7,0.02), rgba(118,75,162,0.02));
     cursor: pointer;
     position: relative;
   }
 
   .image-upload-area:hover {
-    border-color: #667eea;
-    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    border-color: #232526;
+    background: linear-gradient(135deg, rgba(255,193,7,0.05), rgba(118,75,162,0.05));
   }
 
   .image-upload-area.dragover {
-    border-color: #667eea;
-    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-color: #232526;
+    background: linear-gradient(135deg, rgba(35,37,38,0.08), rgba(118,75,162,0.1));
   }
 
   .upload-icon {
     font-size: 3rem;
-    color: #667eea;
+    color: #232526;
     margin-bottom: 1rem;
   }
 
@@ -251,8 +251,8 @@
 
   /* Stock Management */
   .stock-card {
-    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
-    border: 2px solid rgba(102,126,234,0.2);
+    background: linear-gradient(135deg, rgba(255,193,7,0.05), rgba(118,75,162,0.05));
+    border: 2px solid rgba(35,37,38,0.15);
     border-radius: var(--radius);
     padding: 1.5rem;
     margin-top: 1rem;
@@ -264,7 +264,7 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(102,126,234,0.1);
+    border-bottom: 2px solid rgba(35,37,38,0.08);
   }
 
   .stock-title {
@@ -316,7 +316,7 @@
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #667eea;
+    color: #232526;
     font-size: 1.25rem;
   }
 
@@ -441,28 +441,94 @@
     padding-right: 0.5rem;
   }
 
-  /* Categories Multi-Select */
-  .form-select[multiple] {
-    min-height: 200px;
-    padding: 0.5rem;
+  /* Categories Checkbox List */
+  .category-checkbox-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(255,193,7,0.02), rgba(118,75,162,0.02));
+    border-radius: 0.75rem;
+    border: 2px solid #e2e8f0;
+    max-height: 300px;
+    overflow-y: auto;
   }
-
-  .form-select[multiple] option {
-    padding: 0.75rem 1rem;
-    margin: 0.25rem 0;
-    border-radius: 0.5rem;
-    transition: var(--transition);
+  
+  .category-checkbox-list li {
+    list-style: none;
+  }
+  
+  .category-checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: white;
+    border-radius: 0.625rem;
     cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #e2e8f0;
+    font-weight: 500;
+    color: #475569;
   }
-
-  .form-select[multiple] option:hover {
-    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+  
+  .category-checkbox-list label:hover {
+    border-color: #232526;
+    background: linear-gradient(135deg, rgba(255,193,7,0.05), rgba(118,75,162,0.05));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   }
-
-  .form-select[multiple] option:checked {
-    background: var(--primary-gradient);
+  
+  .category-checkbox-list input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #232526;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  
+  .category-checkbox-list label:has(input:checked) {
+    background: linear-gradient(135deg, #ffc107, #232526);
+    border-color: transparent;
     color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  .category-checkbox-list label:has(input:checked) input[type="checkbox"] {
+    accent-color: white;
+  }
+  
+  /* Selected categories counter */
+  .categories-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #ffc107, #232526);
+    color: white;
+    border-radius: 2rem;
+    font-size: 0.875rem;
     font-weight: 600;
+    margin-top: 0.75rem;
+  }
+  
+  .categories-counter.empty {
+    background: #94a3b8;
+  }
+
+  /* Mobile responsive for categories */
+  @media (max-width: 576px) {
+    .category-checkbox-list {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      max-height: 250px;
+    }
+    
+    .category-checkbox-list label {
+      padding: 0.75rem;
+      font-size: 0.9rem;
+    }
   }
 
   .badge {
@@ -475,7 +541,7 @@
   /* Action Buttons */
   .form-actions {
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    background: linear-gradient(135deg, rgba(255,193,7,0.02), rgba(118,75,162,0.02));
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
@@ -591,6 +657,254 @@
       justify-content: center;
     }
   }
+
+  /* ========== SECTION TAILLES ========== */
+  .sizes-toggle-section {
+    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    border: 2px solid rgba(102,126,234,0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sizes-toggle-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .sizes-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 700;
+    color: #1a1f26;
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .sizes-toggle-label i {
+    font-size: 1.25rem;
+    color: #6366f1;
+  }
+
+  .sizes-toggle-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding-left: 2.5rem;
+  }
+
+  /* Toggle Switch */
+  .toggle-switch {
+    position: relative;
+    width: 60px;
+    height: 32px;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e2e8f0;
+    transition: 0.4s;
+    border-radius: 34px;
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  .toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(28px);
+  }
+
+  /* Sizes Management Section */
+  .sizes-management {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed rgba(102,126,234,0.2);
+    display: none;
+  }
+
+  .sizes-management.active {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  .sizes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .size-item {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .size-item:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.15);
+  }
+
+  .size-item.has-stock {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(5,150,105,0.05));
+  }
+
+  .size-item.out-of-stock {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239,68,68,0.05), rgba(220,38,38,0.05));
+  }
+
+  .size-item.low-stock {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245,158,11,0.05), rgba(217,119,6,0.05));
+  }
+
+  .size-name {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #1a1f26;
+    margin-bottom: 0.5rem;
+  }
+
+  .size-stock-input {
+    width: 100%;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .size-stock-input:focus {
+    border-color: #6366f1;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+  }
+
+  .size-status {
+    margin-top: 0.5rem;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .status-badge.ok {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .status-badge.low {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-badge.out {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .sizes-alerts {
+    margin-top: 1rem;
+  }
+
+  .size-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .size-alert.danger {
+    background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.1));
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #991b1b;
+  }
+
+  .size-alert.warning {
+    background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(217,119,6,0.1));
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #92400e;
+  }
+
+  .sizes-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.1));
+    border: 2px solid rgba(59,130,246,0.3);
+    border-radius: 0.75rem;
+    color: #1e40af;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .sizes-info i {
+    font-size: 1.25rem;
+  }
+
+  .sizes-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1));
+    border: 2px solid rgba(16,185,129,0.3);
+    border-radius: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .sizes-total-label {
+    font-weight: 600;
+    color: #064e3b;
+  }
+
+  .sizes-total-value {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #10b981;
+  }
 </style>
 {% endblock %}
 
@@ -701,7 +1015,20 @@
                   <i class="bi bi-folder-fill"></i>
                   {{ field.label }}
                 </label>
-                {{ field }}
+                <div id="categoriesContainer" class="category-checkbox-list">
+                  {% for checkbox in field %}
+                    <li>
+                      <label>
+                        {{ checkbox.tag }}
+                        {{ checkbox.choice_label }}
+                      </label>
+                    </li>
+                  {% endfor %}
+                </div>
+                <div class="categories-counter" id="categoriesCounter">
+                  <i class="bi bi-check2-circle"></i>
+                  <span id="categoriesCountText">0 catégorie(s) sélectionnée(s)</span>
+                </div>
                 {% if field.help_text %}
                   <small class="form-text">
                     <i class="bi bi-info-circle"></i>
@@ -796,11 +1123,94 @@
         </div>
       </div>
 
-      <div class="stock-card">
+      <!-- Section Tailles - TOUJOURS ACTIVÉE -->
+      <div class="sizes-toggle-section">
+        <div class="sizes-toggle-header">
+          <label class="sizes-toggle-label">
+            <i class="bi bi-rulers"></i>
+            <span>Gestion des tailles</span>
+          </label>
+          <!-- Champ caché pour forcer a_tailles = True -->
+          <input type="hidden" name="a_tailles" value="on">
+          <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Activé</span>
+        </div>
+        <p class="sizes-toggle-description">
+          Le stock est géré par taille. Entrez la quantité disponible pour chaque taille.
+        </p>
+
+        <!-- Gestion des stocks par taille -->
+        <div class="sizes-management" id="sizesManagement">
+          <h4 style="font-weight: 700; color: #1a1f26; margin-bottom: 1rem;">
+            <i class="bi bi-grid-3x3-gap-fill me-2" style="color: #6366f1;"></i>
+            Stock par taille
+          </h4>
+          
+          <div class="sizes-grid" id="sizesGrid">
+            {% for taille in tailles %}
+              <div class="size-item {% if taille.stock > 0 %}has-stock{% elif taille.stock == 0 %}out-of-stock{% endif %}" data-stock="{{ taille.stock }}">
+                <div class="size-name">{{ taille.taille.nom }}</div>
+                <input type="number" 
+                       name="taille_stock_{{ taille.taille.id }}" 
+                       class="size-stock-input" 
+                       value="{{ taille.stock }}" 
+                       min="0" 
+                       placeholder="0"
+                       data-taille-id="{{ taille.taille.id }}"
+                       onchange="updateSizeTotal(); updateSizeStatus(this);">
+                <div class="size-status">
+                  {% if taille.stock == 0 %}
+                    <span class="status-badge out">Rupture</span>
+                  {% elif taille.stock <= 3 %}
+                    <span class="status-badge low">Stock bas</span>
+                  {% else %}
+                    <span class="status-badge ok">En stock</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% empty %}
+              {% for taille in all_tailles %}
+                <div class="size-item" data-stock="0">
+                  <div class="size-name">{{ taille.nom }}</div>
+                  <input type="number" 
+                         name="taille_stock_{{ taille.id }}" 
+                         class="size-stock-input" 
+                         value="0" 
+                         min="0" 
+                         placeholder="0"
+                         data-taille-id="{{ taille.id }}"
+                         onchange="updateSizeTotal(); updateSizeStatus(this);">
+                  <div class="size-status">
+                    <span class="status-badge out">Rupture</span>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+
+          <!-- Alertes de rupture de stock -->
+          <div class="sizes-alerts" id="sizesAlerts"></div>
+
+          <div class="sizes-info">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>Entrez le stock pour chaque taille. Les tailles à 0 ne seront pas proposées aux clients.</span>
+          </div>
+
+          <div class="sizes-total">
+            <span class="sizes-total-label">
+              <i class="bi bi-calculator me-2"></i>
+              Stock total (toutes tailles)
+            </span>
+            <span class="sizes-total-value" id="sizesTotalValue">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock normal - MASQUÉ car tailles toujours activées -->
+      <div class="stock-card" id="normalStockSection" style="display: none !important;">
         <div class="stock-header">
           <div class="stock-title">
             <i class="bi bi-graph-up-arrow"></i>
-            Niveau de Stock
+            Stock Global
           </div>
           <div class="stock-level high" id="stockLevel">
             <i class="bi bi-circle-fill"></i>
@@ -811,7 +1221,7 @@
         <!-- Stock Input -->
         {% for field in form.visible_fields %}
           {% if field.name == 'stock' %}
-            <div class="form-group">
+            <div class="form-group" id="stockFieldGroup">
               <label class="form-label label-required" for="{{ field.id_for_label }}">
                 <i class="bi bi-boxes"></i>
                 {{ field.label }}
@@ -835,7 +1245,7 @@
             </div>
 
             <!-- Quick Stock Buttons -->
-            <div class="stock-buttons">
+            <div class="stock-buttons" id="stockButtons">
               <button type="button" class="stock-btn decrease" onclick="adjustStock(-10)">
                 <i class="bi bi-dash-circle-fill"></i>
                 -10
@@ -1237,22 +1647,170 @@
       }
     }
 
-    // Categories selection helper
-    const categoriesSelect = document.querySelector('select[name="categories"]');
-    if (categoriesSelect) {
-      categoriesSelect.addEventListener('change', () => {
-        const selectedCount = categoriesSelect.selectedOptions.length;
-        const helperText = categoriesSelect.parentElement.querySelector('.form-text');
-        if (helperText) {
-          if (selectedCount > 0) {
-            helperText.innerHTML = `<i class="bi bi-check-circle-fill" style="color: #10b981;"></i> ${selectedCount} catégorie(s) sélectionnée(s)`;
-          } else {
-            helperText.innerHTML = `<i class="bi bi-info-circle"></i> Maintenez Ctrl pour sélectionner plusieurs catégories`;
-          }
-        }
-      });
+    // Categories checkbox selection counter
+    function updateCategoriesCounter() {
+      const checkboxes = document.querySelectorAll('#categoriesContainer input[type="checkbox"]');
+      const counter = document.getElementById('categoriesCounter');
+      const countText = document.getElementById('categoriesCountText');
+      
+      if (!checkboxes.length || !counter || !countText) return;
+      
+      const checkedCount = document.querySelectorAll('#categoriesContainer input[type="checkbox"]:checked').length;
+      
+      if (checkedCount === 0) {
+        counter.classList.add('empty');
+        countText.textContent = 'Aucune catégorie sélectionnée';
+      } else if (checkedCount === 1) {
+        counter.classList.remove('empty');
+        countText.textContent = '1 catégorie sélectionnée';
+      } else {
+        counter.classList.remove('empty');
+        countText.textContent = `${checkedCount} catégories sélectionnées`;
+      }
     }
+    
+    // Attach event listeners to category checkboxes
+    const categoryCheckboxes = document.querySelectorAll('#categoriesContainer input[type="checkbox"]');
+    categoryCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateCategoriesCounter);
+    });
+    
+    // Initial count on page load
+    updateCategoriesCounter();
+
+    // ========== GESTION DES TAILLES (TOUJOURS ACTIVÉE) ==========
+    const sizesManagement = document.getElementById('sizesManagement');
+    const normalStockSection = document.getElementById('normalStockSection');
+    const mainStockInput = document.querySelector('input[name="stock"]');
+    
+    function initSizesManagement() {
+      // Toujours afficher la gestion des tailles
+      if (sizesManagement) {
+        sizesManagement.classList.add('active');
+      }
+      
+      // Toujours masquer la section stock normal
+      if (normalStockSection) {
+        normalStockSection.style.display = 'none';
+      }
+      
+      // Désactiver le champ stock principal
+      if (mainStockInput) {
+        mainStockInput.removeAttribute('required');
+        mainStockInput.value = '0';
+      }
+      
+      updateSizeTotal();
+      updateSizeAlerts();
+    }
+    
+    // Initialiser au chargement
+    initSizesManagement();
+    
+    // Initialiser le total des tailles au chargement
+    updateSizeTotal();
   });
+
+  // Fonction pour calculer le total des stocks par taille
+  function updateSizeTotal() {
+    const sizeInputs = document.querySelectorAll('.size-stock-input');
+    let total = 0;
+    
+    sizeInputs.forEach(input => {
+      const value = parseInt(input.value) || 0;
+      total += value;
+    });
+    
+    const totalElement = document.getElementById('sizesTotalValue');
+    if (totalElement) {
+      totalElement.textContent = total;
+      
+      // Colorer selon le niveau
+      if (total === 0) {
+        totalElement.style.color = '#ef4444';
+      } else if (total < 10) {
+        totalElement.style.color = '#f59e0b';
+      } else {
+        totalElement.style.color = '#10b981';
+      }
+    }
+    
+    updateSizeAlerts();
+  }
+
+  // Fonction pour mettre à jour le statut d'une taille individuelle
+  function updateSizeStatus(input) {
+    const value = parseInt(input.value) || 0;
+    const sizeItem = input.closest('.size-item');
+    const statusBadge = sizeItem.querySelector('.status-badge');
+    
+    // Mettre à jour les classes
+    sizeItem.classList.remove('has-stock', 'out-of-stock', 'low-stock');
+    
+    if (value === 0) {
+      sizeItem.classList.add('out-of-stock');
+      if (statusBadge) {
+        statusBadge.className = 'status-badge out';
+        statusBadge.textContent = 'Rupture';
+      }
+    } else if (value <= 3) {
+      sizeItem.classList.add('low-stock');
+      if (statusBadge) {
+        statusBadge.className = 'status-badge low';
+        statusBadge.textContent = 'Stock bas';
+      }
+    } else {
+      sizeItem.classList.add('has-stock');
+      if (statusBadge) {
+        statusBadge.className = 'status-badge ok';
+        statusBadge.textContent = 'En stock';
+      }
+    }
+  }
+
+  // Fonction pour afficher les alertes de stock
+  function updateSizeAlerts() {
+    const alertsContainer = document.getElementById('sizesAlerts');
+    if (!alertsContainer) return;
+    
+    const sizeItems = document.querySelectorAll('.size-item');
+    let outOfStock = [];
+    let lowStock = [];
+    
+    sizeItems.forEach(item => {
+      const input = item.querySelector('.size-stock-input');
+      const sizeName = item.querySelector('.size-name').textContent;
+      const value = parseInt(input.value) || 0;
+      
+      if (value === 0) {
+        outOfStock.push(sizeName);
+      } else if (value <= 3) {
+        lowStock.push(sizeName);
+      }
+    });
+    
+    let alertsHtml = '';
+    
+    if (outOfStock.length > 0) {
+      alertsHtml += `
+        <div class="size-alert danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span><strong>Rupture de stock :</strong> ${outOfStock.join(', ')}</span>
+        </div>
+      `;
+    }
+    
+    if (lowStock.length > 0) {
+      alertsHtml += `
+        <div class="size-alert warning">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span><strong>Stock bas (≤3) :</strong> ${lowStock.join(', ')}</span>
+        </div>
+      `;
+    }
+    
+    alertsContainer.innerHTML = alertsHtml;
+  }
 </script>
 
 {% endblock %}

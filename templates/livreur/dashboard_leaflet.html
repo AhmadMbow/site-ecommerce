@@ -664,7 +664,13 @@
         <div class="order-details">
           <div class="order-detail-item">
             <span class="order-detail-label">Client</span>
-            <span class="order-detail-value">{{ order.user.get_full_name|default:order.user.username }}</span>
+            <span class="order-detail-value">
+              {% if order.user %}
+                {{ order.user.get_full_name|default:order.user.username }}
+              {% else %}
+                {{ order.prenom }} {{ order.nom }}
+              {% endif %}
+            </span>
           </div>
           <div class="order-detail-item">
             <span class="order-detail-label">Montant</span>

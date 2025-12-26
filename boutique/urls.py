@@ -39,7 +39,6 @@ urlpatterns = [
     path('livreur/profil/', views.livreur_profile, name='livreur_profile'),
     path('livreur/dashboard/', views.livreur_dashboard, name='livreur_dashboard'),
     path('livreur/orders/', views.livreur_orders, name='livreur_orders'),
-    path('livreur/map/', views.livreur_map, name='livreur_map'),  
     path('livreur/stats/', views.livreur_stats, name='livreur_stats'),
     path('livreur/profile/', views.livreur_profile, name='livreur_profile'),
     path('livreur/order/<int:pk>/', views.livreur_order_detail, name='livreur_order_detail'),
@@ -53,8 +52,11 @@ urlpatterns = [
     path('panier/', views.voir_panier, name='panier'),
     path('panier/ajouter/<int:produit_id>/', views.ajouter_au_panier, name='ajouter_au_panier'),
     path('panier/retirer/<int:item_id>/', views.retirer_du_panier, name='retirer_du_panier'),
+    path('panier/retirer-session/<int:produit_id>/', views.retirer_du_panier_session, name='retirer_du_panier_session'),
     path('panier/modifier/', views.modifier_quantite, name='modifier_quantite'),
+    path('panier/modifier-session/', views.modifier_quantite_session, name='modifier_quantite_session'),
     path('panier/confirmer/', views.confirmer_commande, name='confirmer_commande'),
+    path('panier/commande-invite/', views.commande_invite, name='commande_invite'),
 
     # Admin panel
     path('admin-panel/', views.admin_dashboard, name='admin_dashboard'),
@@ -68,6 +70,7 @@ urlpatterns = [
     path('admin-panel/categories/nouvelle/', views.admin_category_create, name='admin_category_create'),
     path('admin-panel/categories/<int:pk>/modifier/', views.admin_category_update, name='admin_category_update'),
     path('admin-panel/categories/<int:pk>/supprimer/', views.admin_category_delete, name='admin_category_delete'),
+    path('admin-panel/categories/<int:pk>/supprimer-image/', views.admin_category_delete_image, name='admin_category_delete_image'),
     path('admin-panel/livreurs/', views.admin_livreurs_list, name='admin_livreurs_list'),
     path('admin-panel/livreurs/nouveau/', views.admin_livreurs_create, name='admin_livreurs_create'),
     path('admin-panel/livreurs/<int:user_id>/modifier/', views.admin_livreurs_edit, name='admin_livreurs_edit'),
@@ -75,6 +78,8 @@ urlpatterns = [
     path('admin-panel/clients/', views.admin_clients_list, name='admin_clients_list'),
     path('admin-panel/clients/<int:user_id>/', views.admin_client_detail, name='admin_client_detail'),
     path('admin-panel/clients/<int:user_id>/toggle-active/', views.admin_client_toggle_active, name='admin_client_toggle_active'),
+    path('admin-panel/clients/<int:user_id>/send-email/', views.admin_send_email_client, name='admin_send_email_client'),
+    path('admin-panel/clients/send-mass-email/', views.admin_send_mass_email, name='admin_send_mass_email'),
     path('admin-panel/avis/', views.admin_avis, name='admin_avis'),
     path('admin-panel/avis/<int:avis_id>/supprimer/', views.admin_avis_delete, name='admin_avis_delete'),
     path('admin-panel/avis/<int:avis_id>/examiner/', views.admin_avis_marquer_examine, name='admin_avis_marquer_examine'),
@@ -89,6 +94,7 @@ urlpatterns = [
     
     # Notifications Admin
     path('api/admin/notification/marquer-vue/', views.admin_marquer_notification_vue, name='admin_marquer_notification_vue'),
+    path('api/admin/notifications/marquer-toutes-vues/', views.admin_marquer_toutes_notifications_vues, name='admin_marquer_toutes_notifications_vues'),
     
     path('admin-logout/', views.admin_logout, name='admin_logout'),
 

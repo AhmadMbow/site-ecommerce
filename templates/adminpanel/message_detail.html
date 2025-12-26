@@ -395,7 +395,7 @@
       <div class="message-meta">
         <div class="meta-item">
           <i class="fa-solid fa-user"></i>
-          <strong>{{ message.client.get_full_name|default:message.client.username }}</strong>
+          <strong>{{ message.get_client_name }}{% if not message.client %} <small class="text-muted">(Visiteur)</small>{% endif %}</strong>
         </div>
         <div class="meta-item">
           <i class="fa-solid fa-calendar"></i>
@@ -490,7 +490,7 @@
       </h3>
       <div class="info-row">
         <span class="info-label">Nom</span>
-        <span class="info-value">{{ message.client.get_full_name|default:message.client.username }}</span>
+        <span class="info-value">{{ message.get_client_name }}{% if not message.client %} <span class="badge bg-secondary ms-1">Visiteur</span>{% endif %}</span>
       </div>
       <div class="contact-info">
         {% if message.email_contact %}
@@ -547,7 +547,7 @@
         <div class="timeline-item">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
-            Message créé par <strong>{{ message.client.username }}</strong>
+            Message créé par <strong>{{ message.get_client_name }}</strong>
             <div class="timeline-date">{{ message.date_creation|date:"d M Y à H:i" }}</div>
           </div>
         </div>

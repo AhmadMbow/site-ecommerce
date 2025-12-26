@@ -20,26 +20,65 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
-            background: linear-gradient(135deg, #232526 0%, #414345 100%);
-            padding: 40px 30px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 30px;
             text-align: center;
             color: #ffffff;
         }
-        .header h1 {
+        .logo-container {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .logo-icon {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%);
+            border-radius: 12px;
+            text-align: center;
+            line-height: 50px;
+            vertical-align: middle;
+            margin-right: 12px;
+            font-size: 28px;
+        }
+        .logo-text {
+            display: inline-block;
+            vertical-align: middle;
+            text-align: left;
+        }
+        .logo-text h2 {
+            color: #ffffff;
             margin: 0;
             font-size: 28px;
-            font-weight: 700;
+            font-weight: 800;
+        }
+        .logo-text h2 span {
+            color: #ffc107;
+        }
+        .logo-tagline {
+            color: #888888;
+            margin: 2px 0 0 0;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            color: #ffffff;
         }
         .success-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background-color: #ffc107;
+            width: 70px;
+            height: 70px;
+            margin: 20px auto 15px;
+            background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 40px;
+            color: #1a1a1a;
         }
         .content {
             padding: 40px 30px;
@@ -67,7 +106,7 @@
         .order-number {
             font-size: 24px;
             font-weight: 700;
-            color: #232526;
+            color: #1a1a1a;
             margin: 0 0 10px 0;
         }
         .order-detail {
@@ -84,7 +123,7 @@
             margin: 20px 0;
         }
         .items-table th {
-            background-color: #232526;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             color: #ffffff;
             padding: 12px;
             text-align: left;
@@ -113,41 +152,36 @@
             color: #111827;
         }
         .attachment-notice {
-            background-color: #dbeafe;
-            border-left: 4px solid #3b82f6;
+            background-color: #fef3c7;
+            border-left: 4px solid #ffc107;
             padding: 15px;
             border-radius: 8px;
             margin: 25px 0;
         }
         .attachment-notice p {
             margin: 0;
-            color: #1e40af;
+            color: #1a1a1a;
             font-size: 14px;
         }
         .attachment-notice strong {
-            color: #1e3a8a;
+            color: #000000;
         }
         .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-            color: #000000;
+            background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%);
+            color: #1a1a1a;
             text-decoration: none;
             padding: 14px 32px;
             border-radius: 8px;
             font-weight: 700;
             font-size: 16px;
             margin: 20px 0;
-            transition: transform 0.2s;
-        }
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
         }
         .footer {
-            background-color: #f9fafb;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             padding: 30px;
             text-align: center;
-            color: #6b7280;
             font-size: 13px;
             border-top: 1px solid #e5e7eb;
         }
@@ -173,15 +207,22 @@
 </head>
 <body>
     <div class="email-container">
-        <!-- Header -->
+        <!-- Header avec Logo SadibouShop -->
         <div class="header">
+            <div class="logo-container">
+                <span class="logo-icon">👔</span>
+                <div class="logo-text">
+                    <h2>SADIBOU<span>SHOP</span></h2>
+                    <p class="logo-tagline">Mode & Tendances</p>
+                </div>
+            </div>
             <div class="success-icon">✓</div>
             <h1>Commande Livrée avec Succès !</h1>
         </div>
 
         <!-- Content -->
         <div class="content">
-            <p class="greeting">Bonjour {{ client.get_full_name|default:client.username }},</p>
+            <p class="greeting">Bonjour {{ client.name }},</p>
             
             <p class="message">
                 Nous avons le plaisir de vous informer que votre commande a été <strong>livrée avec succès</strong> ! 
@@ -190,7 +231,7 @@
 
             <!-- Order Details -->
             <div class="order-box">
-                <p class="order-number">Commande #{{ commande.id }}</p>
+                <p class="order-number">Commande {{ commande.numero_commande }}</p>
                 <p class="order-detail"><strong>Date de commande :</strong> {{ commande.date_commande|date:"d/m/Y à H:i" }}</p>
                 <p class="order-detail"><strong>Statut :</strong> <span style="color: #059669;">✓ LIVRÉE</span></p>
                 {% if commande.livreur %}
@@ -260,25 +301,30 @@
             </div>
         </div>
 
-        <!-- Footer -->
+        <!-- Footer avec Logo SadibouShop -->
         <div class="footer">
-            <p><strong>Merci pour votre confiance !</strong></p>
-            <p>Maryama Shop - Boutique E-commerce</p>
+            <p style="color: #ffc107; font-size: 18px; font-weight: 700; margin: 0 0 5px 0;">
+                SADIBOU<span style="color: #ffffff;">SHOP</span>
+            </p>
+            <p style="color: #888888; font-size: 10px; margin: 0 0 15px 0; letter-spacing: 2px;">
+                MODE & TENDANCES
+            </p>
+            <p style="color: #ffffff; font-weight: 600; margin: 0 0 10px 0;">Merci pour votre confiance !</p>
             
-            <div class="social-links">
-                <a href="#">Facebook</a> | 
-                <a href="#">Instagram</a> | 
-                <a href="#">Twitter</a>
+            <div class="social-links" style="margin: 15px 0;">
+                <a href="#" style="color: #ffc107;">Facebook</a> | 
+                <a href="#" style="color: #ffc107;">Instagram</a> | 
+                <a href="#" style="color: #ffc107;">Twitter</a>
             </div>
             
-            <div class="divider" style="margin: 20px auto; width: 80%;"></div>
+            <div style="margin: 20px auto; width: 80%; height: 1px; background: #333;"></div>
             
-            <p style="font-size: 12px; color: #9ca3af;">
+            <p style="font-size: 11px; color: #666666;">
                 Vous recevez cet email car vous avez passé une commande sur notre site.<br>
                 Ceci est un email automatique, merci de ne pas y répondre directement.
             </p>
-            <p style="font-size: 12px; color: #9ca3af; margin-top: 15px;">
-                © {{ "now"|date:"Y" }} Maryama Shop. Tous droits réservés.
+            <p style="font-size: 11px; color: #555555; margin-top: 15px;">
+                © {{ "now"|date:"Y" }} SadibouShop. Tous droits réservés.
             </p>
         </div>
     </div>

@@ -5,91 +5,126 @@
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.0/mdb.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
   :root{
     --gold: #ffc107;
+    --gold-light: #ffda6a;
     --dark: #232526;
-    --success: #28a745;
-    --info: #17a2b8;
-    --danger: #dc3545;
-    --warning: #ff9800;
-    --radius: 16px;
-    --radius-sm: 10px;
-    --shadow-sm: 0 6px 16px rgba(0,0,0,.06);
-    --shadow: 0 14px 30px rgba(0,0,0,.10);
-    --shadow-lg: 0 24px 48px rgba(0,0,0,.16);
+    --dark-2: #1a1c1d;
+    --success: #10b981;
+    --info: #06b6d4;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+    --shadow-sm: 0 4px 15px rgba(0,0,0,.06);
+    --shadow: 0 10px 40px rgba(0,0,0,.10);
+    --shadow-lg: 0 25px 60px rgba(0,0,0,.15);
+    --shadow-gold: 0 10px 30px rgba(255,193,7,.25);
   }
 
   body{
     font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     min-height: 100vh;
   }
 
+  /* ===== PAGE HEADER ===== */
   .page-header {
-    background: white;
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 100%);
     border-radius: var(--radius);
-    padding: 2rem;
+    padding: 2rem 2.5rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     overflow: hidden;
+    color: white;
   }
 
   .page-header::before {
     content: '';
     position: absolute;
     top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,193,7,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(30%, -30%);
+  }
+
+  .page-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--gold) 0%, #ffcd39 100%);
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
   }
 
   .page-header h3 {
     margin: 0;
-    font-weight: 700;
+    font-weight: 800;
     display: flex;
     align-items: center;
     gap: 1rem;
+    font-size: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-header h3 i {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.75rem;
   }
 
   .cart-badge {
-    background: linear-gradient(135deg, var(--gold) 0%, #ffcd39 100%);
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
     color: var(--dark);
     border-radius: 999px;
-    padding: .25rem .75rem;
-    font-size: .9rem;
+    padding: .35rem 1rem;
+    font-size: .85rem;
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(255,193,7,.3);
+    box-shadow: var(--shadow-gold);
+    animation: pulse 2s ease-in-out infinite;
   }
 
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* ===== CARDS ===== */
   .card{
-    border: 1px solid rgba(0,0,0,.06);
+    border: none;
     border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow);
     background: white;
     transition: transform .3s ease, box-shadow .3s ease;
+    overflow: hidden;
   }
 
   .card:hover{ 
-    transform: translateY(-2px); 
-    box-shadow: var(--shadow); 
+    transform: translateY(-4px); 
+    box-shadow: var(--shadow-lg); 
   }
 
   .card-header{
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid rgba(0,0,0,.06);
+    border-bottom: 1px solid rgba(0,0,0,.04);
   }
 
   .card-header h5{ 
@@ -98,11 +133,29 @@
     display: flex;
     align-items: center;
     gap: .75rem;
+    color: var(--dark);
   }
 
+  .card-header h5 i {
+    color: var(--gold);
+  }
+
+  /* ===== CART ITEMS ===== */
   .cart-item {
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(0,0,0,.06);
+    padding: 1.75rem;
+    border-bottom: 1px solid rgba(0,0,0,.04);
+    transition: all .3s ease;
+    position: relative;
+  }
+
+  .cart-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
     transition: background .3s ease;
   }
 
@@ -111,7 +164,11 @@
   }
 
   .cart-item:hover {
-    background: rgba(255,193,7,.03);
+    background: linear-gradient(90deg, rgba(255,193,7,.03) 0%, transparent 100%);
+  }
+
+  .cart-item:hover::before {
+    background: var(--gold);
   }
 
   .product-image-wrapper {
@@ -119,428 +176,536 @@
     border-radius: var(--radius-sm);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
+    aspect-ratio: 1;
   }
 
   .product-image {
     width: 100%;
-    transition: transform .5s ease;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .cart-item:hover .product-image {
-    transform: scale(1.05);
+    transform: scale(1.08);
   }
 
   .discount-badge {
     position: absolute;
-    top: .5rem;
-    right: .5rem;
-    background: linear-gradient(135deg, var(--danger) 0%, #e74c3c 100%);
+    top: .75rem;
+    right: .75rem;
+    background: linear-gradient(135deg, var(--danger) 0%, #f87171 100%);
     color: white;
-    padding: .25rem .75rem;
+    padding: .35rem .85rem;
     border-radius: 999px;
-    font-size: .75rem;
+    font-size: .7rem;
     font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(239,68,68,.4);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
   }
 
   .product-name {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--dark);
     margin-bottom: .5rem;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    line-height: 1.3;
   }
 
   .product-meta {
     display: flex;
-    gap: 1rem;
-    margin-bottom: .75rem;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-bottom: 1rem;
   }
 
   .meta-item {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: .35rem;
-    color: #6c757d;
-    font-size: .9rem;
+    gap: .4rem;
+    color: #64748b;
+    font-size: .85rem;
+    background: #f1f5f9;
+    padding: .3rem .75rem;
+    border-radius: 999px;
   }
 
   .meta-item i {
     color: var(--gold);
+    font-size: .75rem;
   }
 
+  .meta-item.size-badge {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: var(--dark);
+    font-weight: 600;
+  }
+
+  .meta-item.size-badge i {
+    color: var(--dark);
+  }
+
+  /* ===== QUANTITY CONTROLS ===== */
   .quantity-controls {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: .75rem;
-    background: #f8f9fa;
-    border-radius: var(--radius-sm);
-    padding: .5rem;
-    max-width: 280px;
+    gap: .5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 999px;
+    padding: .4rem;
+    border: 2px solid #e2e8f0;
+    transition: border-color .3s ease, box-shadow .3s ease;
+  }
+
+  .quantity-controls:hover {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(255,193,7,.15);
   }
 
   .qty-btn {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: none;
     background: white;
     color: var(--dark);
     cursor: pointer;
     transition: all .25s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .qty-btn:hover {
     background: var(--gold);
     transform: scale(1.1);
+    box-shadow: var(--shadow-gold);
+  }
+
+  .qty-btn:active {
+    transform: scale(0.95);
   }
 
   .qty-input {
-    flex: 1;
+    width: 50px;
     text-align: center;
     border: none;
     background: transparent;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1.1rem;
+    color: var(--dark);
   }
 
+  /* ===== ACTION BUTTONS ===== */
   .btn-action {
-    border-radius: var(--radius-sm);
-    padding: .5rem 1rem;
+    border-radius: 999px;
+    padding: .6rem 1.25rem;
     font-weight: 600;
-    transition: all .25s ease;
+    font-size: .9rem;
+    transition: all .3s ease;
     border: 2px solid transparent;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: .5rem;
   }
 
   .btn-remove {
-    background: #fff;
+    background: #fef2f2;
     color: var(--danger);
-    border-color: var(--danger);
+    border-color: #fecaca;
   }
 
   .btn-remove:hover {
     background: var(--danger);
     color: white;
+    border-color: var(--danger);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239,68,68,.3);
   }
 
+  /* ===== PRICE DISPLAY ===== */
+  .price-display {
+    text-align: right;
+  }
+
+  .current-price {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--dark);
+    line-height: 1.2;
+  }
+
+  .original-price {
+    font-size: .9rem;
+    text-decoration: line-through;
+    color: #94a3b8;
+    margin-top: .25rem;
+  }
+
+  .subtotal {
+    margin-top: .75rem;
+    padding: .5rem 1rem;
+    background: linear-gradient(135deg, rgba(255,193,7,.1) 0%, rgba(255,193,7,.05) 100%);
+    border-radius: var(--radius-xs);
+    font-size: .9rem;
+    color: #64748b;
+  }
+
+  .subtotal strong {
+    color: var(--dark);
+    font-weight: 700;
+  }
+
+  /* ===== BUTTONS ===== */
   .btn{
     border-radius: var(--radius-sm);
     font-weight: 600;
-    padding: .75rem 1.5rem;
+    padding: .85rem 1.75rem;
     transition: all .3s ease;
+    border: none;
   }
 
   .btn-primary{
-    background: linear-gradient(135deg, var(--dark) 0%, #000 100%);
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(35,37,38,.3);
+    box-shadow: 0 4px 15px rgba(35,37,38,.25);
   }
 
   .btn-primary:hover{
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(35,37,38,.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(35,37,38,.35);
   }
 
   .btn-success {
-    background: linear-gradient(135deg, var(--success) 0%, #34ce57 100%);
+    background: linear-gradient(135deg, var(--success) 0%, #34d399 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(16,185,129,.3);
+  }
+
+  .btn-success:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(16,185,129,.4);
+  }
+
+  /* ===== SUMMARY CARD ===== */
+  .summary-card {
+    position: sticky;
+    top: 100px;
   }
 
   .summary-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 1rem 0;
-    border-bottom: 1px solid rgba(0,0,0,.06);
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .summary-item:last-of-type {
+    border-bottom: none;
+  }
+
+  .summary-label {
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .summary-value {
+    font-weight: 600;
+    color: var(--dark);
   }
 
   .total-row {
-    background: rgba(255,193,7,.1);
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 100%);
     border-radius: var(--radius-sm);
     padding: 1.5rem !important;
     margin-top: 1rem;
+    color: white;
   }
 
   .total-row .summary-label {
-    font-size: 1.1rem;
-    font-weight: 700;
+    color: rgba(255,255,255,.7);
+    font-size: 1rem;
   }
 
   .total-row .summary-value {
     font-size: 1.75rem;
-    font-weight: 700;
+    font-weight: 800;
+    color: var(--gold);
   }
 
-  /* 📍 Location Section Styles */
-  .location-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: var(--shadow);
-    position: relative;
-    overflow: hidden;
+  .total-row small {
+    color: rgba(255,255,255,.5);
   }
 
-  .location-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: rotate 20s linear infinite;
+  /* ===== EMPTY CART ===== */
+  .empty-cart {
+    text-align: center;
+    padding: 4rem 2rem;
   }
 
-  @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .location-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .location-icon {
-    width: 50px;
-    height: 50px;
-    background: rgba(255,255,255,0.2);
+  .empty-cart-icon {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    backdrop-filter: blur(10px);
+    margin: 0 auto 1.5rem;
   }
 
-  .location-status {
-    flex: 1;
+  .empty-cart-icon i {
+    font-size: 3.5rem;
+    color: #cbd5e1;
   }
 
-  .location-status h5 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
+  .empty-cart h5 {
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: .5rem;
   }
 
-  .location-status p {
-    margin: 0;
-    font-size: 0.85rem;
-    opacity: 0.9;
+  .empty-cart p {
+    color: #64748b;
+    margin-bottom: 1.5rem;
   }
 
-  .location-actions {
+  /* ===== FORM STYLES ===== */
+  .form-section {
+    border-top: 2px solid #f1f5f9;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .form-section-title {
+    font-weight: 700;
+    margin-bottom: 1rem;
     display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .btn-location {
-    flex: 1;
-    background: rgba(255,255,255,0.2);
-    border: 2px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 0.75rem;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-  }
-
-  .btn-location:hover {
-    background: rgba(255,255,255,0.3);
-    border-color: rgba(255,255,255,0.5);
-    transform: translateY(-2px);
-  }
-
-  .btn-location i {
-    margin-right: 0.5rem;
-  }
-
-  .btn-location.active {
-    background: rgba(255,255,255,0.95);
-    color: #667eea;
-    border-color: white;
-  }
-
-  .location-map {
-    height: 300px;
-    border-radius: var(--radius-sm);
-    margin-top: 1rem;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    display: none;
-    position: relative;
-    z-index: 1;
-  }
-
-  .location-map.show {
-    display: block;
-    animation: slideDown 0.3s ease;
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .location-details {
-    background: rgba(255,255,255,0.15);
-    border-radius: var(--radius-sm);
-    padding: 1rem;
-    margin-top: 1rem;
-    backdrop-filter: blur(10px);
-    position: relative;
-    z-index: 1;
-  }
-
-  .location-detail-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    font-size: 0.9rem;
-  }
-
-  .location-detail-item:not(:last-child) {
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-  }
-
-  .location-detail-label {
-    opacity: 0.9;
-  }
-
-  .location-detail-value {
-    font-weight: 600;
-  }
-
-  /* Status badges */
-  .status-badge {
-    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    animation: pulse 2s ease-in-out infinite;
+    color: var(--dark);
   }
 
-  .status-badge.detecting {
-    background: rgba(255, 152, 0, 0.2);
-    color: var(--warning);
-    border: 2px solid var(--warning);
+  .form-section-title i {
+    color: var(--gold);
   }
 
-  .status-badge.success {
-    background: rgba(40, 167, 69, 0.2);
-    color: var(--success);
-    border: 2px solid var(--success);
-  }
-
-  .status-badge.error {
-    background: rgba(220, 53, 69, 0.2);
-    color: var(--danger);
-    border: 2px solid var(--danger);
-  }
-
-  .status-badge i {
-    animation: spin 1s linear infinite;
-  }
-
-  .status-badge.success i,
-  .status-badge.error i {
-    animation: none;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-
-  /* Alert styles */
-  .alert-modern {
+  /* ===== DELIVERY ADDRESS CARD ===== */
+  .delivery-address-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 2px solid #e2e8f0;
     border-radius: var(--radius-sm);
-    border: none;
-    padding: 1rem 1.25rem;
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    position: relative;
+    transition: all .3s ease;
+  }
+
+  .delivery-address-card:hover {
+    border-color: var(--gold);
+    box-shadow: 0 4px 15px rgba(255,193,7,.15);
+  }
+
+  .address-icon {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    box-shadow: var(--shadow-sm);
-    animation: slideIn 0.3s ease;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-gold);
   }
 
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .alert-modern i {
+  .address-icon i {
+    color: var(--dark);
     font-size: 1.25rem;
   }
 
+  .address-details {
+    flex: 1;
+  }
+
+  .address-line {
+    color: var(--dark);
+    font-size: .9rem;
+    line-height: 1.5;
+  }
+
+  .address-phone {
+    color: #64748b;
+    font-size: .85rem;
+  }
+
+  .address-badge {
+    position: absolute;
+    top: .75rem;
+    right: .75rem;
+  }
+
+  .other-addresses .btn-outline-secondary {
+    border: 2px dashed #cbd5e1;
+    color: #64748b;
+  }
+
+  .other-addresses .btn-outline-secondary:hover {
+    border-color: var(--gold);
+    background: rgba(255,193,7,.05);
+    color: var(--dark);
+  }
+
+  .other-address-option {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-xs);
+    padding: 1rem;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    cursor: pointer;
+    transition: all .3s ease;
+  }
+
+  .other-address-option:hover {
+    border-color: var(--gold);
+    background: rgba(255,193,7,.03);
+  }
+
+  .other-address-option .form-check-input:checked + .form-check-label {
+    color: var(--dark);
+    font-weight: 600;
+  }
+
+  .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-xs);
+    padding: .75rem 1rem;
+    transition: all .3s ease;
+    font-weight: 500;
+  }
+
+  .form-control:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(255,193,7,.15);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: .9rem;
+    margin-bottom: .4rem;
+  }
+
+  /* ===== ALERTS ===== */
+  .alert {
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    font-size: .9rem;
+  }
+
   .alert-info {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    color: #0d47a1;
+    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+    color: #0e7490;
   }
 
-  .alert-warning {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    color: #e65100;
+  .alert-info i {
+    color: var(--info);
   }
 
-  .alert-danger {
-    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-    color: #b71c1c;
+  .alert-info a {
+    color: var(--info);
+    font-weight: 700;
   }
 
-  .alert-success {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    color: #1b5e20;
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 991.98px) {
+    .summary-card {
+      position: static;
+      margin-top: 1.5rem;
+    }
   }
 
   @media (max-width: 768px){
     .page-header {
       flex-direction: column;
       gap: 1rem;
+      padding: 1.5rem;
+      text-align: center;
     }
 
-    .location-actions {
+    .page-header h3 {
+      font-size: 1.25rem;
       flex-direction: column;
+      gap: .5rem;
     }
 
-    .btn-location {
+    .cart-item {
+      padding: 1.25rem;
+    }
+
+    .cart-item .row {
+      gap: 1rem;
+    }
+
+    .price-display {
+      text-align: left;
+      margin-top: 1rem;
+    }
+
+    .current-price {
+      font-size: 1.35rem;
+    }
+
+    .quantity-controls {
       width: 100%;
+      justify-content: center;
     }
 
-    .location-map {
-      height: 250px;
+    .btn-action {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .container {
+      padding-left: .75rem;
+      padding-right: .75rem;
+    }
+
+    .page-header {
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+    }
+
+    .card {
+      border-radius: var(--radius-sm);
+    }
+
+    .product-name {
+      font-size: 1rem;
+    }
+
+    .current-price {
+      font-size: 1.2rem;
+    }
+
+    .total-row .summary-value {
+      font-size: 1.5rem;
     }
   }
 </style>
@@ -548,17 +713,17 @@
 
 {% block content %}
 <div class="container py-4">
-  <script type="application/json" id="lat_json">{{ adresse_latitude|default:'null'|json_script }}</script>
-  <script type="application/json" id="lng_json">{{ adresse_longitude|default:'null'|json_script }}</script>
-
   <div class="page-header">
     <h3>
       <i class="fas fa-shopping-cart"></i>
       Mon Panier
-      {% if items %}
-        <span class="cart-badge">{{ items|length }} article{{ items|length|pluralize }}</span>
-      {% endif %}
     </h3>
+    {% if items %}
+      <span class="cart-badge">
+        <i class="fas fa-box me-1"></i>
+        {{ items|length }} article{{ items|length|pluralize }}
+      </span>
+    {% endif %}
   </div>
 
   <div class="row">
@@ -567,7 +732,7 @@
         <div class="card-header">
           <h5>
             <i class="fas fa-box-open"></i>
-            Articles
+            Mes Articles
           </h5>
         </div>
         <div class="card-body p-0">
@@ -575,73 +740,105 @@
             {% for item in items %}
               <div class="cart-item">
                 <div class="row align-items-center">
-                  <div class="col-lg-3">
+                  <div class="col-4 col-md-3">
                     <div class="product-image-wrapper">
                       <img src="{% if item.produit.image %}{{ item.produit.image.url }}{% else %}{% static 'images/default.png' %}{% endif %}" 
                            class="product-image" 
                            alt="{{ item.produit.nom }}">
                       {% if item.produit.prix_promo %}
-                        <div class="discount-badge">PROMO</div>
+                        <div class="discount-badge">
+                          <i class="fas fa-tag me-1"></i>PROMO
+                        </div>
                       {% endif %}
                     </div>
                   </div>
 
-                  <div class="col-lg-5">
+                  <div class="col-8 col-md-5">
                     <div class="product-name">{{ item.produit.nom }}</div>
                     <div class="product-meta">
+                      {% if item.taille %}
+                        <span class="meta-item size-badge">
+                          <i class="fas fa-ruler"></i>
+                          Taille {{ item.taille.nom }}
+                        </span>
+                      {% elif item.taille_nom %}
+                        <span class="meta-item size-badge">
+                          <i class="fas fa-ruler"></i>
+                          Taille {{ item.taille_nom }}
+                        </span>
+                      {% endif %}
                       {% if item.produit.couleur %}
-                        <div class="meta-item">
+                        <span class="meta-item">
                           <i class="fas fa-palette"></i>
                           {{ item.produit.couleur }}
-                        </div>
+                        </span>
+                      {% endif %}
+                      {% if item.produit.categorie %}
+                        <span class="meta-item">
+                          <i class="fas fa-folder"></i>
+                          {{ item.produit.categorie.nom }}
+                        </span>
                       {% endif %}
                     </div>
 
-                    <form action="{% url 'modifier_quantite' %}" method="post">
+                    <form action="{% if user.is_authenticated %}{% url 'modifier_quantite' %}{% else %}{% url 'modifier_quantite_session' %}{% endif %}" method="post" class="mb-3">
                       {% csrf_token %}
-                      <input type="hidden" name="item_id" value="{{ item.id }}">
+                      {% if user.is_authenticated %}
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                      {% else %}
+                        <input type="hidden" name="produit_id" value="{{ item.produit.id }}">
+                        {% if item.taille_id %}
+                          <input type="hidden" name="taille_id" value="{{ item.taille_id }}">
+                        {% endif %}
+                        {% if item.cart_key %}
+                          <input type="hidden" name="cart_key" value="{{ item.cart_key }}">
+                        {% endif %}
+                      {% endif %}
                       <div class="quantity-controls">
-                        <button type="button" class="qty-btn" onclick="this.nextElementSibling.value = Math.max(1, parseInt(this.nextElementSibling.value) - 1); this.closest('form').submit();">
+                        <button type="button" class="qty-btn qty-minus">
                           <i class="fas fa-minus"></i>
                         </button>
                         <input name="qty" value="{{ item.quantite }}" type="number" min="1" class="qty-input" readonly>
-                        <button type="button" class="qty-btn" onclick="this.previousElementSibling.value = parseInt(this.previousElementSibling.value) + 1; this.closest('form').submit();">
+                        <button type="button" class="qty-btn qty-plus">
                           <i class="fas fa-plus"></i>
                         </button>
                       </div>
                     </form>
 
-                    <form action="{% url 'retirer_du_panier' item.id %}" method="post" style="margin-top: 1rem;">
+                    <form action="{% if user.is_authenticated %}{% url 'retirer_du_panier' item.id %}{% else %}{% url 'retirer_du_panier_session' item.produit.id %}{% endif %}" method="post">
                       {% csrf_token %}
                       <button type="submit" class="btn-action btn-remove">
-                        <i class="fas fa-trash"></i>
+                        <i class="fas fa-trash-alt"></i>
                         Retirer
                       </button>
                     </form>
                   </div>
 
-                  <div class="col-lg-4 text-end">
-                    <div style="font-size: 1.5rem; font-weight: 700;">
+                  <div class="col-12 col-md-4">
+                    <div class="price-display">
                       {% if item.produit.prix_promo %}
-                        {{ item.produit.prix_promo }} FCFA
-                        <div style="font-size: .9rem; text-decoration: line-through; color: #6c757d;">{{ item.produit.prix }} FCFA</div>
+                        <div class="current-price">{{ item.produit.prix_promo }} FCFA</div>
+                        <div class="original-price">{{ item.produit.prix }} FCFA</div>
                       {% else %}
-                        {{ item.produit.prix }} FCFA
+                        <div class="current-price">{{ item.produit.prix }} FCFA</div>
                       {% endif %}
-                    </div>
-                    <div style="margin-top: .5rem; color: #6c757d;">
-                      Sous-total: <strong>{{ item.prix_total }} FCFA</strong>
+                      <div class="subtotal">
+                        Sous-total: <strong>{{ item.prix_total }} FCFA</strong>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             {% endfor %}
           {% else %}
-            <div style="text-align: center; padding: 4rem 2rem;">
-              <i class="fas fa-shopping-cart" style="font-size: 5rem; color: #dee2e6;"></i>
-              <h5 style="margin-top: 1.5rem;">Votre panier est vide</h5>
-              <a class="btn btn-primary" href="{% url 'boutique' %}" style="margin-top: 1.5rem;">
-                <i class="fas fa-store"></i> Découvrir nos produits
+            <div class="empty-cart">
+              <div class="empty-cart-icon">
+                <i class="fas fa-shopping-basket"></i>
+              </div>
+              <h5>Votre panier est vide</h5>
+              <p>Découvrez notre boutique et trouvez des produits qui vous plaisent !</p>
+              <a class="btn btn-primary" href="{% url 'boutique' %}">
+                <i class="fas fa-store me-2"></i>Découvrir nos produits
               </a>
             </div>
           {% endif %}
@@ -650,110 +847,180 @@
     </div>
 
     {% if items %}
-      <!-- 📍 Location Section -->
-      <div class="col-12">
-        <div class="location-card">
-          <div class="location-header">
-            <div class="location-icon">
-              <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <div class="location-status">
-              <h5 id="locationTitle">
-                {% if adresse_latitude and adresse_longitude %}
-                  📍 Adresse de livraison détectée
-                {% else %}
-                  📍 Localisation requise
-                {% endif %}
-              </h5>
-              <p id="locationSubtitle">
-                {% if adresse_latitude and adresse_longitude %}
-                  Nous avons votre position pour calculer les frais de livraison
-                {% else %}
-                  Activez la géolocalisation pour calculer les frais de livraison
-                {% endif %}
-              </p>
-            </div>
-            <div id="locationStatusBadge"></div>
-          </div>
-
-          <div class="location-actions">
-            <button type="button" class="btn-location" id="detectLocationBtn">
-              <i class="fas fa-crosshairs"></i>
-              Détecter ma position
-            </button>
-            <button type="button" class="btn-location" id="showMapBtn">
-              <i class="fas fa-map"></i>
-              Voir sur la carte
-            </button>
-          </div>
-
-          <!-- Map Container -->
-          <div id="mapContainer" class="location-map"></div>
-
-          <!-- Location Details -->
-          <div class="location-details" id="locationDetails" style="display: none;">
-            <div class="location-detail-item">
-              <span class="location-detail-label">
-                <i class="fas fa-map-pin me-2"></i>Coordonnées
-              </span>
-              <span class="location-detail-value" id="coordsDisplay">—</span>
-            </div>
-            <div class="location-detail-item">
-              <span class="location-detail-label">
-                <i class="fas fa-route me-2"></i>Distance estimée
-              </span>
-              <span class="location-detail-value" id="distanceDisplay">—</span>
-            </div>
-            <div class="location-detail-item">
-              <span class="location-detail-label">
-                <i class="fas fa-truck me-2"></i>Frais de livraison
-              </span>
-              <span class="location-detail-value" id="shippingDisplay">—</span>
-            </div>
-          </div>
-
-          <!-- Status Alert -->
-          <div id="locationAlert" style="margin-top: 1rem;"></div>
-        </div>
-      </div>
-
       <div class="col-lg-4">
-        <div class="card">
+        <div class="card summary-card">
           <div class="card-header">
             <h5>
-              <i class="fas fa-calculator"></i>
-              Résumé
+              <i class="fas fa-receipt"></i>
+              Récapitulatif
             </h5>
           </div>
           <div class="card-body">
             <div class="summary-item">
-              <span>Sous-total</span>
-              <span>{{ total }} FCFA</span>
+              <span class="summary-label">
+                <i class="fas fa-shopping-bag me-2 text-muted"></i>
+                Sous-total
+              </span>
+              <span class="summary-value">{{ total }} FCFA</span>
             </div>
             <div class="summary-item">
-              <span>Livraison</span>
-              <span id="shippingSummary">{% if shipping %}{{ shipping }} FCFA{% else %}—{% endif %}</span>
+              <span class="summary-label">
+                <i class="fas fa-truck me-2 text-muted"></i>
+                Livraison
+              </span>
+              <span class="summary-value">{{ shipping }} FCFA</span>
             </div>
             <div class="summary-item total-row">
               <div>
-                <div class="summary-label">Total</div>
-                <small style="color: #6c757d;">(TVA incluse)</small>
+                <div class="summary-label">Total à payer</div>
+                <small>(TVA incluse)</small>
               </div>
-              <span class="summary-value" id="totalSummary">{{ total|add:shipping|default:total }} FCFA</span>
+              <span class="summary-value">{{ total|add:shipping }} FCFA</span>
             </div>
 
-            <form method="post" action="{% url 'confirmer_commande' %}" id="orderForm" style="margin-top: 1.5rem;">
+            <form method="post" action="{% if user.is_authenticated %}{% url 'confirmer_commande' %}{% else %}{% url 'commande_invite' %}{% endif %}" id="orderForm" class="mt-4">
               {% csrf_token %}
-              <input type="hidden" id="latitude" name="latitude">
-              <input type="hidden" id="longitude" name="longitude">
-              <input type="hidden" id="shipping" name="shipping">
-              
-              <div class="alert d-none" id="locationStatus"></div>
 
-              <button type="button" class="btn btn-success w-100" id="confirmOrderBtn">
-                <i class="fas fa-check-circle"></i>
-                Confirmer
+              {% if not user.is_authenticated %}
+                <!-- Formulaire pour les invités -->
+                <div class="form-section">
+                  <h6 class="form-section-title">
+                    <i class="fas fa-map-marker-alt"></i> Informations de livraison
+                  </h6>
+                  
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="prenom" name="prenom" placeholder="Votre prénom" required>
+                    </div>
+                    <div class="col-6">
+                      <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="nom" name="nom" placeholder="Votre nom" required>
+                    </div>
+                    <div class="col-12">
+                      <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                      <input type="email" class="form-control" id="email" name="email" placeholder="email@exemple.com" required>
+                    </div>
+                    <div class="col-12">
+                      <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                      <input type="tel" class="form-control" id="telephone" name="telephone" placeholder="77 123 45 67" required>
+                    </div>
+                    <div class="col-12">
+                      <label for="adresse" class="form-label">Adresse <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="adresse" name="adresse" placeholder="Rue, Quartier..." required>
+                    </div>
+                    <div class="col-8">
+                      <label for="ville" class="form-label">Ville <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="ville" name="ville" value="Dakar" required>
+                    </div>
+                    <div class="col-4">
+                      <label for="code_postal" class="form-label">Code</label>
+                      <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="00000">
+                    </div>
+                    <div class="col-12">
+                      <label for="complement_adresse" class="form-label">Complément</label>
+                      <input type="text" class="form-control" id="complement_adresse" name="complement_adresse" placeholder="Bâtiment, étage...">
+                    </div>
+                    <div class="col-12">
+                      <label for="notes" class="form-label">Instructions</label>
+                      <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Instructions pour le livreur (facultatif)"></textarea>
+                    </div>
+                  </div>
+                  
+                  <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Commande invité. <a href="{% url 'register' %}">Créez un compte</a> pour suivre vos commandes !
+                  </div>
+                </div>
+              {% else %}
+                <!-- Section pour les utilisateurs connectés -->
+                {% if adresse_defaut %}
+                  <div class="form-section">
+                    <h6 class="form-section-title">
+                      <i class="fas fa-map-marker-alt"></i> Adresse de livraison
+                    </h6>
+                    <div class="delivery-address-card">
+                      <div class="address-icon">
+                        <i class="fas fa-home"></i>
+                      </div>
+                      <div class="address-details">
+                        <div class="address-line"><strong>{{ adresse_defaut.ligne1 }}</strong></div>
+                        {% if adresse_defaut.ligne2 %}
+                          <div class="address-line">{{ adresse_defaut.ligne2 }}</div>
+                        {% endif %}
+                        <div class="address-line">
+                          {{ adresse_defaut.ville }}{% if adresse_defaut.code_postal %}, {{ adresse_defaut.code_postal }}{% endif %}
+                        </div>
+                        {% if adresse_defaut.region %}
+                          <div class="address-line">{{ adresse_defaut.region }}</div>
+                        {% endif %}
+                        <div class="address-line">{{ adresse_defaut.pays }}</div>
+                        {% if adresse_defaut.telephone %}
+                          <div class="address-phone mt-2">
+                            <i class="fas fa-phone me-1"></i> {{ adresse_defaut.telephone }}
+                          </div>
+                        {% endif %}
+                      </div>
+                      <div class="address-badge">
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Par défaut</span>
+                      </div>
+                    </div>
+                    
+                    {% if adresses|length > 1 %}
+                      <div class="other-addresses mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#otherAddresses">
+                          <i class="fas fa-exchange-alt me-2"></i>Choisir une autre adresse ({{ adresses|length|add:"-1" }} disponible{% if adresses|length > 2 %}s{% endif %})
+                        </button>
+                        <div class="collapse mt-2" id="otherAddresses">
+                          {% for adr in adresses %}
+                            {% if adr.id != adresse_defaut.id %}
+                              <div class="other-address-option">
+                                <input type="radio" name="adresse_id" value="{{ adr.id }}" id="adr_{{ adr.id }}" class="form-check-input">
+                                <label for="adr_{{ adr.id }}" class="form-check-label">
+                                  <strong>{{ adr.ligne1 }}</strong><br>
+                                  <small class="text-muted">{{ adr.ville }}{% if adr.region %}, {{ adr.region }}{% endif %}</small>
+                                </label>
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'profile' %}" class="btn btn-link btn-sm p-0 mt-2">
+                      <i class="fas fa-edit me-1"></i>Modifier mes adresses
+                    </a>
+                  </div>
+                {% else %}
+                  <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Aucune adresse enregistrée</strong>
+                    <p class="mb-2 small">Veuillez ajouter une adresse de livraison dans votre profil avant de passer commande.</p>
+                    <a href="{% url 'profile' %}" class="btn btn-warning btn-sm">
+                      <i class="fas fa-plus me-1"></i>Ajouter une adresse
+                    </a>
+                  </div>
+                {% endif %}
+              {% endif %}
+
+              {% if not user.is_authenticated or adresse_defaut %}
+              <button type="submit" class="btn btn-success w-100 py-3 mt-2">
+                <i class="fas fa-lock me-2"></i>
+                {% if user.is_authenticated %}Confirmer la commande{% else %}Passer commande{% endif %}
               </button>
+              {% else %}
+              <button type="button" class="btn btn-secondary w-100 py-3 mt-2" disabled>
+                <i class="fas fa-lock me-2"></i>
+                Ajoutez une adresse pour commander
+              </button>
+              {% endif %}
+              
+              <div class="text-center mt-3">
+                <small class="text-muted">
+                  <i class="fas fa-shield-alt me-1"></i>
+                  Paiement sécurisé
+                </small>
+              </div>
             </form>
           </div>
         </div>
@@ -765,293 +1032,42 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-(function(){
-  'use strict';
+document.addEventListener('DOMContentLoaded', function() {
+  // Gestion des boutons de quantité
+  document.querySelectorAll('.qty-minus').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const form = this.closest('form');
+      const input = form.querySelector('.qty-input');
+      const currentValue = parseInt(input.value) || 1;
+      if (currentValue > 1) {
+        input.value = currentValue - 1;
+        form.submit();
+      }
+    });
+  });
   
-  // Configuration
-  const total = Number("{{ total }}") || 0;
-  const STORE_LAT = 14.693425;  // Coordonnées du magasin (Dakar - à ajuster)
-  const STORE_LNG = -17.447938;
+  document.querySelectorAll('.qty-plus').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const form = this.closest('form');
+      const input = form.querySelector('.qty-input');
+      const currentValue = parseInt(input.value) || 1;
+      input.value = currentValue + 1;
+      form.submit();
+    });
+  });
   
-  // CSRF Token
-  function getCookie(name) {
-    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-    return m ? m.pop() : '';
-  }
-  const CSRF = getCookie('csrftoken');
-  
-  // DOM Elements
-  const latInput = document.getElementById('latitude');
-  const lngInput = document.getElementById('longitude');
-  const shippingInput = document.getElementById('shipping');
+  // Validation pour le formulaire de commande
   const orderForm = document.getElementById('orderForm');
-  const confirmBtn = document.getElementById('confirmOrderBtn');
-  const detectBtn = document.getElementById('detectLocationBtn');
-  const showMapBtn = document.getElementById('showMapBtn');
-  const mapContainer = document.getElementById('mapContainer');
-  const locationAlert = document.getElementById('locationAlert');
-  const locationTitle = document.getElementById('locationTitle');
-  const locationSubtitle = document.getElementById('locationSubtitle');
-  const locationDetails = document.getElementById('locationDetails');
-  const statusBadge = document.getElementById('locationStatusBadge');
-  
-  // State
-  let shippingReady = false;
-  let map = null;
-  let userMarker = null;
-  let storeMarker = null;
-  let routeLine = null;
-  let currentLat = null;
-  let currentLng = null;
-  
-  // UI Functions
-  function showAlert(message, type = 'info') {
-    locationAlert.innerHTML = `
-      <div class="alert-modern alert-${type}">
-        <i class="fas fa-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'check-circle'}"></i>
-        <span>${message}</span>
-      </div>
-    `;
-  }
-  
-  function updateStatus(status) {
-    statusBadge.innerHTML = '';
-    if (status === 'detecting') {
-      statusBadge.innerHTML = '<span class="status-badge detecting"><i class="fas fa-spinner"></i> Détection...</span>';
-    } else if (status === 'success') {
-      statusBadge.innerHTML = '<span class="status-badge success"><i class="fas fa-check"></i> Détecté</span>';
-    } else if (status === 'error') {
-      statusBadge.innerHTML = '<span class="status-badge error"><i class="fas fa-times"></i> Erreur</span>';
-    }
-  }
-  
-  function updateLocationDisplay(lat, lng, distance, shipping) {
-    currentLat = lat;
-    currentLng = lng;
-    
-    locationTitle.innerHTML = '📍 Position détectée';
-    locationSubtitle.innerHTML = 'Votre position a été enregistrée avec succès';
-    
-    document.getElementById('coordsDisplay').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    document.getElementById('distanceDisplay').textContent = `${distance.toFixed(2)} km`;
-    document.getElementById('shippingDisplay').textContent = `${shipping} FCFA`;
-    
-    locationDetails.style.display = 'block';
-    updateStatus('success');
-  }
-  
-  // Map Functions
-  function initMap(lat, lng) {
-    if (map) {
-      map.remove();
-    }
-    
-    mapContainer.classList.add('show');
-    showMapBtn.classList.add('active');
-    showMapBtn.innerHTML = '<i class="fas fa-map-marked-alt"></i> Masquer la carte';
-    
-    // Create map
-    map = L.map('mapContainer').setView([lat, lng], 13);
-    
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    // User marker (client)
-    userMarker = L.marker([lat, lng], {
-      icon: L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      })
-    }).addTo(map);
-    userMarker.bindPopup('📍 <b>Votre position</b>').openPopup();
-    
-    // Store marker (magasin)
-    storeMarker = L.marker([STORE_LAT, STORE_LNG], {
-      icon: L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      })
-    }).addTo(map);
-    storeMarker.bindPopup('🏪 <b>Maryama Shop</b>');
-    
-    // Draw route line
-    routeLine = L.polyline([
-      [STORE_LAT, STORE_LNG],
-      [lat, lng]
-    ], {
-      color: '#ffc107',
-      weight: 3,
-      opacity: 0.7,
-      dashArray: '10, 10'
-    }).addTo(map);
-    
-    // Fit bounds to show both markers
-    const bounds = L.latLngBounds([
-      [STORE_LAT, STORE_LNG],
-      [lat, lng]
-    ]);
-    map.fitBounds(bounds, { padding: [50, 50] });
-  }
-  
-  function toggleMap() {
-    if (mapContainer.classList.contains('show')) {
-      mapContainer.classList.remove('show');
-      showMapBtn.classList.remove('active');
-      showMapBtn.innerHTML = '<i class="fas fa-map"></i> Voir sur la carte';
-      if (map) {
-        map.remove();
-        map = null;
-      }
-    } else if (currentLat && currentLng) {
-      initMap(currentLat, currentLng);
-    } else {
-      showAlert('Veuillez d\'abord détecter votre position', 'warning');
-    }
-  }
-  
-  // Shipping Calculation
-  function calculateShipping(lat, lng) {
-    updateStatus('detecting');
-    showAlert('Calcul des frais de livraison en cours...', 'info');
-    
-    return fetch("{% url 'calculer_shipping' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRFToken": CSRF
-      },
-      body: `latitude=${lat}&longitude=${lng}`
-    })
-    .then(res => res.json())
-    .then(data => {
-      const shipping = Number(data.shipping || 0);
-      const distance = Number(data.distance || 0);
-      
-      // Update UI
-      document.getElementById('shippingSummary').textContent = shipping + ' FCFA';
-      document.getElementById('totalSummary').textContent = (total + shipping) + ' FCFA';
-      
-      updateLocationDisplay(lat, lng, distance, shipping);
-      showAlert(`✅ Frais de livraison : ${shipping} FCFA (Distance: ${distance.toFixed(2)} km)`, 'success');
-      
-      return { shipping, distance };
-    })
-    .catch(err => {
-      updateStatus('error');
-      showAlert('❌ Erreur lors du calcul des frais de livraison', 'danger');
-      throw err;
-    });
-  }
-
-  function setLocation(lat, lng){
-    latInput.value = lat;
-    lngInput.value = lng;
-    
-    calculateShipping(lat, lng).then(data => {
-      shippingInput.value = data.shipping;
-      shippingReady = true;
-      detectBtn.innerHTML = '<i class="fas fa-check"></i> Position enregistrée';
-      detectBtn.classList.add('active');
-    });
-  }
-  
-  // Geolocation Detection
-  function detectLocation() {
-    if (!navigator.geolocation) {
-      showAlert('❌ Votre navigateur ne supporte pas la géolocalisation', 'danger');
-      updateStatus('error');
-      return;
-    }
-    
-    updateStatus('detecting');
-    showAlert('🔍 Détection de votre position en cours...', 'info');
-    detectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Détection...';
-    detectBtn.disabled = true;
-    
-    navigator.geolocation.getCurrentPosition(
-      function success(position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setLocation(lat, lng);
-        detectBtn.disabled = false;
-      },
-      function error(err) {
-        updateStatus('error');
-        detectBtn.innerHTML = '<i class="fas fa-crosshairs"></i> Réessayer';
-        detectBtn.disabled = false;
-        
-        let message = '';
-        switch(err.code) {
-          case err.PERMISSION_DENIED:
-            message = '❌ Permission refusée. Veuillez autoriser la géolocalisation dans les paramètres de votre navigateur.';
-            break;
-          case err.POSITION_UNAVAILABLE:
-            message = '⚠️ Position indisponible. Vérifiez votre connexion GPS.';
-            break;
-          case err.TIMEOUT:
-            message = '⏱️ Délai dépassé. Réessayez.';
-            break;
-          default:
-            message = '❌ Erreur inconnue lors de la détection de position.';
-        }
-        showAlert(message, 'danger');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  }
-  
-  // Initialize with saved location
-  try{
-    const latValue = JSON.parse(document.getElementById('lat_json').textContent);
-    const lngValue = JSON.parse(document.getElementById('lng_json').textContent);
-    
-    if (typeof latValue === 'number' && typeof lngValue === 'number'){
-      setLocation(latValue, lngValue);
-      showAlert('✅ Position récupérée depuis votre adresse enregistrée', 'success');
-    } else {
-      showAlert('📍 Veuillez détecter votre position pour calculer les frais de livraison', 'warning');
-    }
-  }catch(_){
-    showAlert('📍 Veuillez détecter votre position pour calculer les frais de livraison', 'warning');
-  }
-  
-  // Event Listeners
-  if (detectBtn) {
-    detectBtn.addEventListener('click', detectLocation);
-  }
-  
-  if (showMapBtn) {
-    showMapBtn.addEventListener('click', toggleMap);
-  }
-  
-  if (confirmBtn) {
-    confirmBtn.addEventListener('click', function(){
-      if (shippingReady) {
-        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirmation...';
-        confirmBtn.disabled = true;
-        orderForm.submit();
-      } else {
-        showAlert('⚠️ Veuillez détecter votre position avant de confirmer', 'warning');
-        detectLocation();
+  if (orderForm) {
+    orderForm.addEventListener('submit', function(e) {
+      const submitBtn = orderForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+        submitBtn.disabled = true;
       }
     });
   }
-})();
+});
 </script>
 {% endblock %}

@@ -386,6 +386,58 @@
     color: #ef4444;
   }
 
+  /* Category Image */
+  .category-image-wrapper {
+    width: 100px;
+    height: 100px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: var(--transition);
+  }
+
+  .category-card:hover .category-image-wrapper {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  .category-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .category-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #9ca3af;
+  }
+
+  .category-card:nth-child(4n+1) .category-image-placeholder {
+    background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+    color: #667eea;
+  }
+
+  .category-card:nth-child(4n+2) .category-image-placeholder {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));
+    color: #10b981;
+  }
+
+  .category-card:nth-child(4n+3) .category-image-placeholder {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.15));
+    color: #f59e0b;
+  }
+
+  .category-card:nth-child(4n+4) .category-image-placeholder {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.15));
+    color: #ef4444;
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .categories-header h2 {
@@ -510,8 +562,14 @@
     {% for c in categories %}
     <div class="category-card" data-category-name="{{ c.nom|lower }}">
       <div class="category-header">
-        <div class="category-icon-wrapper">
-          <i class="category-icon bi bi-tag-fill"></i>
+        <div class="category-image-wrapper">
+          {% if c.image %}
+            <img src="{{ c.image.url }}" alt="{{ c.nom }}" class="category-image">
+          {% else %}
+            <div class="category-image-placeholder">
+              <i class="bi bi-tag-fill"></i>
+            </div>
+          {% endif %}
         </div>
       </div>
       
@@ -524,14 +582,18 @@
         
         <div class="category-meta">
           <div class="meta-item">
-            <div class="meta-value">{{ c.produit_set.count|default:0 }}</div>
+            <div class="meta-value">{{ c.produits.count|default:0 }}</div>
             <div class="meta-label">Produits</div>
           </div>
           <div class="meta-item">
             <div class="meta-value">
-              <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
+              {% if c.image %}
+                <i class="bi bi-image-fill" style="color: #10b981;"></i>
+              {% else %}
+                <i class="bi bi-image" style="color: #9ca3af;"></i>
+              {% endif %}
             </div>
-            <div class="meta-label">Active</div>
+            <div class="meta-label">Image</div>
           </div>
         </div>
         
@@ -653,7 +715,7 @@
   // Confirm delete
   function confirmDelete(categoryId, categoryName) {
     document.getElementById('categoryName').textContent = categoryName;
-    document.getElementById('confirmDeleteBtn').href = `/admin/categories/${categoryId}/delete/`;
+    document.getElementById('confirmDeleteBtn').href = `/admin-panel/categories/${categoryId}/supprimer/`;
     
     const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
     modal.show();

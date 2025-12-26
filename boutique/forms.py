@@ -110,13 +110,13 @@ class ProduitForm(BootstrapModelForm):
             'prix_promo': forms.NumberInput(attrs={'min': 0, 'step': 1, 'class': 'form-control', 'placeholder': '0 (optionnel)'}),
             'stock': forms.NumberInput(attrs={'min': 0, 'step': 1, 'class': 'form-control', 'placeholder': '0'}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'categories': forms.SelectMultiple(attrs={'size': 6, 'class': 'form-select'}),
+            'categories': forms.CheckboxSelectMultiple(attrs={'class': 'category-checkbox-list'}),
             'nom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: T-shirt Premium'}),
         }
         help_texts = {
             'prix_promo': 'Laissez vide si pas de promotion',
-            'stock': 'Nombre d\'unités disponibles',
-            'categories': 'Maintenez Ctrl pour sélectionner plusieurs catégories',
+            'stock': 'Stock global (le stock par taille sera géré séparément)',
+            'categories': 'Sélectionnez une ou plusieurs catégories',
         }
 
     def __init__(self, *args, **kwargs):
@@ -151,16 +151,16 @@ class ProduitForm(BootstrapModelForm):
 class CategorieForm(forms.ModelForm):
     class Meta:
         model = Categorie
-        fields = ['nom', 'description', 'icon']
+        fields = ['nom', 'description', 'image']
         labels = {
             'nom': 'Nom',
             'description': 'Description',
-            'icon': 'Icône (classe FontAwesome)',
+            'image': 'Image de la catégorie',
         }
         widgets = {
             'nom': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex: fa-solid fa-tag'}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
 
 class LivreurCreationForm(UserCreationForm):
@@ -297,7 +297,7 @@ class AdresseForm(forms.ModelForm):
 
 
 
-from .models import AvisLivreur
+from .models import AvisLivreur, CommandeInvite
 # ---------------------------
 # Formulaire pour AvisLivreur
 # ---------------------------
@@ -309,3 +309,50 @@ class AvisLivreurForm(forms.ModelForm):
             'note': forms.Select(choices=[(i, f"{i}★") for i in range(1, 6)], attrs={'class': 'form-select'}),
             'commentaire': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Votre commentaire…'}),
         }
+
+
+# ---------------------------
+# Formulaire pour Commande Invité
+# ---------------------------
+class CommandeInviteForm(forms.ModelForm):
+    class Meta:
+        model = CommandeInvite
+        fields = ['nom', 'prenom', 'email', 'telephone', 'adresse', 'ville', 'code_postal', 'complement_adresse', 'notes']
+        widgets = {
+            'nom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom'}),
+            'prenom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Prénom'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+            'telephone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Téléphone (ex: 77 123 45 67)'}),
+            'adresse': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Adresse de livraison'}),
+            'ville': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ville'}),
+            'code_postal': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Code postal (facultatif)'}),
+            'complement_adresse': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Complément d\'adresse (facultatif)'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Instructions de livraison ou notes spéciales (facultatif)'}),
+        }
+        labels = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'email': 'Email',
+            'telephone': 'Téléphone',
+            'adresse': 'Adresse de livraison',
+            'ville': 'Ville',
+            'code_postal': 'Code postal',
+            'complement_adresse': 'Complément d\'adresse',
+            'notes': 'Instructions de livraison',
+        }
+    
+    def clean_telephone(self):
+        telephone = self.cleaned_data.get('telephone')
+        if not telephone:
+            raise forms.ValidationError("Le numéro de téléphone est obligatoire.")
+        # Nettoyer le numéro
+        telephone = telephone.replace(' ', '').replace('-', '')
+        if len(telephone) < 9:
+            raise forms.ValidationError("Le numéro de téléphone doit contenir au moins 9 chiffres.")
+        return telephone
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise forms.ValidationError("L'adresse e-mail est obligatoire.")
+        return email

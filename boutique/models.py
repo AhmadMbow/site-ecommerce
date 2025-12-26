@@ -12,10 +12,35 @@ from django.utils import timezone
 class Categorie(models.Model):
     nom = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    icon = models.CharField(max_length=50, default='fas fa-folder')  # FontAwesome par défaut
+    icon = models.CharField(max_length=50, default='fas fa-folder', blank=True, null=True)  # FontAwesome (optionnel)
+    image = models.ImageField(upload_to='categories/', blank=True, null=True, help_text="Image de la catégorie")
 
     def __str__(self):
         return self.nom
+
+
+class Taille(models.Model):
+    """Modèle pour les tailles de vêtements (lettres uniquement)"""
+    ORDRE_TAILLES = {
+        'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, 'XXXL': 7,
+    }
+    
+    nom = models.CharField(max_length=20, unique=True)
+    ordre = models.PositiveIntegerField(default=0, help_text="Ordre d'affichage")
+    
+    class Meta:
+        ordering = ['ordre', 'nom']
+        verbose_name = "Taille"
+        verbose_name_plural = "Tailles"
+    
+    def __str__(self):
+        return self.nom
+    
+    def save(self, *args, **kwargs):
+        # Auto-définir l'ordre basé sur le nom si non défini
+        if self.ordre == 0 and self.nom in self.ORDRE_TAILLES:
+            self.ordre = self.ORDRE_TAILLES[self.nom]
+        super().save(*args, **kwargs)
 
 
 class Produit(models.Model):
@@ -23,10 +48,12 @@ class Produit(models.Model):
     description = models.TextField(blank=True, null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=0)
     prix_promo = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
-    stock = models.PositiveIntegerField(default=0)
+    stock = models.PositiveIntegerField(default=0, help_text="Stock total (somme des stocks par taille si tailles actives)")
     image = models.ImageField(upload_to='produits/', blank=True, null=True)
     categories = models.ManyToManyField(Categorie, related_name='produits')
     date_creation = models.DateTimeField(auto_now_add=True)
+    # Nouveau champ pour activer/désactiver les tailles
+    a_tailles = models.BooleanField(default=False, help_text="Cocher si ce produit est disponible en plusieurs tailles")
 
     def __str__(self):
         return self.nom
@@ -41,6 +68,76 @@ class Produit(models.Model):
     def nombre_notes(self):
         # Utilise 'avis_recus' qui est la relation depuis AvisProduit
         return self.avis_recus.count()
+    
+    @property
+    def tailles_disponibles(self):
+        """Retourne les tailles disponibles (avec stock > 0)"""
+        if not self.a_tailles:
+            return []
+        return self.produit_tailles.filter(stock__gt=0).select_related('taille').order_by('taille__ordre')
+    
+    @property
+    def tailles_en_rupture(self):
+        """Retourne le nombre de tailles en rupture de stock"""
+        if not self.a_tailles:
+            return 0
+        return self.produit_tailles.filter(stock=0).count()
+    
+    @property
+    def tailles_stock_bas(self):
+        """Retourne le nombre de tailles avec stock bas (entre 1 et 4)"""
+        if not self.a_tailles:
+            return 0
+        return self.produit_tailles.filter(stock__gt=0, stock__lt=5).count()
+    
+    @property
+    def liste_tailles_rupture(self):
+        """Retourne la liste des noms de tailles en rupture"""
+        if not self.a_tailles:
+            return []
+        return list(self.produit_tailles.filter(stock=0).values_list('taille__nom', flat=True))
+    
+    @property
+    def liste_tailles_stock_bas(self):
+        """Retourne la liste des noms de tailles avec stock bas"""
+        if not self.a_tailles:
+            return []
+        return list(self.produit_tailles.filter(stock__gt=0, stock__lt=5).values_list('taille__nom', flat=True))
+    
+    @property
+    def stock_total(self):
+        """Calcule le stock total basé sur les tailles si activé"""
+        if self.a_tailles:
+            from django.db.models import Sum
+            total = self.produit_tailles.aggregate(total=Sum('stock'))['total']
+            return total or 0
+        return self.stock
+    
+    def get_stock_pour_taille(self, taille):
+        """Retourne le stock pour une taille spécifique"""
+        if not self.a_tailles:
+            return self.stock
+        try:
+            pt = self.produit_tailles.get(taille=taille)
+            return pt.stock
+        except ProduitTaille.DoesNotExist:
+            return 0
+
+
+class ProduitTaille(models.Model):
+    """Association entre un produit et ses tailles avec le stock par taille"""
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE, related_name='produit_tailles')
+    taille = models.ForeignKey(Taille, on_delete=models.CASCADE, related_name='produit_tailles')
+    stock = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        unique_together = ('produit', 'taille')
+        ordering = ['taille__ordre']
+        verbose_name = "Stock par taille"
+        verbose_name_plural = "Stocks par taille"
+    
+    def __str__(self):
+        return f"{self.produit.nom} - {self.taille.nom} ({self.stock} en stock)"
 
 
 # ---------------------------
@@ -61,6 +158,12 @@ class UserProfile(models.Model):
     photo = models.ImageField(upload_to='profiles/', blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     role = models.CharField(max_length=20, choices=RoleChoices.choices, default=RoleChoices.CLIENT)
+    
+    # Champs pour les livreurs - informations véhicule
+    vehicle_type = models.CharField(max_length=50, blank=True, null=True, verbose_name="Type de véhicule")
+    vehicle_plate = models.CharField(max_length=20, blank=True, null=True, verbose_name="Immatriculation")
+    vehicle_model = models.CharField(max_length=100, blank=True, null=True, verbose_name="Modèle du véhicule")
+    vehicle_color = models.CharField(max_length=50, blank=True, null=True, verbose_name="Couleur du véhicule")
 
     def __str__(self):
         return f"{self.user.username} - {self.user_type}"
@@ -104,7 +207,15 @@ class Commande(models.Model):
         blank=True,
         related_name="commandes_livrees"
     )
-
+    
+    # Adresse de livraison (relation vers le modèle Adresse)
+    adresse = models.ForeignKey(
+        'Adresse',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commandes"
+    )
 
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, help_text="Latitude GPS du client")
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, help_text="Longitude GPS du client")
@@ -112,6 +223,16 @@ class Commande(models.Model):
 
     def __str__(self):
         return f"Commande #{self.id} de {self.user.username}"
+    
+    @property
+    def numero_commande(self):
+        """Retourne un numéro de commande unique"""
+        return f"CMD-{self.id}"
+    
+    @property
+    def type_commande(self):
+        """Retourne le type de commande pour les URLs"""
+        return "user"
 
     @property
     def livreur_avis_donne(self):
@@ -121,6 +242,31 @@ class Commande(models.Model):
             return True  # Pas de livreur => pas d'avis à donner
         return AvisLivreur.objects.filter(client=self.user, livreur=self.livreur).exists()
 
+    @property
+    def adresse_livraison_formatee(self):
+        """Retourne l'adresse de livraison formatée pour affichage"""
+        if self.adresse:
+            parts = [self.adresse.ligne1]
+            if self.adresse.ligne2:
+                parts.append(self.adresse.ligne2)
+            parts.append(f"{self.adresse.ville}")
+            if self.adresse.region:
+                parts.append(self.adresse.region)
+            parts.append(self.adresse.pays)
+            return ", ".join(parts)
+        elif self.adresse_gps:
+            return self.adresse_gps
+        return "Adresse non renseignée"
+    
+    @property
+    def telephone_client(self):
+        """Retourne le téléphone du client (depuis l'adresse ou le profil)"""
+        if self.adresse and self.adresse.telephone:
+            return self.adresse.telephone
+        # Fallback sur le profil utilisateur
+        if hasattr(self.user, 'userprofile') and self.user.userprofile.phone:
+            return self.user.userprofile.phone
+        return None
 
 
 class CommandeItem(models.Model):
@@ -128,9 +274,105 @@ class CommandeItem(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField(default=1)
     prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
+    taille = models.ForeignKey('Taille', on_delete=models.SET_NULL, null=True, blank=True, help_text="Taille sélectionnée pour ce produit")
 
     def __str__(self):
-        return f"{self.quantite}x {self.produit.nom}"
+        taille_str = f" - Taille {self.taille.nom}" if self.taille else ""
+        return f"{self.quantite}x {self.produit.nom}{taille_str}"
+
+
+# ---------------------------
+# Commande Invité
+# ---------------------------
+
+class CommandeInvite(models.Model):
+    """Commandes passées par des visiteurs sans compte"""
+    STATUT_CHOICES = [
+        ('EN_ATTENTE', 'En attente'),
+        ('EN_COURS', 'En cours'),
+        ('LIVREE', 'Livrée'),
+        ('ANNULEE', 'Annulée'),
+    ]
+    
+    # Informations personnelles
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    email = models.EmailField()
+    telephone = models.CharField(max_length=20)
+    
+    # Informations de livraison
+    adresse = models.CharField(max_length=255)
+    ville = models.CharField(max_length=100)
+    code_postal = models.CharField(max_length=10, blank=True)
+    complement_adresse = models.CharField(max_length=255, blank=True)
+    
+    # Informations GPS
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    adresse_gps = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Informations de commande
+    date_commande = models.DateTimeField(auto_now_add=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='EN_ATTENTE')
+    
+    # Livreur
+    livreur = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commandes_invites_livrees"
+    )
+    
+    # Notes
+    notes = models.TextField(blank=True, help_text="Instructions de livraison ou notes spéciales")
+    
+    def __str__(self):
+        return f"Commande Invité #{self.id} - {self.prenom} {self.nom}"
+    
+    @property
+    def numero_commande(self):
+        """Retourne un numéro de commande unique avec préfixe INV"""
+        return f"INV-{self.id}"
+    
+    @property
+    def type_commande(self):
+        """Retourne le type de commande pour les URLs"""
+        return "guest"
+    
+    @property
+    def nom_complet(self):
+        return f"{self.prenom} {self.nom}"
+
+    @property
+    def adresse_livraison_formatee(self):
+        """Retourne l'adresse de livraison formatée pour affichage"""
+        parts = [self.adresse]
+        if self.complement_adresse:
+            parts.append(self.complement_adresse)
+        parts.append(self.ville)
+        if self.code_postal:
+            parts.append(self.code_postal)
+        return ", ".join(parts)
+    
+    @property
+    def telephone_client(self):
+        """Retourne le téléphone du client"""
+        return self.telephone
+
+
+class CommandeInviteItem(models.Model):
+    """Produits d'une commande invité"""
+    commande = models.ForeignKey(CommandeInvite, related_name='items', on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    quantite = models.PositiveIntegerField(default=1)
+    prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
+    taille = models.ForeignKey('Taille', on_delete=models.SET_NULL, null=True, blank=True, help_text="Taille sélectionnée pour ce produit")
+
+    def __str__(self):
+        taille_str = f" - Taille {self.taille.nom}" if self.taille else ""
+        return f"{self.quantite}x {self.produit.nom}{taille_str} (Invité)"
 
 
 # ---------------------------
@@ -142,12 +384,15 @@ class PanierItem(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField(default=1)
     date_ajout = models.DateTimeField(auto_now_add=True)
+    taille = models.ForeignKey('Taille', on_delete=models.SET_NULL, null=True, blank=True, help_text="Taille sélectionnée pour ce produit")
 
     class Meta:
-        unique_together = ('user', 'produit')
+        # Un utilisateur peut avoir le même produit plusieurs fois s'il a des tailles différentes
+        unique_together = ('user', 'produit', 'taille')
 
     def __str__(self):
-        return f"{self.user.username} - {self.produit.nom} ({self.quantite})"
+        taille_str = f" - Taille {self.taille.nom}" if self.taille else ""
+        return f"{self.user.username} - {self.produit.nom}{taille_str} ({self.quantite})"
 
     def prix_total(self):
         prix = self.produit.prix_promo if self.produit.prix_promo else self.produit.prix
@@ -155,6 +400,11 @@ class PanierItem(models.Model):
 
     def prix_unitaire(self):
         return self.produit.prix_promo if self.produit.prix_promo else self.produit.prix
+    
+    @property
+    def taille_nom(self):
+        """Retourne le nom de la taille ou None"""
+        return self.taille.nom if self.taille else None
 
 
 # ---------------------------
@@ -234,7 +484,9 @@ class MessageSupport(models.Model):
         ('URGENTE', 'Urgente'),
     ]
     
-    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages_support")
+    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages_support", null=True, blank=True)
+    # Pour les visiteurs non connectés
+    nom_visiteur = models.CharField(max_length=100, blank=True, null=True)
     sujet = models.CharField(max_length=200)
     message = models.TextField()
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='NOUVEAU')
@@ -253,7 +505,15 @@ class MessageSupport(models.Model):
         verbose_name_plural = "Messages Support"
     
     def __str__(self):
-        return f"{self.sujet} - {self.client.username} ({self.statut})"
+        if self.client:
+            return f"{self.sujet} - {self.client.username} ({self.statut})"
+        return f"{self.sujet} - {self.nom_visiteur or 'Visiteur'} ({self.statut})"
+    
+    def get_client_name(self):
+        """Retourne le nom du client ou visiteur"""
+        if self.client:
+            return self.client.get_full_name() or self.client.username
+        return self.nom_visiteur or 'Visiteur'
 
 class ReponseSupport(models.Model):
     message = models.ForeignKey(MessageSupport, on_delete=models.CASCADE, related_name="reponses")
@@ -282,8 +542,10 @@ class NotificationAdminVue(models.Model):
     TYPE_CHOICES = [
         ('NOUVEAU_CLIENT', 'Nouveau Client'),
         ('NOUVELLE_COMMANDE', 'Nouvelle Commande'),
+        ('NOUVELLE_COMMANDE_INVITE', 'Nouvelle Commande Invité'),
         ('NOUVEAU_MESSAGE', 'Nouveau Message'),
-        ('NOUVEL_AVIS', 'Nouvel Avis'),
+        ('AVIS_PRODUIT', 'Avis Produit'),
+        ('AVIS_LIVREUR', 'Avis Livreur'),
         ('RUPTURE_STOCK', 'Rupture de Stock'),
     ]
     

@@ -1,9 +1,14 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" style="color-scheme: dark;">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#1a1a1b">
   <title>{% block title %}Admin | InnovaTech{% endblock %}</title>
 
   <!-- Vendor CSS -->
@@ -18,36 +23,66 @@
 
   <style>
     :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f857a6 0%, #ff6348 100%);
+      /* Couleurs harmonisées - Noir dominant avec accents dorés subtils */
+      --gold: #ffc107;
+      --gold-dark: #e6ac00;
+      --gold-light: #ffcd39;
+      --dark: #232526;
+      --dark-light: #414345;
+      --dark-lighter: #5a5c5e;
+      --dark-bg: #1a1a1b;
+      --primary: #232526;
+      --primary-dark: #1a1a1b;
+      --secondary: #ffc107;
+      --accent: #ffc107;
+      --primary-gradient: linear-gradient(135deg, #232526 0%, #414345 100%);
+      --secondary-gradient: linear-gradient(135deg, #414345 0%, #232526 100%);
+      --dark-gradient: linear-gradient(135deg, #232526 0%, #414345 100%);
+      --accent-gradient: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%);
       --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       --sidebar-width: 280px;
       --sidebar-collapsed-width: 80px;
       --header-height: 70px;
-      --primary-blue: #667eea;
-      --primary-purple: #764ba2;
-      --accent-pink: #f857a6;
-      --dark-bg: #0f1419;
       --card-bg: rgba(255, 255, 255, 0.98);
-      --sidebar-bg: linear-gradient(180deg, #1a1f26 0%, #0f1419 100%);
-      --text-primary: #1a1f26;
+      --sidebar-bg: linear-gradient(180deg, #1a1a1b 0%, #0d0d0e 100%);
+      --text-primary: #232526;
       --text-secondary: #64748b;
-      --border-color: rgba(102, 126, 234, 0.1);
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --text-muted: #94a3b8;
+      --border-color: rgba(35, 37, 38, 0.12);
+      --border-light: rgba(35, 37, 38, 0.08);
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-      --shadow-glow: 0 0 40px rgba(102, 126, 234, 0.3);
+      --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+      --shadow-dark: 0 8px 24px rgba(35, 37, 38, 0.2);
+      --shadow-glow: 0 0 40px rgba(35, 37, 38, 0.15);
+      --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+      --radius-xs: 0.375rem;
       --radius-sm: 0.5rem;
       --radius-md: 0.75rem;
       --radius-lg: 1rem;
+      --radius-xl: 1.25rem;
+      --radius-2xl: 1.5rem;
+      --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
 
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+    
+    html {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      overflow-x: hidden;
     }
 
     *::-webkit-scrollbar {
@@ -60,16 +95,24 @@
     }
 
     *::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, var(--primary-blue), var(--primary-purple));
+      background: linear-gradient(180deg, #414345, #232526);
       border-radius: 10px;
     }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #e3e7f0 100%);
+      background: #f8fafc;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(35, 37, 38, 0.03) 0%, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(35, 37, 38, 0.02) 0%, transparent 50%);
       color: var(--text-primary);
       overflow-x: hidden;
       position: relative;
+      min-width: 320px;
+      width: 100%;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     /* Animated background */
@@ -80,7 +123,7 @@
       right: -20%;
       width: 800px;
       height: 800px;
-      background: radial-gradient(circle, rgba(102,126,234,0.08) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(35,37,38,0.04) 0%, transparent 70%);
       border-radius: 50%;
       animation: float 25s ease-in-out infinite;
       pointer-events: none;
@@ -94,7 +137,7 @@
       left: -10%;
       width: 600px;
       height: 600px;
-      background: radial-gradient(circle, rgba(248,87,166,0.06) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(35,37,38,0.03) 0%, transparent 70%);
       border-radius: 50%;
       animation: float 30s ease-in-out infinite reverse;
       pointer-events: none;
@@ -111,6 +154,15 @@
       position: relative;
       z-index: 1;
       min-height: 100vh;
+      width: 100%;
+      display: flex;
+      flex-wrap: nowrap;
+    }
+    
+    @media screen and (max-width: 767.98px) {
+      .admin-shell {
+        flex-direction: column;
+      }
     }
 
     /* ========== SIDEBAR PREMIUM ========== */
@@ -118,7 +170,7 @@
       width: var(--sidebar-width);
       min-height: 100vh;
       background: var(--sidebar-bg);
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
       position: fixed;
       left: 0;
       top: 0;
@@ -127,7 +179,7 @@
       transition: var(--transition-smooth);
       overflow-y: auto;
       overflow-x: hidden;
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.2);
     }
 
     .admin-sidebar::before {
@@ -136,92 +188,110 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 200px;
-      background: radial-gradient(circle at top, rgba(102,126,234,0.15), transparent);
+      height: 300px;
+      background: linear-gradient(180deg, rgba(255,193,7,0.08) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    
+    .admin-sidebar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, transparent 100%);
       pointer-events: none;
     }
 
     /* Brand logo */
     .navbar-brand {
-      color: #fff !important;
-      font-size: 1.3rem;
-      font-weight: 800;
-      padding: 1.2rem 1rem;
+      padding: 0.75rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       margin-bottom: 1rem !important;
       transition: var(--transition-base);
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
       text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .navbar-brand i {
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-size: 1.5rem;
-      animation: pulse-rotate 3s ease-in-out infinite;
+    .navbar-brand .brand-logo {
+      width: 100%;
+      max-width: 220px;
+      height: auto;
+      object-fit: contain;
+      transition: var(--transition-base);
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
     }
 
-    @keyframes pulse-rotate {
-      0%, 100% { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(5deg) scale(1.05); }
+    .navbar-brand:hover .brand-logo {
+      transform: scale(1.02);
+      filter: drop-shadow(0 4px 12px rgba(255,193,7,0.3));
     }
 
     .navbar-brand:hover {
-      transform: translateX(5px);
+      transform: translateX(3px);
     }
 
     /* Section labels */
     .section-label {
-      color: rgba(255, 255, 255, 0.4) !important;
-      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.35) !important;
+      font-size: 0.65rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin-top: 1.5rem !important;
-      margin-bottom: 0.5rem !important;
+      letter-spacing: 1.5px;
+      margin-top: 1.75rem !important;
+      margin-bottom: 0.6rem !important;
       padding-left: 1rem !important;
+      position: relative;
+    }
+    
+    .section-label::before {
+      content: '';
+      position: absolute;
+      left: 1rem;
+      right: 1rem;
+      top: -0.75rem;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
     }
 
     /* Nav links premium style */
     .admin-sidebar .nav-link {
-      color: rgba(255, 255, 255, 0.75);
-      padding: 0.85rem 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 0.9rem 1rem;
       border-radius: var(--radius-md);
-      margin: 0.2rem 0;
+      margin: 0.25rem 0.5rem;
       font-weight: 500;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       transition: var(--transition-base);
       position: relative;
       overflow: hidden;
       display: flex;
       align-items: center;
       text-decoration: none;
+      backdrop-filter: blur(4px);
     }
 
     .admin-sidebar .nav-link::before {
       content: '';
       position: absolute;
       left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: var(--primary-gradient);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: var(--accent-gradient);
       border-radius: 0 4px 4px 0;
-      opacity: 0;
-      transition: var(--transition-base);
+      transition: height 0.3s ease;
     }
 
     .admin-sidebar .nav-link::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+      background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
       opacity: 0;
       transition: var(--transition-base);
       border-radius: var(--radius-md);
@@ -242,8 +312,12 @@
 
     .admin-sidebar .nav-link:hover {
       color: #fff;
-      transform: translateX(5px);
-      background: rgba(102, 126, 234, 0.15);
+      transform: translateX(4px);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .admin-sidebar .nav-link:hover::before {
+      height: 60%;
     }
 
     .admin-sidebar .nav-link:hover::after {
@@ -251,22 +325,26 @@
     }
 
     .admin-sidebar .nav-link:hover i {
-      transform: scale(1.15);
+      transform: scale(1.1);
+      color: var(--gold);
     }
 
     .admin-sidebar .nav-link.active {
       color: #fff;
-      background: var(--primary-gradient);
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+      background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,193,7,0.05));
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
       font-weight: 600;
+      border: 1px solid rgba(255,193,7,0.2);
     }
 
     .admin-sidebar .nav-link.active::before {
+      height: 70%;
       opacity: 1;
     }
 
     .admin-sidebar .nav-link.active i {
       transform: scale(1.1);
+      color: var(--gold);
     }
 
     /* ========== BADGES DE NOTIFICATION ========== */
@@ -309,13 +387,13 @@
 
     .admin-sidebar .nav-link.active .notification-badge {
       background: rgba(255, 255, 255, 0.9);
-      color: #667eea;
+      color: #ffc107;
       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
     }
 
     /* Badge pour commandes urgentes */
     .notification-badge.urgent {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      background: linear-gradient(135deg, #232526 0%, #f5576c 100%);
       animation: pulse-urgent 1s ease-in-out infinite;
     }
 
@@ -328,13 +406,84 @@
       }
     }
 
+    /* ========== CLOCHE NOTIFICATIONS AMÉLIORÉE ========== */
+    #notificationsDropdown {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 193, 7, 0.3);
+      background: rgba(255, 193, 7, 0.1);
+    }
+    
+    #notificationsDropdown:hover {
+      background: rgba(255, 193, 7, 0.2);
+      border-color: #ffc107;
+      transform: scale(1.05);
+    }
+    
+    #notificationsDropdown i {
+      color: #ffc107;
+      font-size: 1rem;
+    }
+    
+    /* Animation shake pour la cloche */
+    @keyframes fa-shake {
+      0% { transform: rotate(0); }
+      15% { transform: rotate(15deg); }
+      30% { transform: rotate(-15deg); }
+      45% { transform: rotate(10deg); }
+      60% { transform: rotate(-10deg); }
+      75% { transform: rotate(5deg); }
+      85% { transform: rotate(-5deg); }
+      100% { transform: rotate(0); }
+    }
+    
+    .fa-shake {
+      animation: fa-shake 1s ease-in-out infinite;
+    }
+    
+    /* Dropdown notifications style */
+    .dropdown-menu[aria-labelledby="notificationsDropdown"] {
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      border: 1px solid rgba(255, 193, 7, 0.2);
+      border-radius: 1rem;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .dropdown-menu[aria-labelledby="notificationsDropdown"] .dropdown-item {
+      color: #e0e0e0;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+    }
+    
+    .dropdown-menu[aria-labelledby="notificationsDropdown"] .dropdown-item:hover {
+      background: rgba(255, 193, 7, 0.1);
+      color: #fff;
+      border-left-color: #ffc107;
+    }
+    
+    .dropdown-menu[aria-labelledby="notificationsDropdown"] .dropdown-divider {
+      border-color: rgba(255, 193, 7, 0.1);
+      margin: 0;
+    }
+    
+    .dropdown-menu[aria-labelledby="notificationsDropdown"] small.text-muted {
+      color: rgba(255, 193, 7, 0.7) !important;
+    }
+
     /* ========== HEADER PREMIUM ========== */
     .admin-header {
       height: var(--header-height);
-      background: var(--card-bg) !important;
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border-color) !important;
-      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+      background: rgba(255, 255, 255, 0.85) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(35, 37, 38, 0.08) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.03);
       position: sticky;
       top: 0;
       z-index: 1030;
@@ -342,30 +491,42 @@
 
     .page-title {
       font-weight: 700;
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 1.25rem;
+      color: var(--text-primary);
       letter-spacing: -0.02em;
+    }
+    
+    .page-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 1.2em;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+      margin-right: 0.75rem;
+      vertical-align: middle;
     }
 
     .sidebar-toggle {
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--border-color);
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      background: transparent;
-      color: var(--primary-blue);
+      background: #fff;
+      color: var(--text-primary);
       transition: var(--transition-base);
       padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .sidebar-toggle:hover {
-      background: var(--primary-gradient);
-      color: #fff;
-      border-color: transparent;
-      transform: rotate(90deg);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      background: var(--dark);
+      color: var(--gold);
+      border-color: var(--dark);
+      transform: scale(1.05);
+      box-shadow: var(--shadow-md);
     }
 
     /* Search input */
@@ -379,8 +540,8 @@
     }
 
     .admin-header .form-control:focus {
-      border-color: var(--primary-blue);
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      border-color: #232526;
+      box-shadow: 0 0 0 4px rgba(35, 37, 38, 0.1);
       background: #fff;
       transform: translateY(-1px);
     }
@@ -395,10 +556,10 @@
     }
 
     .dropdown-toggle:hover {
-      border-color: var(--primary-blue) !important;
+      border-color: #232526 !important;
       background: #fff !important;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15) !important;
+      box-shadow: 0 4px 12px rgba(35, 37, 38, 0.15) !important;
     }
 
     .dropdown-menu {
@@ -423,7 +584,7 @@
 
     .dropdown-header {
       padding: 1rem !important;
-      background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));
+      background: linear-gradient(135deg, rgba(35,37,38,0.08), rgba(65,67,69,0.08));
       border-radius: var(--radius-md);
       margin-bottom: 0.5rem;
     }
@@ -437,9 +598,9 @@
     }
 
     .dropdown-item:hover {
-      background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1)) !important;
+      background: linear-gradient(135deg, rgba(35,37,38,0.1), rgba(65,67,69,0.1)) !important;
       transform: translateX(5px);
-      color: var(--primary-blue);
+      color: #232526;
     }
 
     .dropdown-item i {
@@ -463,11 +624,27 @@
       min-height: 100vh;
       transition: var(--transition-smooth);
       position: relative;
+      width: calc(100% - var(--sidebar-width));
+      flex: 1;
     }
 
     main .container-fluid {
-      padding: 2rem !important;
+      padding: 1.5rem !important;
       max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    @media screen and (max-width: 767.98px) {
+      main {
+        margin-left: 0 !important;
+        width: 100% !important;
+      }
+      
+      main .container-fluid {
+        padding: 0.75rem !important;
+        max-width: 100% !important;
+      }
     }
 
     /* ========== MOBILE OVERLAY ========== */
@@ -511,28 +688,100 @@
     body.sidebar-collapsed .admin-sidebar .nav-link i {
       margin-right: 0 !important;
     }
+    
+    body.sidebar-collapsed .admin-sidebar .notification-badge {
+      right: 5px;
+      top: 5px;
+      transform: none;
+      font-size: 0.6rem;
+      padding: 2px 5px;
+      min-width: 16px;
+      height: 16px;
+    }
 
     body.sidebar-collapsed main {
       margin-left: var(--sidebar-collapsed-width);
     }
 
+    /* Extra Small Mobile (< 400px) */
+    @media (max-width: 399.98px) {
+      .admin-header {
+        height: auto;
+        min-height: 56px;
+        padding: 0.5rem 0;
+      }
+      
+      .admin-header .container-fluid {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+      }
+      
+      .page-title {
+        font-size: 0.95rem !important;
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .sidebar-toggle {
+        width: 36px;
+        height: 36px;
+      }
+      
+      .dropdown-toggle {
+        padding: 0.35rem 0.5rem !important;
+      }
+      
+      .dropdown-toggle span {
+        display: none !important;
+      }
+      
+      main .container-fluid {
+        padding: 0.75rem !important;
+      }
+      
+      .dropdown-menu {
+        min-width: 250px !important;
+        max-width: calc(100vw - 20px);
+      }
+    }
+
     /* Mobile view (< 768px) */
-    @media (max-width: 767.98px) {
+    @media screen and (max-width: 767.98px) {
+      :root {
+        --header-height: 60px;
+        --sidebar-width: 280px;
+      }
+      
       .admin-sidebar {
-        transform: translateX(-100%);
+        transform: translateX(-100%) !important;
+        width: var(--sidebar-width) !important;
+        max-width: 85vw !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        z-index: 1050 !important;
       }
 
       body.sidebar-open .admin-sidebar {
-        transform: translateX(0);
+        transform: translateX(0) !important;
       }
 
       main {
         margin-left: 0 !important;
+        width: 100% !important;
       }
 
       .admin-header .form-control {
-        min-width: auto;
-        width: 100%;
+        min-width: auto !important;
+        width: 100% !important;
+        display: none !important;
+      }
+      
+      .admin-header .d-none.d-md-block {
+        display: none !important;
       }
 
       .page-title {
@@ -540,14 +789,147 @@
       }
 
       main .container-fluid {
-        padding: 1rem !important;
+        padding: 0.75rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      
+      .admin-header {
+        height: var(--header-height) !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1030 !important;
+      }
+      
+      .admin-header .container-fluid {
+        padding: 0 0.75rem !important;
+      }
+      
+      .admin-sidebar .navbar-brand {
+        font-size: 1.1rem !important;
+        padding: 1rem 0.75rem !important;
+      }
+      
+      .admin-sidebar .nav-link {
+        padding: 0.75rem 0.85rem !important;
+        font-size: 0.9rem !important;
+      }
+      
+      /* Notifications Dropdown Mobile */
+      .dropdown-menu {
+        position: fixed !important;
+        left: 10px !important;
+        right: 10px !important;
+        transform: none !important;
+        top: 60px !important;
+        width: calc(100vw - 20px) !important;
+        max-width: none !important;
+        max-height: calc(100vh - 80px) !important;
+        overflow-y: auto !important;
+        z-index: 9999 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+        background: white !important;
+      }
+      
+      .dropdown-menu[aria-labelledby="notificationsDropdown"],
+      .dropdown-menu[aria-labelledby="adminUserDropdown"] {
+        top: 60px !important;
+      }
+      
+      .dropdown-menu .dropdown-item {
+        padding: 12px 16px !important;
+        font-size: 0.95rem !important;
+        white-space: normal !important;
+      }
+      
+      .dropdown-menu .dropdown-item span {
+        display: flex !important;
+        align-items: center !important;
+      }
+      
+      .dropdown-header {
+        padding: 12px 16px !important;
+        font-size: 1rem !important;
+        background: linear-gradient(135deg, #ffc107 0%, #232526 100%);
+        color: white !important;
+        border-radius: 12px 12px 0 0 !important;
+        margin: -0.5rem -0.5rem 0.5rem -0.5rem !important;
+      }
+      
+      .dropdown-header .badge {
+        background: white !important;
+        color: #ffc107 !important;
+      }
+      
+      /* Notification button on mobile */
+      #notificationsDropdown {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #ffc107 0%, #232526 100%) !important;
+        border: none !important;
+        color: white !important;
+      }
+      
+      #notificationsDropdown .badge {
+        top: -5px !important;
+        right: -5px !important;
+        transform: none !important;
+        font-size: 0.6rem !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
     }
 
     /* Tablet view (768px - 991.98px) */
     @media (min-width: 768px) and (max-width: 991.98px) {
+      :root {
+        --sidebar-width: 250px;
+        --sidebar-collapsed-width: 70px;
+      }
+      
+      .admin-header .form-control {
+        min-width: 180px;
+      }
+      
+      .page-title {
+        font-size: 1.15rem !important;
+      }
+      
+      main .container-fluid {
+        padding: 1.5rem !important;
+      }
+      
+      .admin-sidebar .nav-link {
+        padding: 0.75rem 0.9rem;
+        font-size: 0.9rem;
+      }
+      
+      .dropdown-menu {
+        min-width: 280px;
+      }
+    }
+    
+    /* Small Desktop (992px - 1199.98px) */
+    @media (min-width: 992px) and (max-width: 1199.98px) {
+      :root {
+        --sidebar-width: 260px;
+      }
+      
       .admin-header .form-control {
         min-width: 200px;
+      }
+      
+      main .container-fluid {
+        padding: 1.75rem !important;
       }
     }
 
@@ -555,6 +937,44 @@
     @media (min-width: 1400px) {
       main .container-fluid {
         padding: 2.5rem !important;
+      }
+      
+      .page-title {
+        font-size: 1.4rem !important;
+      }
+    }
+    
+    /* Touch-friendly adjustments */
+    @media (hover: none) and (pointer: coarse) {
+      .admin-sidebar .nav-link {
+        padding: 0.9rem 1rem;
+      }
+      
+      .btn {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      .dropdown-item {
+        padding: 0.85rem 1rem !important;
+      }
+      
+      .sidebar-toggle {
+        min-width: 44px;
+        min-height: 44px;
+      }
+    }
+    
+    /* Landscape orientation on mobile */
+    @media (max-width: 991.98px) and (orientation: landscape) {
+      .admin-sidebar {
+        max-height: 100vh;
+        overflow-y: auto;
+      }
+      
+      .admin-header {
+        position: sticky;
+        top: 0;
       }
     }
 
@@ -585,6 +1005,97 @@
     .admin-sidebar .nav-item:nth-child(9) { animation-delay: 0.45s; }
     .admin-sidebar .nav-item:nth-child(10) { animation-delay: 0.5s; }
 
+    /* ========== FIX MOBILE VISIBILITY - GLOBAL ========== */
+    @media screen and (max-width: 767.98px) {
+      /* Désactiver TOUTES les animations sur mobile */
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      
+      /* Forcer la visibilité du contenu principal */
+      main,
+      main *,
+      .container-fluid,
+      .container-fluid * {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+      }
+      
+      /* Garder le backdrop invisible par défaut */
+      .sidebar-backdrop {
+        opacity: 0 !important;
+        visibility: hidden !important;
+      }
+      
+      body.sidebar-open .sidebar-backdrop {
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+    }
+    
+    /* ========== MODAL FIX GLOBAL ========== */
+    /* Quand un modal est ouvert, cacher TOUS les backdrops sauf celui du modal */
+    body.modal-open .sidebar-backdrop {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    
+    /* Modal Bootstrap - z-index très élevé pour passer au-dessus de tout */
+    .modal {
+      z-index: 1070 !important;
+      position: fixed !important;
+    }
+    
+    .modal-backdrop {
+      z-index: 1065 !important;
+      position: fixed !important;
+    }
+    
+    .modal.show {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-dialog {
+      z-index: 1071 !important;
+      pointer-events: auto !important;
+      margin: auto !important;
+    }
+    
+    .modal-content {
+      pointer-events: auto !important;
+      position: relative !important;
+    }
+    
+    /* S'assurer que le body ne bloque pas les événements quand modal est ouvert */
+    body.modal-open {
+      overflow: hidden !important;
+    }
+    
+    /* Les pseudo-elements du body ne doivent pas interférer */
+    body.modal-open::before,
+    body.modal-open::after {
+      display: none !important;
+    }
+    
+    /* Admin shell ne doit pas créer un stacking context qui bloque le modal */
+    body.modal-open .admin-shell {
+      z-index: auto !important;
+    }
+    
+    body.modal-open .admin-sidebar {
+      z-index: 1040 !important;
+    }
+    
+    body.modal-open main {
+      z-index: auto !important;
+    }
+
     /* ========== UTILITIES ========== */
     .badge {
       padding: 0.4rem 0.8rem;
@@ -611,7 +1122,7 @@
     }
 
     .btn-primary:hover {
-      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      background: linear-gradient(135deg, #232526 0%, #ffc107 100%);
     }
 
     /* Dark mode support */
@@ -647,17 +1158,59 @@
         color: #e9ecef;
       }
     }
+    
+    /* ========== BOOTSTRAP ROW RESPONSIVE FIX ========== */
+    .row {
+      --bs-gutter-x: 1rem;
+      margin-left: calc(var(--bs-gutter-x) * -.5);
+      margin-right: calc(var(--bs-gutter-x) * -.5);
+    }
+    
+    .row > * {
+      padding-left: calc(var(--bs-gutter-x) * .5);
+      padding-right: calc(var(--bs-gutter-x) * .5);
+    }
+    
+    @media screen and (max-width: 767.98px) {
+      .row {
+        --bs-gutter-x: 0.75rem;
+        --bs-gutter-y: 0.75rem;
+      }
+      
+      .row.g-2, .row.g-sm-3 {
+        --bs-gutter-x: 0.5rem;
+        --bs-gutter-y: 0.5rem;
+      }
+      
+      /* Force full width for all columns on very small screens */
+      .col-6, .col-sm-6 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+      }
+      
+      .col-12, .col-lg-7, .col-lg-5, .col-lg-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+    }
+    
+    @media screen and (max-width: 399.98px) {
+      .row {
+        --bs-gutter-x: 0.5rem;
+        --bs-gutter-y: 0.5rem;
+      }
+    }
 
     {% block extra_css %}{% endblock %}
   </style>
 </head>
 <body>
+  {% csrf_token %}
   <div class="d-flex admin-shell">
     <!-- Sidebar -->
     <aside class="admin-sidebar p-3">
       <a class="navbar-brand fw-bold d-flex align-items-center mb-3" href="{% url 'admin_dashboard' %}">
-        <i class="fa-solid fa-gauge-high me-2"></i> 
-        <span class="brand-text">Admin Panel</span>
+        <img src="{% static 'img/sadiboushop-logo.svg' %}" alt="SadibouShop" class="brand-logo">
       </a>
       <ul class="nav nav-pills flex-column gap-1">
         <li class="nav-item">
@@ -772,80 +1325,181 @@
               <input class="form-control form-control-sm" name="q" placeholder="🔍 Rechercher...">
             </form>
 
-            <!-- Notifications rapides -->
-            {% with total_notif=admin_badges.commandes|add:admin_badges.messages|add:admin_badges.avis|add:admin_badges.clients|add:admin_badges.rupture_stock %}
-            {% if total_notif > 0 %}
+            <!-- Notifications rapides améliorées -->
+            {% with total_notif=admin_badges.commandes|add:admin_badges.messages|add:admin_badges.avis|add:admin_badges.clients|add:admin_badges.rupture_stock|add:admin_badges.stock_bas %}
             <div class="dropdown">
               <button class="btn btn-sm btn-outline-primary position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-bell"></i>
+                <i class="fa-solid fa-bell{% if total_notif > 0 %} fa-shake{% endif %}"></i>
+                {% if total_notif > 0 %}
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
                   {{ total_notif }}
                   <span class="visually-hidden">notifications non lues</span>
                 </span>
+                {% endif %}
               </button>
-              <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationsDropdown" style="min-width: 300px;">
-                <li class="dropdown-header d-flex justify-content-between align-items-center">
-                  <strong>🔔 Notifications</strong>
-                  <span class="badge bg-primary">{{ total_notif }}</span>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="notificationsDropdown" style="min-width: 360px; max-height: 500px; overflow-y: auto;">
+                <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 0.5rem 0.5rem 0 0;">
+                  <strong style="color: #ffc107;"><i class="fa-solid fa-bell me-2"></i>Centre de Notifications</strong>
+                  {% if total_notif > 0 %}
+                  <span class="badge bg-danger">{{ total_notif }}</span>
+                  {% else %}
+                  <span class="badge bg-success">À jour</span>
+                  {% endif %}
                 </li>
-                <li><hr class="dropdown-divider"></li>
                 
-                {% if admin_badges.commandes > 0 %}
+                <!-- Section Commandes -->
+                <li class="px-3 py-1 mt-2"><small class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-shopping-cart me-1"></i> Commandes</small></li>
+                
+                {% if admin_badges.commandes_en_attente > 0 %}
                 <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_orders' %}">
-                    <span><i class="fa-solid fa-basket-shopping text-warning me-2"></i> Nouvelles commandes</span>
-                    <span class="badge bg-warning text-dark">{{ admin_badges.commandes }}</span>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2 notification-link" 
+                     href="{% url 'admin_orders' %}?statut=EN_ATTENTE"
+                     data-notification-type="NOUVELLE_COMMANDE">
+                    <span><i class="fa-solid fa-clock text-warning me-2"></i> En attente</span>
+                    <span class="badge bg-warning text-dark">{{ admin_badges.commandes_en_attente }}</span>
                   </a>
                 </li>
                 {% endif %}
                 
+                {% if admin_badges.commandes_en_livraison > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2" 
+                     href="{% url 'admin_orders' %}?statut=EN_COURS">
+                    <span><i class="fa-solid fa-truck text-info me-2"></i> En livraison</span>
+                    <span class="badge bg-info">{{ admin_badges.commandes_en_livraison }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.commandes_livrees_aujourdhui > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2" 
+                     href="{% url 'admin_orders' %}?statut=LIVREE">
+                    <span><i class="fa-solid fa-check-circle text-success me-2"></i> Livrées aujourd'hui</span>
+                    <span class="badge bg-success">{{ admin_badges.commandes_livrees_aujourdhui }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.commandes == 0 and admin_badges.commandes_en_livraison == 0 %}
+                <li>
+                  <span class="dropdown-item text-muted py-2">
+                    <i class="fa-solid fa-check me-2 text-success"></i> Aucune commande en attente
+                  </span>
+                </li>
+                {% endif %}
+                
+                <li><hr class="dropdown-divider my-2"></li>
+                
+                <!-- Section Stock -->
+                <li class="px-3 py-1"><small class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-boxes-stacked me-1"></i> Stock</small></li>
+                
+                {% if admin_badges.tailles_rupture > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2 notification-link" 
+                     href="{% url 'admin_products' %}"
+                     data-notification-type="RUPTURE_STOCK">
+                    <span><i class="fa-solid fa-xmark-circle text-danger me-2"></i> Tailles en rupture</span>
+                    <span class="badge bg-danger">{{ admin_badges.tailles_rupture }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.stock_bas > 0 %}
+                <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2" 
+                     href="{% url 'admin_products' %}">
+                    <span><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> Stock bas (&lt;5)</span>
+                    <span class="badge bg-warning text-dark">{{ admin_badges.stock_bas }}</span>
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if admin_badges.tailles_rupture == 0 and admin_badges.stock_bas == 0 %}
+                <li>
+                  <span class="dropdown-item text-muted py-2">
+                    <i class="fa-solid fa-check me-2 text-success"></i> Stock OK
+                  </span>
+                </li>
+                {% endif %}
+                
+                <li><hr class="dropdown-divider my-2"></li>
+                
+                <!-- Section Communication -->
+                <li class="px-3 py-1"><small class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-comments me-1"></i> Communication</small></li>
+                
                 {% if admin_badges.messages > 0 %}
                 <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_messagerie' %}">
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2 notification-link" 
+                     href="{% url 'admin_messagerie' %}"
+                     data-notification-type="NOUVEAU_MESSAGE">
                     <span><i class="fa-solid fa-envelope text-primary me-2"></i> Nouveaux messages</span>
                     <span class="badge bg-primary">{{ admin_badges.messages }}</span>
                   </a>
                 </li>
                 {% endif %}
                 
-                {% if admin_badges.rupture_stock > 0 %}
-                <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_products' %}?stock=0">
-                    <span><i class="fa-solid fa-box-open text-danger me-2"></i> Rupture de stock</span>
-                    <span class="badge bg-danger">{{ admin_badges.rupture_stock }}</span>
-                  </a>
-                </li>
-                {% endif %}
-                
                 {% if admin_badges.avis_produit > 0 %}
                 <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_avis' %}?type=produits">
-                    <span><i class="fa-solid fa-star text-info me-2"></i> Avis produits</span>
-                    <span class="badge bg-info">{{ admin_badges.avis_produit }}</span>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2 notification-link" 
+                     href="{% url 'admin_avis' %}?type=produits"
+                     data-notification-type="AVIS_PRODUIT">
+                    <span><i class="fa-solid fa-star text-warning me-2"></i> Avis produits à examiner</span>
+                    <span class="badge bg-warning text-dark">{{ admin_badges.avis_produit }}</span>
                   </a>
                 </li>
                 {% endif %}
                 
                 {% if admin_badges.avis_livreur > 0 %}
                 <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_avis' %}?type=livreurs">
-                    <span><i class="fa-solid fa-truck text-secondary me-2"></i> Avis livreurs</span>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2 notification-link" 
+                     href="{% url 'admin_avis' %}?type=livreurs"
+                     data-notification-type="AVIS_LIVREUR">
+                    <span><i class="fa-solid fa-truck text-secondary me-2"></i> Avis livreurs à examiner</span>
                     <span class="badge bg-secondary">{{ admin_badges.avis_livreur }}</span>
                   </a>
                 </li>
                 {% endif %}
                 
+                {% if admin_badges.messages == 0 and admin_badges.avis == 0 %}
+                <li>
+                  <span class="dropdown-item text-muted py-2">
+                    <i class="fa-solid fa-check me-2 text-success"></i> Aucun message en attente
+                  </span>
+                </li>
+                {% endif %}
+                
+                <li><hr class="dropdown-divider my-2"></li>
+                
+                <!-- Section Clients -->
+                <li class="px-3 py-1"><small class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-users me-1"></i> Clients</small></li>
+                
                 {% if admin_badges.clients > 0 %}
                 <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'admin_clients_list' %}">
-                    <span><i class="fa-solid fa-users text-success me-2"></i> Nouveaux clients</span>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center py-2 notification-link" 
+                     href="{% url 'admin_clients_list' %}"
+                     data-notification-type="NOUVEAU_CLIENT">
+                    <span><i class="fa-solid fa-user-plus text-success me-2"></i> Nouveaux inscrits (24h)</span>
                     <span class="badge bg-success">{{ admin_badges.clients }}</span>
                   </a>
                 </li>
+                {% else %}
+                <li>
+                  <span class="dropdown-item text-muted py-2">
+                    <i class="fa-solid fa-users me-2"></i> Aucun nouveau client
+                  </span>
+                </li>
                 {% endif %}
+                
+                <!-- Footer -->
+                <li><hr class="dropdown-divider my-2"></li>
+                <li class="px-3 py-2 text-center" style="background: rgba(255,193,7,0.05);">
+                  <a href="{% url 'admin_dashboard' %}" class="text-decoration-none" style="color: #ffc107; font-weight: 600;">
+                    <i class="fa-solid fa-gauge-high me-1"></i> Voir le tableau de bord
+                  </a>
+                </li>
               </ul>
             </div>
-            {% endif %}
             {% endwith %}
 
             <!-- User dropdown -->
@@ -856,7 +1510,7 @@
                 {% if user.is_authenticated and user.userprofile.photo %}
                   <img src="{{ user.userprofile.photo.url }}" 
                        class="rounded-circle me-2" 
-                       style="width:32px;height:32px;object-fit:cover;border:2px solid var(--primary-blue);" 
+                       style="width:32px;height:32px;object-fit:cover;border:2px solid var(--gold);" 
                        alt="{{ user.username }}">
                 {% else %}
                   <div style="width:32px;height:32px;background:var(--primary-gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:0.5rem;">
@@ -916,6 +1570,9 @@
       </div>
     </main>
   </div>
+
+  <!-- Block pour modals - en dehors de la structure admin-shell pour éviter les problèmes de z-index -->
+  {% block modals %}{% endblock %}
 
   <!-- Vendor JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -981,6 +1638,28 @@
       // Wait for content to load
       setTimeout(observeElements, 100);
     })();
+    
+    // Gestion des notifications - Marquer comme vues au clic
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.notification-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          const notificationType = this.getAttribute('data-notification-type');
+          if (notificationType) {
+            // Envoyer la requête AJAX pour marquer comme vu
+            fetch('/boutique/api/admin/notifications/marquer-toutes-vues/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}'
+              },
+              body: JSON.stringify({ type: notificationType })
+            }).then(response => response.json())
+              .then(data => console.log('Notifications marquées:', data))
+              .catch(err => console.error('Erreur:', err));
+          }
+        });
+      });
+    });
   </script>
 
   {% block extra_js %}{% endblock %}

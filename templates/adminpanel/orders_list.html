@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
   :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-gradient: linear-gradient(135deg, #ffc107 0%, #232526 100%);
     --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
     --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -18,7 +18,7 @@
   }
 
   body {
-    background: linear-gradient(135deg, rgba(102,126,234,0.02), rgba(118,75,162,0.02));
+    background: linear-gradient(135deg, rgba(255,193,7,0.02), rgba(118,75,162,0.02));
   }
 
   /* Page Header */
@@ -30,6 +30,8 @@
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .orders-header::before {
@@ -49,7 +51,7 @@
     right: -10%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(102,126,234,0.1), transparent);
+    background: radial-gradient(circle, rgba(35,37,38,0.08), transparent);
     border-radius: 50%;
     animation: float 15s ease-in-out infinite;
   }
@@ -84,6 +86,8 @@
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .stat-card-order {
@@ -95,6 +99,8 @@
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .stat-card-order::before {
@@ -134,8 +140,8 @@
   }
 
   .stat-card-order.active {
-    border: 2px solid rgba(102,126,234,0.3);
-    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    border: 2px solid rgba(35,37,38,0.25);
+    background: linear-gradient(135deg, rgba(255,193,7,0.05), rgba(118,75,162,0.05));
   }
 
   .stat-card-order.active::before {
@@ -184,6 +190,8 @@
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .search-wrapper {
@@ -195,7 +203,7 @@
   .search-input-ultra {
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 3rem;
-    border: 2px solid rgba(102,126,234,0.2);
+    border: 2px solid rgba(35,37,38,0.15);
     border-radius: var(--radius);
     font-size: 0.95rem;
     transition: var(--transition);
@@ -204,8 +212,8 @@
 
   .search-input-ultra:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+    border-color: #232526;
+    box-shadow: 0 0 0 4px rgba(35,37,38,0.08);
   }
 
   .search-icon {
@@ -213,7 +221,7 @@
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #667eea;
+    color: #232526;
     font-size: 1.1rem;
   }
 
@@ -240,18 +248,18 @@
   .btn-primary-ultra {
     background: var(--primary-gradient);
     color: white;
-    box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    box-shadow: 0 4px 12px rgba(35,37,38,0.25);
   }
 
   .btn-primary-ultra:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    box-shadow: 0 6px 20px rgba(35,37,38,0.3);
   }
 
   .btn-outline-ultra {
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #232526;
+    border: 2px solid #ffc107;
   }
 
   .btn-outline-ultra:hover {
@@ -264,7 +272,7 @@
   /* View Toggle */
   .view-toggle {
     display: flex;
-    background: rgba(102,126,234,0.1);
+    background: rgba(35,37,38,0.08);
     border-radius: 0.75rem;
     padding: 0.25rem;
   }
@@ -273,7 +281,7 @@
     padding: 0.5rem 1rem;
     border: none;
     background: transparent;
-    color: #667eea;
+    color: #232526;
     border-radius: 0.5rem;
     cursor: pointer;
     transition: var(--transition);
@@ -285,12 +293,31 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 
+  /* Table Wrapper */
+  .table-wrapper-mobile {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* IMPORTANT: S'assurer que les vues sont visibles par défaut */
+  #tableView {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  #gridView {
+    display: none;
+  }
+
   /* Orders Table */
   .orders-table-container {
     background: white;
     border-radius: var(--radius);
     box-shadow: var(--card-shadow);
     overflow: hidden;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .table-header-ultra {
@@ -312,13 +339,13 @@
   }
 
   .table-header-ultra h3 i {
-    color: #667eea;
+    color: #232526;
   }
 
   .orders-count {
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
-    color: #667eea;
+    background: linear-gradient(135deg, rgba(35,37,38,0.12), rgba(118,75,162,0.15));
+    color: #232526;
     border-radius: 2rem;
     font-weight: 700;
     font-size: 0.9rem;
@@ -328,10 +355,24 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .table-ultra-modern thead {
-    background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    background: linear-gradient(135deg, rgba(255,193,7,0.05), rgba(118,75,162,0.05));
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-ultra-modern tbody {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-ultra-modern tbody tr {
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .table-ultra-modern thead th {
@@ -350,8 +391,47 @@
     border-bottom: 1px solid rgba(0,0,0,0.05);
   }
 
+  /* Style pour les nouvelles commandes (table view) */
+  .table-ultra-modern tbody tr.new-order {
+    background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+    border-left: 4px solid #ffc107;
+    animation: pulse-row 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-row {
+    0%, 100% { background: linear-gradient(135deg, #fffbeb 0%, #fff 100%); }
+    50% { background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%); }
+  }
+
+  .table-ultra-modern tbody tr.new-order:hover {
+    animation: none;
+    background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  }
+
+  /* Badge EN COURS */
+  .new-order-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border-radius: 1rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0.5rem;
+    animation: bounce-badge 1s ease-in-out infinite;
+  }
+
+  @keyframes bounce-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
   .table-ultra-modern tbody tr:hover {
-    background: linear-gradient(135deg, rgba(102,126,234,0.03), rgba(118,75,162,0.03));
+    background: linear-gradient(135deg, rgba(255,193,7,0.03), rgba(118,75,162,0.03));
     transform: scale(1.01);
   }
 
@@ -367,10 +447,10 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    background: linear-gradient(135deg, rgba(35,37,38,0.08), rgba(118,75,162,0.1));
     border-radius: 0.5rem;
     font-weight: 700;
-    color: #667eea;
+    color: #232526;
     font-size: 1rem;
   }
 
@@ -392,7 +472,7 @@
     color: white;
     font-weight: 700;
     font-size: 1rem;
-    box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+    box-shadow: 0 2px 8px rgba(35,37,38,0.25);
   }
 
   .client-details-small {
@@ -447,27 +527,6 @@
     border: 2px solid rgba(239,68,68,0.3);
   }
 
-  /* GPS Badge */
-  .gps-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 0.8rem;
-  }
-
-  .gps-badge.available {
-    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));
-    color: #10b981;
-  }
-
-  .gps-badge.unavailable {
-    background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(100,116,139,0.15));
-    color: #64748b;
-  }
-
   /* Action Buttons */
   .action-buttons-cell {
     display: flex;
@@ -491,15 +550,15 @@
   }
 
   .btn-details {
-    background: rgba(102,126,234,0.1);
-    color: #667eea;
+    background: rgba(35,37,38,0.08);
+    color: #232526;
   }
 
   .btn-details:hover {
     background: var(--primary-gradient);
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    box-shadow: 0 4px 12px rgba(35,37,38,0.25);
   }
 
   .btn-map {
@@ -563,6 +622,17 @@
     transition: var(--transition);
     overflow: hidden;
     position: relative;
+  }
+
+  /* Style pour les nouvelles commandes (card view) */
+  .order-card.new-order {
+    background: linear-gradient(135deg, #fffbeb 0%, #fff 50%);
+    border-left: 4px solid #ffc107;
+  }
+
+  .order-card.new-order::before {
+    opacity: 1;
+    background: linear-gradient(90deg, #ffc107, #f59e0b);
   }
 
   .order-card::before {
@@ -633,66 +703,722 @@
     }
   }
 
+  /* IMPORTANT: Les éléments doivent être visibles par défaut */
   .animated {
-    animation: fadeInUp 0.5s ease backwards;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
-  .animated:nth-child(1) { animation-delay: 0.05s; }
-  .animated:nth-child(2) { animation-delay: 0.1s; }
-  .animated:nth-child(3) { animation-delay: 0.15s; }
-  .animated:nth-child(4) { animation-delay: 0.2s; }
-  .animated:nth-child(5) { animation-delay: 0.25s; }
+  /* Animation seulement sur desktop si JavaScript est activé */
+  @media screen and (min-width: 768px) {
+    .animated.do-animate {
+      opacity: 0;
+      animation: fadeInUp 0.5s ease forwards;
+    }
 
-  /* Responsive */
-  @media (max-width: 1200px) {
-    .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
+    .animated.do-animate:nth-child(1) { animation-delay: 0.05s; }
+    .animated.do-animate:nth-child(2) { animation-delay: 0.1s; }
+    .animated.do-animate:nth-child(3) { animation-delay: 0.15s; }
+    .animated.do-animate:nth-child(4) { animation-delay: 0.2s; }
+    .animated.do-animate:nth-child(5) { animation-delay: 0.25s; }
+  }
+
+  /* Sur mobile, pas d'animation - affichage direct */
+  @media screen and (max-width: 767.98px) {
+    .animated,
+    .order-card,
+    .table-ultra-modern tbody tr {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+    
+    /* Cacher le gridView sur mobile - on utilise le tableau transformé en cartes */
+    #gridView {
+      display: none !important;
+    }
+    
+    /* Le tableView est toujours visible sur mobile */
+    #tableView {
+      display: block !important;
+    }
+    
+    .table-ultra-modern tbody {
+      display: flex !important;
+      flex-direction: column !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    
+    .table-ultra-modern tbody tr {
+      display: flex !important;
+      flex-direction: column !important;
+      opacity: 1 !important;
+      visibility: visible !important;
     }
   }
 
-  @media (max-width: 768px) {
+  /* ========== RESPONSIVE DESIGN AVANCÉ ========== */
+  
+  /* Large Tablet (991px - 1200px) */
+  @media screen and (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .stat-card-order {
+      padding: 1.25rem;
+    }
+    
+    .stat-value-box {
+      font-size: 2rem;
+    }
+    
+    .orders-grid {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+  }
+
+  /* Tablet (768px - 991px) */
+  @media screen and (max-width: 991.98px) {
     .orders-header {
       padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .orders-header::after {
+      display: none;
     }
 
     .orders-title {
       font-size: 1.5rem;
     }
+    
+    .orders-subtitle {
+      font-size: 0.9rem;
+    }
 
     .stats-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .stat-card-order {
+      padding: 1rem;
+    }
+    
+    .stat-icon-box {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+    }
+    
+    .stat-value-box {
+      font-size: 1.75rem;
+    }
+    
+    .stat-label-box {
+      font-size: 0.75rem;
     }
 
     .orders-toolbar {
-      flex-direction: column;
-      align-items: stretch;
+      padding: 1rem;
+      gap: 0.75rem;
     }
 
     .search-wrapper {
       min-width: 100%;
+      flex: none;
+    }
+    
+    .toolbar-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .view-toggle {
+      flex: 1;
+    }
+    
+    .view-toggle button {
+      flex: 1;
+      justify-content: center;
+    }
+    
+    .btn-toolbar {
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* Table adjustments */
+    .table-header-ultra {
+      padding: 1rem;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    
+    .table-header-ultra h3 {
+      font-size: 1.1rem;
+    }
+    
+    .table-ultra-modern thead th {
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+    }
+    
+    .table-ultra-modern tbody td {
+      padding: 1rem;
+      font-size: 0.9rem;
+    }
+    
+    .order-id-badge {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.85rem;
+    }
+    
+    .client-avatar-small {
+      width: 35px;
+      height: 35px;
+      font-size: 0.9rem;
+    }
+    
+    .client-name {
+      font-size: 0.9rem;
+    }
+    
+    .client-email {
+      font-size: 0.75rem;
+    }
+    
+    .status-badge-modern {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.75rem;
+    }
+    
+    .btn-action-small {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+    }
+    
+    .action-buttons-cell {
+      gap: 0.35rem;
+    }
+
+    .orders-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  /* Mobile (< 768px) - Transformation en cartes */
+  @media screen and (max-width: 767.98px) {
+    .orders-header {
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .orders-title {
+      font-size: 1.3rem;
+      gap: 0.5rem;
+    }
+    
+    .orders-title i {
+      font-size: 1.2rem;
+    }
+    
+    .orders-subtitle {
+      font-size: 0.85rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    
+    .stat-card-order {
+      padding: 1rem;
+    }
+    
+    .stat-icon-box {
+      width: 45px;
+      height: 45px;
+      font-size: 1.3rem;
+      margin-bottom: 0.75rem;
+      border-radius: 12px;
+    }
+    
+    .stat-value-box {
+      font-size: 1.5rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-label-box {
+      font-size: 0.65rem;
+      letter-spacing: 0.3px;
+    }
+
+    .orders-toolbar {
+      padding: 1rem;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .search-wrapper {
+      min-width: 100%;
+      width: 100%;
+    }
+    
+    .search-input-ultra {
+      padding: 0.65rem 1rem 0.65rem 2.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .search-icon {
+      left: 0.85rem;
+      font-size: 1rem;
     }
 
     .toolbar-actions {
       width: 100%;
       flex-direction: column;
+      gap: 0.5rem;
     }
-
+    
+    .view-toggle {
+      width: 100%;
+    }
+    
+    .view-toggle button {
+      flex: 1;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.85rem;
+    }
+    
     .btn-toolbar {
       width: 100%;
       justify-content: center;
+      padding: 0.65rem 1rem;
     }
 
+    /* Table responsive - transformation en cartes */
+    .orders-table-container {
+      background: transparent;
+      box-shadow: none;
+    }
+    
+    .table-wrapper-mobile {
+      overflow: visible;
+    }
+    
+    .table-header-ultra {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1rem;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .table-header-ultra h3 {
+      font-size: 1rem;
+    }
+    
+    .orders-count {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+    }
+    
     .table-ultra-modern {
-      display: block;
-      overflow-x: auto;
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    
+    .table-ultra-modern thead {
+      display: none !important;
+    }
+    
+    .table-ultra-modern tbody {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.75rem;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    
+    .table-ultra-modern tbody tr {
+      display: flex !important;
+      flex-direction: column !important;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 1rem;
+      margin: 0;
+      border: none !important;
+      position: relative;
+      overflow: hidden;
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+      visibility: visible !important;
+    }
+    
+    .table-ultra-modern tbody tr::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+    
+    .table-ultra-modern tbody tr:hover {
+      transform: none;
+    }
+    
+    .table-ultra-modern tbody td {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding: 0.6rem 0 !important;
+      border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    }
+    
+    .table-ultra-modern tbody td:first-child {
+      padding-top: 0.75rem !important;
+    }
+    
+    .table-ultra-modern tbody td:last-child {
+      border-bottom: none !important;
+      padding-top: 1rem !important;
+      padding-bottom: 0 !important;
+    }
+    
+    .table-ultra-modern tbody td::before {
+      content: attr(data-label);
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+      margin-right: 0.5rem;
+    }
+    
+    .table-ultra-modern tbody td:last-child::before {
+      display: none;
     }
 
+    /* Adaptations spécifiques des colonnes */
+    .order-id-badge {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.8rem;
+    }
+    
+    .client-info-cell {
+      flex-direction: row;
+      gap: 0.5rem;
+    }
+    
+    .client-avatar-small {
+      width: 32px;
+      height: 32px;
+      font-size: 0.8rem;
+    }
+    
+    .client-details-small {
+      text-align: right;
+    }
+    
+    .client-name {
+      font-size: 0.85rem;
+    }
+    
+    .client-email {
+      font-size: 0.7rem;
+    }
+    
+    .status-badge-modern {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.7rem;
+    }
+    
+    /* Actions en mode mobile */
+    .action-buttons-cell {
+      flex-direction: row !important;
+      justify-content: center !important;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    
+    .btn-action-small {
+      flex: 1;
+      min-width: 100px;
+      max-width: 150px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8rem;
+      justify-content: center;
+    }
+
+    /* Grid view - caché sur mobile */
+    #gridView {
+      display: none !important;
+    }
+    
+    .order-card {
+      margin-bottom: 0;
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+    
+    .order-card-header {
+      padding: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .order-card-body {
+      padding: 1rem;
+    }
+    
+    .order-info-row {
+      padding: 0.5rem 0;
+    }
+    
+    .order-info-label {
+      font-size: 0.75rem;
+    }
+    
+    .order-info-value {
+      font-size: 0.85rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 2rem 1rem;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+    }
+    
+    .empty-state h3 {
+      font-size: 1.2rem;
+    }
+    
+    .empty-state p {
+      font-size: 0.9rem;
+    }
+    
+    /* Modal responsive */
+    .modal-dialog {
+      margin: 0.5rem;
+      max-width: calc(100% - 1rem);
+    }
+    
+    #cancelOrderModal .modal-content {
+      max-height: 90vh;
+    }
+    
+    #cancelOrderModal .modal-header {
+      padding: 1rem !important;
+    }
+    
+    #cancelOrderModal .modal-body {
+      padding: 1rem !important;
+    }
+    
+    #cancelOrderModal .modal-footer {
+      padding: 1rem !important;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    #cancelOrderModal .modal-footer button,
+    #cancelOrderModal .modal-footer form {
+      width: 100%;
+    }
+    
+    #cancelOrderModal .modal-footer form button {
+      width: 100%;
+    }
+  }
+
+  /* Extra Small Mobile (< 480px) */
+  @media screen and (max-width: 479.98px) {
+    .orders-header {
+      padding: 1rem;
+    }
+
+    .orders-title {
+      font-size: 1.15rem;
+    }
+    
+    .orders-subtitle {
+      font-size: 0.8rem;
+    }
+
+    .stats-grid {
+      gap: 0.5rem;
+    }
+    
+    .stat-card-order {
+      padding: 0.85rem;
+    }
+    
+    .stat-icon-box {
+      width: 40px;
+      height: 40px;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 10px;
+    }
+    
+    .stat-value-box {
+      font-size: 1.3rem;
+    }
+    
+    .stat-label-box {
+      font-size: 0.6rem;
+    }
+
+    .orders-toolbar {
+      padding: 0.75rem;
+    }
+    
+    .search-input-ultra {
+      padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+      font-size: 0.85rem;
+    }
+    
+    .view-toggle button {
+      padding: 0.5rem;
+      font-size: 0.8rem;
+    }
+    
+    .btn-toolbar {
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .table-header-ultra {
+      padding: 0.85rem;
+    }
+    
+    .table-header-ultra h3 {
+      font-size: 0.9rem;
+    }
+    
+    .orders-count {
+      font-size: 0.75rem;
+    }
+    
+    .table-ultra-modern tbody tr {
+      padding: 0.85rem;
+    }
+    
+    .table-ultra-modern tbody td {
+      padding: 0.5rem 0 !important;
+    }
+    
+    .table-ultra-modern tbody td::before {
+      font-size: 0.6rem;
+    }
+    
+    .order-id-badge {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .order-id-badge i {
+      font-size: 0.7rem;
+    }
+    
+    .client-avatar-small {
+      width: 28px;
+      height: 28px;
+      font-size: 0.7rem;
+    }
+    
+    .client-name {
+      font-size: 0.8rem;
+    }
+    
+    .client-email {
+      font-size: 0.65rem;
+    }
+    
+    .status-badge-modern {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.65rem;
+    }
+    
+    .status-badge-modern i {
+      font-size: 0.4rem;
+    }
+    
+    .action-buttons-cell {
+      gap: 0.35rem;
+    }
+    
+    .btn-action-small {
+      min-width: 80px;
+      padding: 0.5rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .btn-action-small i {
+      font-size: 0.8rem;
+    }
+
+    .order-card-header {
+      padding: 0.85rem;
+    }
+    
+    .order-card-body {
+      padding: 0.85rem;
+    }
+    
+    .order-info-label {
+      font-size: 0.7rem;
+    }
+    
+    .order-info-value {
+      font-size: 0.8rem;
+    }
+  }
+  
+  /* Tiny Mobile (< 360px) */
+  @media screen and (max-width: 359.98px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .stat-card-order {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .stat-icon-box {
+      margin-bottom: 0;
+    }
+    
     .action-buttons-cell {
       flex-direction: column;
     }
-
-    .orders-grid {
-      grid-template-columns: 1fr;
+    
+    .btn-action-small {
+      max-width: 100%;
+      width: 100%;
     }
   }
 
@@ -711,41 +1437,49 @@
     to { transform: rotate(360deg); }
   }
 
-  /* 🔥 FIX CRITIQUE POUR LE MODAL */
-  #cancelOrderModal {
-    z-index: 99999 !important;
+  /* 🔥 FIX CRITIQUE POUR LE MODAL - Force au-dessus de tout */
+  .modal {
+    z-index: 9999 !important;
   }
-
-  #cancelOrderModal.show {
-    display: block !important;
-    opacity: 1 !important;
+  
+  .modal-backdrop {
+    z-index: 9998 !important;
   }
-
-  #cancelOrderModal .modal-dialog {
-    z-index: 100000 !important;
-    position: relative;
+  
+  .modal-dialog {
+    z-index: 10000 !important;
+    pointer-events: auto !important;
+    max-height: 90vh;
+    margin: 1.75rem auto;
   }
 
   #cancelOrderModal .modal-content {
     background: white !important;
     color: #1a1f26 !important;
-    position: relative;
-    z-index: 100001 !important;
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    pointer-events: auto !important;
+    max-height: 85vh;
+    overflow: visible;
   }
-
-  .modal-backdrop {
-    z-index: 99998 !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+  
+  #cancelOrderModal .modal-body {
+    max-height: 50vh;
+    overflow-y: auto;
   }
-
-  .modal-backdrop.show {
-    opacity: 0.5 !important;
+  
+  #cancelOrderModal .modal-footer {
+    pointer-events: auto !important;
+    background: white;
+    border-radius: 0 0 1rem 1rem;
   }
-
-  /* Force visibility */
-  .modal.show .modal-dialog {
-    transform: none !important;
-    opacity: 1 !important;
+  
+  #cancelOrderModal .modal-footer button,
+  #cancelOrderModal .modal-footer form,
+  #cancelOrderModal .modal-footer form button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
   }
 </style>
 {% endblock %}
@@ -770,10 +1504,10 @@
 <div class="stats-grid">
   <div class="stat-card-order all animated {% if not request.GET.status %}active{% endif %}" 
        onclick="window.location.href='?'">
-    <div class="stat-icon-box" style="background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15)); color: #667eea;">
+    <div class="stat-icon-box" style="background: linear-gradient(135deg, rgba(35,37,38,0.12), rgba(118,75,162,0.15)); color: #232526;">
       <i class="bi bi-cart-check-fill"></i>
     </div>
-    <div class="stat-value-box" style="color: #667eea;">{{ stats.all }}</div>
+    <div class="stat-value-box" style="color: #232526;">{{ stats.all }}</div>
     <div class="stat-label-box">Toutes les Commandes</div>
   </div>
 
@@ -859,7 +1593,7 @@
   </div>
 
   {% if orders %}
-  <div style="overflow-x: auto;">
+  <div class="table-wrapper-mobile">
     <table class="table-ultra-modern">
       <thead>
         <tr>
@@ -868,34 +1602,63 @@
           <th>Total</th>
           <th>Statut</th>
           <th>Date</th>
-          <th>GPS</th>
           <th style="text-align: right;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for o in orders %}
-        <tr>
-          <td>
+        <tr{% if o.is_new %} class="new-order"{% endif %}>
+          <td data-label="Commande">
             <span class="order-id-badge">
               <i class="bi bi-receipt"></i>
-              #{{ o.id }}
+              {{ o.numero_commande }}
             </span>
+            {% if o.is_new %}
+            <span class="new-order-badge">
+              <i class="bi bi-clock-fill"></i> En cours
+            </span>
+            {% endif %}
           </td>
           
-          <td>
+          <td data-label="Client">
             <div class="client-info-cell">
               <div class="client-avatar-small">
-                {{ o.user.get_full_name|default:o.user.username|slice:":1"|upper }}
+                {% if o.type_commande == 'user' %}
+                  {{ o.user.get_full_name|default:o.user.username|slice:":1"|upper }}
+                {% else %}
+                  {{ o.prenom|slice:":1"|upper }}
+                {% endif %}
               </div>
               <div class="client-details-small">
-                <span class="client-name">{{ o.user.get_full_name|default:o.user.username }}</span>
-                <span class="client-email">{{ o.user.email|default:"—" }}</span>
+                <span class="client-name">
+                  {% if o.type_commande == 'user' %}
+                    {{ o.user.get_full_name|default:o.user.username }}
+                  {% else %}
+                    {{ o.prenom }} {{ o.nom }}
+                  {% endif %}
+                </span>
+                <span class="client-email">
+                  {% if o.type_commande == 'user' %}
+                    {{ o.user.email|default:"—" }}
+                  {% else %}
+                    {{ o.email|default:"—" }}
+                  {% endif %}
+                </span>
+                {% if o.telephone_client %}
+                <span class="client-phone" style="font-size: 0.75rem; color: #667eea;">
+                  <i class="bi bi-telephone"></i> {{ o.telephone_client }}
+                </span>
+                {% elif o.telephone %}
+                <span class="client-phone" style="font-size: 0.75rem; color: #667eea;">
+                  <i class="bi bi-telephone"></i> {{ o.telephone }}
+                </span>
+                {% endif %}
               </div>
             </div>
           </td>
           
-          <td>
-            <span style="font-weight: 700; font-size: 1.1rem; color: #667eea;">
+          <td data-label="Total">
+            <span style="font-weight: 700; font-size: 1.1rem; color: #232526;">
               {% if o.total %}
                 {{ o.total|floatformat:0 }} <span style="font-size: 0.85rem; color: #94a3b8;">FCFA</span>
               {% else %}
@@ -904,15 +1667,15 @@
             </span>
           </td>
           
-          <td>
+          <td data-label="Statut">
             <span class="status-badge-modern status-{{ o.statut|lower|cut:" " }}">
               <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
               {{ o.statut|default:"—" }}
             </span>
           </td>
           
-          <td>
-            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+          <td data-label="Date">
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; text-align: right;">
               <span style="font-weight: 600; color: #1a1f26;">
                 {% if o.date_commande %}
                   {{ o.date_commande|date:"d/m/Y" }}
@@ -932,39 +1695,23 @@
             </div>
           </td>
           
-          <td>
-            {% if o.latitude and o.longitude %}
-              <span class="gps-badge available">
-                <i class="bi bi-geo-alt-fill"></i>
-                Disponible
-              </span>
-            {% else %}
-              <span class="gps-badge unavailable">
-                <i class="bi bi-geo-alt"></i>
-                N/A
-              </span>
-            {% endif %}
-          </td>
-          
-          <td>
+          <td data-label="Actions">
             <div class="action-buttons-cell">
-              <a href="{% url 'admin_order_detail' o.id %}" class="btn-action-small btn-details">
+              <a href="{% url 'admin_order_detail' o.id %}?type={{ o.type_commande }}" class="btn-action-small btn-details">
                 <i class="bi bi-eye"></i>
-                Détails
+                <span>Détails</span>
               </a>
-              {% if o.latitude and o.longitude %}
-                <a href="https://www.google.com/maps?q={{ o.latitude }},{{ o.longitude }}" 
-                   target="_blank" 
-                   class="btn-action-small btn-map">
-                  <i class="bi bi-map"></i>
-                  Carte
-                </a>
-              {% endif %}
               {% if o.statut != 'LIVREE' and o.statut != 'ANNULEE' %}
-                <button onclick="confirmCancelOrder({{ o.id }}, '{{ o.user.get_full_name|default:o.user.username }}')" 
-                        class="btn-action-small btn-cancel">
+                <button type="button"
+                        class="btn-action-small btn-cancel"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#cancelOrderModal"
+                        data-order-id="{{ o.id }}"
+                        data-order-type="{{ o.type_commande }}"
+                        data-order-number="{% if o.type_commande == 'user' %}CMD-{{ o.id }}{% else %}INV-{{ o.id }}{% endif %}"
+                        data-client-name="{% if o.type_commande == 'user' %}{{ o.user.get_full_name|default:o.user.username }}{% else %}{{ o.prenom }} {{ o.nom }}{% endif %}">
                   <i class="bi bi-x-circle"></i>
-                  Annuler
+                  <span>Annuler</span>
                 </button>
               {% endif %}
             </div>
@@ -989,14 +1736,20 @@
   {% endif %}
 </div>
 
-<!-- Grid View (Hidden by default) -->
+<!-- Grid View (Hidden by default) - Outside tableView -->
+{% if orders %}
 <div class="orders-grid" id="gridView" style="display: none;">
-  {% for o in orders %}
-  <div class="order-card">
+    {% for o in orders %}
+  <div class="order-card{% if o.is_new %} new-order{% endif %}">
     <div class="order-card-header">
       <span class="order-id-badge">
         <i class="bi bi-receipt"></i>
-        #{{ o.id }}
+        {{ o.numero_commande }}
+        {% if o.is_new %}
+        <span class="new-order-badge" style="margin-left: 0.5rem;">
+          <i class="bi bi-clock-fill"></i> En cours
+        </span>
+        {% endif %}
       </span>
       <span class="status-badge-modern status-{{ o.statut|lower|cut:" " }}">
         <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
@@ -1010,7 +1763,13 @@
           <i class="bi bi-person me-1"></i>
           Client
         </span>
-        <span class="order-info-value">{{ o.user.get_full_name|default:o.user.username }}</span>
+        <span class="order-info-value">
+          {% if o.type_commande == 'user' %}
+            {{ o.user.get_full_name|default:o.user.username }}
+          {% else %}
+            {{ o.prenom }} {{ o.nom }}
+          {% endif %}
+        </span>
       </div>
       
       <div class="order-info-row">
@@ -1018,7 +1777,7 @@
           <i class="bi bi-cash me-1"></i>
           Total
         </span>
-        <span class="order-info-value" style="color: #667eea;">
+        <span class="order-info-value" style="color: #232526;">
           {% if o.total %}{{ o.total|floatformat:0 }} FCFA{% else %}—{% endif %}
         </span>
       </div>
@@ -1039,40 +1798,21 @@
         </span>
       </div>
       
-      <div class="order-info-row">
-        <span class="order-info-label">
-          <i class="bi bi-geo-alt me-1"></i>
-          GPS
-        </span>
-        {% if o.latitude and o.longitude %}
-          <span class="gps-badge available">
-            <i class="bi bi-geo-alt-fill"></i>
-            Disponible
-          </span>
-        {% else %}
-          <span class="gps-badge unavailable">
-            <i class="bi bi-geo-alt"></i>
-            N/A
-          </span>
-        {% endif %}
-      </div>
-      
       <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-        <a href="{% url 'admin_order_detail' o.id %}" class="btn-action-small btn-details" style="flex: 1; justify-content: center;">
+        <a href="{% url 'admin_order_detail' o.id %}?type={{ o.type_commande }}" class="btn-action-small btn-details" style="flex: 1; justify-content: center;">
           <i class="bi bi-eye"></i>
           Détails
         </a>
-        {% if o.latitude and o.longitude %}
-          <a href="https://www.google.com/maps?q={{ o.latitude }},{{ o.longitude }}" 
-             target="_blank" 
-             class="btn-action-small btn-map" style="flex: 1; justify-content: center;">
-            <i class="bi bi-map"></i>
-            Carte
-          </a>
-        {% endif %}
         {% if o.statut != 'LIVREE' and o.statut != 'ANNULEE' %}
-          <button onclick="confirmCancelOrder({{ o.id }}, '{{ o.user.get_full_name|default:o.user.username }}')" 
-                  class="btn-action-small btn-cancel" style="flex: 1; justify-content: center;">
+          <button type="button"
+                  class="btn-action-small btn-cancel" 
+                  style="flex: 1; justify-content: center;"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#cancelOrderModal"
+                  data-order-id="{{ o.id }}"
+                  data-order-type="{{ o.type_commande }}"
+                  data-order-number="{% if o.type_commande == 'user' %}CMD-{{ o.id }}{% else %}INV-{{ o.id }}{% endif %}"
+                  data-client-name="{% if o.type_commande == 'user' %}{{ o.user.get_full_name|default:o.user.username }}{% else %}{{ o.prenom }} {{ o.nom }}{% endif %}">
             <i class="bi bi-x-circle"></i>
             Annuler
           </button>
@@ -1082,11 +1822,12 @@
   </div>
   {% endfor %}
 </div>
+{% endif %}
 
 <!-- Cancel Order Modal -->
-<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true" style="z-index: 9999 !important;">
-  <div class="modal-dialog modal-dialog-centered" style="z-index: 10000 !important;">
-    <div class="modal-content" style="border-radius: 1rem; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.15); background: white; position: relative; z-index: 10001 !important;">
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 1rem; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.15); background: white;">
       <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding: 1.5rem; background: linear-gradient(135deg, rgba(239,68,68,0.05), rgba(220,38,38,0.05));">
         <h5 class="modal-title" style="font-weight: 700; display: flex; align-items: center; gap: 0.75rem; color: #1a1f26;">
           <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 1.5rem;"></i>
@@ -1104,10 +1845,10 @@
           </p>
         </div>
         
-        <div style="background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05)); padding: 1rem; border-radius: 0.75rem; border-left: 4px solid #667eea; margin-bottom: 1rem;">
+        <div style="background: linear-gradient(135deg, rgba(255,193,7,0.05), rgba(118,75,162,0.05)); padding: 1rem; border-radius: 0.75rem; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
             <span style="color: #64748b; font-weight: 600;">Commande</span>
-            <span style="font-weight: 700; color: #667eea;" id="modalOrderId">#0</span>
+            <span style="font-weight: 700; color: #232526;" id="modalOrderId">#0</span>
           </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: #64748b; font-weight: 600;">Client</span>
@@ -1126,21 +1867,21 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="border-top: 1px solid rgba(0,0,0,0.05); padding: 1.5rem; gap: 0.75rem;">
+      <div class="modal-footer" style="border-top: 1px solid rgba(0,0,0,0.05); padding: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
         <button type="button" 
                 class="btn" 
                 data-bs-dismiss="modal"
-                style="background: rgba(0,0,0,0.05); color: #64748b; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.3s ease;">
+                style="background: #f1f5f9; color: #64748b; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600;">
           <i class="bi bi-x-lg me-2"></i>
-          Non, garder la commande
+          Non, garder
         </button>
         <form id="cancelOrderForm" method="post" style="margin: 0;">
           {% csrf_token %}
           <button type="submit" 
-                  class="btn" 
-                  style="background: var(--danger-gradient); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; box-shadow: 0 4px 12px rgba(239,68,68,0.3); transition: all 0.3s ease;">
+                  class="btn"
+                  style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600;">
             <i class="bi bi-x-circle me-2"></i>
-            Oui, annuler la commande
+            Oui, annuler
           </button>
         </form>
       </div>
@@ -1151,6 +1892,15 @@
 
 {% block extra_js %}
 <script>
+  // 🔥 FIX: Déplacer le modal au body pour éviter les problèmes de z-index
+  document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('cancelOrderModal');
+    if (modal && modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+      console.log('✅ Modal déplacé au body');
+    }
+  });
+
   // Search functionality
   let searchTimeout;
   document.getElementById('searchInput')?.addEventListener('input', function(e) {
@@ -1167,26 +1917,41 @@
     const tableBtn = document.getElementById('tableViewBtn');
     const gridBtn = document.getElementById('gridViewBtn');
 
+    // S'assurer que les éléments existent
+    if (!tableView || !gridView) {
+      console.log('Views not found - tableView:', !!tableView, 'gridView:', !!gridView);
+      return;
+    }
+
     if (view === 'table') {
       tableView.style.display = 'block';
       gridView.style.display = 'none';
-      tableBtn.classList.add('active');
-      gridBtn.classList.remove('active');
+      if (tableBtn) tableBtn.classList.add('active');
+      if (gridBtn) gridBtn.classList.remove('active');
       localStorage.setItem('ordersView', 'table');
     } else {
       tableView.style.display = 'none';
       gridView.style.display = 'grid';
-      tableBtn.classList.remove('active');
-      gridBtn.classList.add('active');
+      if (tableBtn) tableBtn.classList.remove('active');
+      if (gridBtn) gridBtn.classList.add('active');
       localStorage.setItem('ordersView', 'grid');
     }
   }
 
-  // Restore saved view preference
+  // Restore saved view preference - RESET to table by default
   document.addEventListener('DOMContentLoaded', function() {
+    // Force table view pour corriger le bug
+    localStorage.setItem('ordersView', 'table');
+    
     const savedView = localStorage.getItem('ordersView');
     if (savedView === 'grid') {
       switchView('grid');
+    } else {
+      // S'assurer que la vue table est visible
+      const tableView = document.getElementById('tableView');
+      const gridView = document.getElementById('gridView');
+      if (tableView) tableView.style.display = 'block';
+      if (gridView) gridView.style.display = 'none';
     }
   });
 
@@ -1206,43 +1971,6 @@
     setTimeout(() => {
       showNotification('Commandes exportées avec succès!', 'success');
     }, 1500);
-  }
-
-  // Confirm cancel order
-  function confirmCancelOrder(orderId, clientName) {
-    console.log('🎯 confirmCancelOrder appelée:', orderId, clientName);
-    
-    // Mettre à jour les informations du modal
-    const modalOrderId = document.getElementById('modalOrderId');
-    const modalOrderClient = document.getElementById('modalOrderClient');
-    const form = document.getElementById('cancelOrderForm');
-    const modalElement = document.getElementById('cancelOrderModal');
-    
-    console.log('📋 Éléments trouvés:', {
-      modalOrderId: !!modalOrderId,
-      modalOrderClient: !!modalOrderClient,
-      form: !!form,
-      modalElement: !!modalElement,
-      bootstrap: typeof bootstrap !== 'undefined'
-    });
-    
-    if (modalOrderId) modalOrderId.textContent = '#' + orderId;
-    if (modalOrderClient) modalOrderClient.textContent = clientName;
-    if (form) form.action = `/boutique/admin-panel/orders/${orderId}/cancel/`;
-    
-    // SOLUTION SIMPLIFIÉE: Utiliser Bootstrap directement
-    if (modalElement && typeof bootstrap !== 'undefined') {
-      const bsModal = new bootstrap.Modal(modalElement, {
-        backdrop: true,
-        keyboard: true,
-        focus: true
-      });
-      console.log('✅ Affichage du modal avec Bootstrap');
-      bsModal.show();
-    } else {
-      console.error('❌ Erreur:', !modalElement ? 'Modal non trouvé' : 'Bootstrap non chargé');
-      alert(`Annuler la commande #${orderId} de ${clientName} ?\n\nCliquez OK pour confirmer.`);
-    }
   }
 
   // Notification system
@@ -1340,25 +2068,33 @@
   `;
   document.head.appendChild(style);
 
-  // Initialize modal close handlers
+  // Écouter l'événement d'ouverture du modal Bootstrap
   document.addEventListener('DOMContentLoaded', function() {
-    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
-    closeButtons.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const modal = document.getElementById('cancelOrderModal');
-        if (modal) {
-          modal.classList.remove('show');
-          modal.style.display = 'none';
-          document.body.classList.remove('modal-open');
-          
-          // Remove backdrop
-          const backdrop = document.querySelector('.modal-backdrop');
-          if (backdrop) {
-            backdrop.remove();
-          }
-        }
+    const cancelModal = document.getElementById('cancelOrderModal');
+    if (cancelModal) {
+      cancelModal.addEventListener('show.bs.modal', function (event) {
+        // Bouton qui a déclenché le modal
+        const button = event.relatedTarget;
+        
+        // Extraire les données des attributs data-*
+        const orderId = button.getAttribute('data-order-id');
+        const orderType = button.getAttribute('data-order-type');
+        const orderNumber = button.getAttribute('data-order-number');
+        const clientName = button.getAttribute('data-client-name');
+        
+        console.log('🎯 Modal ouvert pour:', { orderId, orderType, orderNumber, clientName });
+        
+        // Mettre à jour le contenu du modal
+        const modalOrderId = document.getElementById('modalOrderId');
+        const modalOrderClient = document.getElementById('modalOrderClient');
+        const form = document.getElementById('cancelOrderForm');
+        
+        if (modalOrderId) modalOrderId.textContent = '#' + orderNumber;
+        if (modalOrderClient) modalOrderClient.textContent = clientName;
+        if (form) form.action = `/admin-panel/orders/${orderId}/cancel/?type=${orderType}`;
       });
-    });
+    }
   });
+
 </script>
 {% endblock %}
