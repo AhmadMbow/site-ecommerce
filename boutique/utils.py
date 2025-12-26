@@ -96,13 +96,22 @@ L'equipe SadibouShop
 
     # 3. Envoi de l'email
     try:
-        send_mail(
-            sujet,
-            message_final,
-            settings.DEFAULT_FROM_EMAIL,
-            [email_client],
-            fail_silently=False,
+        from django.core.mail import EmailMessage
+        
+        email = EmailMessage(
+            subject=sujet,
+            body=message_final,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email_client],
+            headers={
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High',
+                'X-Mailer': 'SadibouShop',
+                'Reply-To': settings.DEFAULT_FROM_EMAIL,
+            }
         )
+        email.send(fail_silently=False)
         print(f"[OK] Email envoye pour {commande.numero_commande} a {email_client}")
     except Exception as e:
         print(f"[ERREUR] Erreur email {commande.numero_commande}: {e}")
@@ -387,9 +396,16 @@ def send_delivery_email_with_receipt(commande, is_guest=False):
             body=html_message,
             from_email=from_email,
             to=recipient_list,
+            headers={
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High',
+                'X-Mailer': 'SadibouShop',
+                'Reply-To': from_email,
+            }
         )
         
-        # Définir le contenu comme HTML
+        # Definir le contenu comme HTML
         email.content_subtype = 'html'
         
         # Attacher le PDF
