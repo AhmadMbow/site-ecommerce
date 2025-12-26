@@ -5,7 +5,7 @@ import json
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, Http404
 from django.core.paginator import Paginator
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -25,13 +25,24 @@ from .utils import envoyer_mail_statut_commande
 from boutique.forms import (
     AdminProfileForm, AdresseForm, CategorieForm, DelivererCreateForm, 
     DelivererProfileForm, DelivererProfileUpdateForm, DelivererUserUpdateForm, 
-    ProduitForm, UserUpdateForm, CustomUserCreationForm, AvisLivreurForm
+    ProduitForm, UserUpdateForm, ProfileUpdateForm, CustomUserCreationForm, AvisLivreurForm
 )
 from .models import (
     Produit, Categorie, Commande, CommandeItem, PanierItem, UserProfile, 
-    Note, Adresse, RoleChoices, AvisLivreur, AvisProduit
+    Note, Adresse, RoleChoices, AvisLivreur, AvisProduit, CommandeInvite, 
+    CommandeInviteItem, Taille, ProduitTaille
 )
 from .constants import FRAIS_LIVRAISON_DEFAUT
+
+# ===================================================================
+# CLASSE WRAPPER POUR LES TAILLES AVEC STOCK
+# ===================================================================
+
+class TailleStock:
+    """Wrapper pour passer les tailles avec leur stock au template"""
+    def __init__(self, taille, stock):
+        self.taille = taille
+        self.stock = stock
 
 # ===================================================================
 # PAGE DETAIL PRODUIT
@@ -73,12 +84,21 @@ def produit_detail(request, pk):
             id=produit.id
         ).order_by('-date_creation')[:6]
     
+    # Récupérer les tailles disponibles si le produit a des tailles
+    tailles_disponibles = []
+    if produit.a_tailles:
+        tailles_disponibles = ProduitTaille.objects.filter(
+            produit=produit, 
+            stock__gt=0
+        ).select_related('taille').order_by('taille__ordre')
+    
     return render(request, 'boutique/produit_detail.html', {
         'produit': produit,
         'avis': avis,
         'peut_noter': peut_noter,
         'a_deja_note': a_deja_note,
         'produits_similaires': produits_similaires,
+        'tailles_disponibles': tailles_disponibles,
     })
 
 # ===================================================================
@@ -116,27 +136,51 @@ def _merge_session_cart_to_user(request):
     cart = request.session.get('panier') or {}
     if not cart:
         return
-    # Précharger les produits
+    
+    # Extraire les IDs de produits des clés du panier (format: "produit_id" ou "produit_id_taille_id")
     try:
-        produit_ids = [int(pid) for pid in cart.keys() if str(pid).isdigit()]
+        produit_ids = []
+        for key in cart.keys():
+            pid = key.split('_')[0] if '_' in key else key
+            if str(pid).isdigit():
+                produit_ids.append(int(pid))
     except Exception:
         produit_ids = []
+    
     if not produit_ids:
         request.session['panier'] = {}
         request.session.modified = True
         return
+    
     produits_map = {p.id: p for p in Produit.objects.filter(id__in=produit_ids)}
-    for pid_str, data in cart.items():
+    
+    for cart_key, data in cart.items():
         try:
+            # Extraire l'ID du produit de la clé
+            pid_str = cart_key.split('_')[0] if '_' in cart_key else cart_key
             pid = int(pid_str)
-            qty = int(data.get('quantite', 0))
+            
+            qty = int(data.get('quantite', 0)) if isinstance(data, dict) else int(data)
             if qty <= 0:
                 continue
+            
             produit = produits_map.get(pid)
             if not produit:
                 continue
+            
+            # Récupérer la taille si elle existe
+            taille = None
+            if isinstance(data, dict) and data.get('taille_id'):
+                try:
+                    taille = Taille.objects.get(pk=data['taille_id'])
+                except Taille.DoesNotExist:
+                    pass
+            
             item, created = PanierItem.objects.get_or_create(
-                user=request.user, produit=produit, defaults={'quantite': qty}
+                user=request.user, 
+                produit=produit,
+                taille=taille,
+                defaults={'quantite': qty}
             )
             if not created:
                 # Incrémenter en base pour éviter les races
@@ -156,12 +200,27 @@ def is_livreur(user):
 
 # Fonctions pour les livreurs
 def _livreur_orders_queryset(user=None):
-    """Récupère les commandes pour un livreur"""
-    return Commande.objects.select_related('user').order_by('-id')
+    """Récupère TOUTES les commandes (avec et sans compte) pour un livreur"""
+    from itertools import chain
+    from operator import attrgetter
+    
+    # Récupérer les commandes classiques (utilisateurs avec compte) avec l'adresse
+    commandes = list(Commande.objects.select_related('user', 'adresse', 'user__userprofile').all())
+    
+    # Récupérer les commandes invités (sans compte)
+    commandes_invite = list(CommandeInvite.objects.all())
+    
+    # Combiner les deux types et trier par date de commande décroissante (plus récentes en premier)
+    all_orders = sorted(
+        chain(commandes, commandes_invite),
+        key=lambda x: x.date_commande,
+        reverse=True
+    )
+    
+    return all_orders
 
 def _livreur_stats(orders):
-    """Calcule les statistiques pour un livreur"""
-    from django.db.models import Sum, Count
+    """Calcule les statistiques pour un livreur (fonctionne avec une liste)"""
     from django.utils import timezone
     
     today = timezone.now().date()
@@ -169,36 +228,41 @@ def _livreur_stats(orders):
     # Utiliser la constante partagée
     FRAIS_LIVRAISON = FRAIS_LIVRAISON_DEFAUT
     
+    # Convertir en liste si ce n'est pas déjà le cas
+    if not isinstance(orders, list):
+        orders = list(orders)
+    
     # Compter les commandes par statut
-    pending = orders.filter(statut='EN_ATTENTE').count()
-    in_progress = orders.filter(statut='EN_COURS').count()
-    completed = orders.filter(statut='LIVREE').count()
+    pending = len([o for o in orders if o.statut == 'EN_ATTENTE'])
+    in_progress = len([o for o in orders if o.statut == 'EN_COURS'])
+    completed = len([o for o in orders if o.statut == 'LIVREE'])
     
     # Commandes livrées aujourd'hui
-    delivered_today = orders.filter(
-        statut='LIVREE',
-        date_commande__date=today
-    ).count()
+    delivered_today = len([
+        o for o in orders 
+        if o.statut == 'LIVREE' and o.date_commande.date() == today
+    ])
     
     # Revenus basés sur les frais de livraison
     # Seules les commandes livrées génèrent des revenus pour le livreur
-    completed_orders = orders.filter(statut='LIVREE')
+    completed_orders = [o for o in orders if o.statut == 'LIVREE']
     
     # Revenus totaux = nombre de commandes livrées × frais de livraison
-    revenue_total = completed_orders.count() * FRAIS_LIVRAISON
+    revenue_total = len(completed_orders) * FRAIS_LIVRAISON
     
     # Revenus du jour = commandes livrées aujourd'hui × frais de livraison
     revenue_today = delivered_today * FRAIS_LIVRAISON
     
     # Revenus du mois
-    revenue_this_month = orders.filter(
-        statut='LIVREE',
-        date_commande__month=today.month,
-        date_commande__year=today.year
-    ).count() * FRAIS_LIVRAISON
+    revenue_this_month = len([
+        o for o in orders 
+        if o.statut == 'LIVREE' 
+        and o.date_commande.month == today.month 
+        and o.date_commande.year == today.year
+    ]) * FRAIS_LIVRAISON
     
     return {
-        'count_all': orders.count(),
+        'count_all': len(orders),
         'pending': pending,
         'in_progress': in_progress,
         'completed': completed,
@@ -533,6 +597,8 @@ def profile(request):
     profile_obj, _ = UserProfile.objects.get_or_create(user=request.user)
     adresses = Adresse.objects.filter(user=request.user).order_by('-is_default', '-created_at')
     address_form = AdresseForm()
+    user_form = UserUpdateForm(instance=request.user)
+    profile_form = ProfileUpdateForm(instance=profile_obj)
 
     if request.method == 'POST':
         section = request.POST.get('_section', '')
@@ -554,6 +620,16 @@ def profile(request):
             profile_obj.save(update_fields=['avatar'])
             messages.success(request, "Photo de profil mise à jour.")
             return redirect('profile')
+        
+        else:
+            # Mise à jour des informations personnelles
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+            profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile_obj)
+            if user_form.is_valid() and profile_form.is_valid():
+                user_form.save()
+                profile_form.save()
+                messages.success(request, "Profil mis à jour avec succès.")
+                return redirect('profile')
 
     # Commandes récentes
     recent_orders = []
@@ -566,6 +642,8 @@ def profile(request):
         'profile': profile_obj,
         'adresses': adresses,
         'address_form': address_form,
+        'user_form': user_form,
+        'profile_form': profile_form,
         'recent_orders': recent_orders,
     }
     return render(request, 'boutique/profile.html', context)
@@ -711,29 +789,64 @@ def noter_produit(request, produit_id):
 @require_POST
 def ajouter_au_panier(request, produit_id):
     produit = get_object_or_404(Produit, pk=produit_id)
+    
+    # Récupérer la taille si le produit a des tailles
+    taille_id = request.POST.get('taille') or request.GET.get('taille')
+    taille = None
+    stock_disponible = produit.stock
+    
+    if produit.a_tailles:
+        # Le produit nécessite une taille
+        if not taille_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Veuillez sélectionner une taille.',
+                'requires_size': True
+            }, status=400)
+        
+        try:
+            taille = Taille.objects.get(pk=taille_id)
+            # Vérifier que cette taille existe pour ce produit
+            produit_taille = ProduitTaille.objects.get(produit=produit, taille=taille)
+            stock_disponible = produit_taille.stock
+        except (Taille.DoesNotExist, ProduitTaille.DoesNotExist):
+            return JsonResponse({
+                'success': False,
+                'message': 'Taille non disponible pour ce produit.',
+            }, status=400)
 
     # Vérifier le stock disponible
-    if produit.stock <= 0:
+    if stock_disponible <= 0:
+        message = f'Désolé, {produit.nom}'
+        if taille:
+            message += f' (taille {taille.nom})'
+        message += ' est en rupture de stock.'
         return JsonResponse({
             'success': False,
-            'message': f'Désolé, {produit.nom} est en rupture de stock.',
+            'message': message,
             'stock': 0
         }, status=400)
 
     if request.user.is_authenticated:
+        # Pour les utilisateurs connectés
         item, created = PanierItem.objects.get_or_create(
             user=request.user,
             produit=produit,
+            taille=taille,
             defaults={'quantite': 1}
         )
         if not created:
             # Vérifier si on peut ajouter une unité de plus
             nouvelle_quantite = item.quantite + 1
-            if nouvelle_quantite > produit.stock:
+            if nouvelle_quantite > stock_disponible:
+                message = f'Stock insuffisant pour {produit.nom}'
+                if taille:
+                    message += f' (taille {taille.nom})'
+                message += f'. Stock disponible: {stock_disponible}'
                 return JsonResponse({
                     'success': False,
-                    'message': f'Stock insuffisant pour {produit.nom}. Stock disponible: {produit.stock}',
-                    'stock': produit.stock,
+                    'message': message,
+                    'stock': stock_disponible,
                     'current_cart_quantity': item.quantite
                 }, status=400)
             
@@ -741,36 +854,58 @@ def ajouter_au_panier(request, produit_id):
             item.save(update_fields=['quantite'])
         else:
             # Nouveau produit ajouté, vérifier quand même le stock
-            if produit.stock < 1:
+            if stock_disponible < 1:
                 item.delete()  # Supprimer l'item créé
+                message = f'Désolé, {produit.nom}'
+                if taille:
+                    message += f' (taille {taille.nom})'
+                message += ' est en rupture de stock.'
                 return JsonResponse({
                     'success': False,
-                    'message': f'Désolé, {produit.nom} est en rupture de stock.',
+                    'message': message,
                     'stock': 0
                 }, status=400)
+        
+        stock_restant = stock_disponible - item.quantite
     else:
+        # Pour les utilisateurs non connectés (session)
         cart = request.session.get('panier', {})
-        key = str(produit_id)
-        qty = int(cart.get(key, {}).get('quantite', 0)) + 1
+        # Clé unique: produit_id + taille_id (si existe)
+        key = f"{produit_id}_{taille_id}" if taille_id else str(produit_id)
+        
+        existing_data = cart.get(key, {})
+        qty = int(existing_data.get('quantite', 0)) + 1
         
         # Vérifier si la quantité demandée ne dépasse pas le stock
-        if qty > produit.stock:
+        if qty > stock_disponible:
+            message = f'Stock insuffisant pour {produit.nom}'
+            if taille:
+                message += f' (taille {taille.nom})'
+            message += f'. Stock disponible: {stock_disponible}'
             return JsonResponse({
                 'success': False,
-                'message': f'Stock insuffisant pour {produit.nom}. Stock disponible: {produit.stock}',
-                'stock': produit.stock,
+                'message': message,
+                'stock': stock_disponible,
                 'current_cart_quantity': qty - 1
             }, status=400)
         
-        cart[key] = {'quantite': qty}
+        cart[key] = {
+            'quantite': qty,
+            'taille_id': int(taille_id) if taille_id else None,
+            'taille_nom': taille.nom if taille else None
+        }
         request.session['panier'] = cart
         request.session.modified = True
+        
+        stock_restant = stock_disponible - qty
 
     count = _get_cart_count(request)
     
-    # Message de succès avec indication du stock restant
-    stock_restant = produit.stock - (item.quantite if request.user.is_authenticated else qty)
-    message = f'{produit.nom} ajouté au panier'
+    # Message de succès avec indication de la taille et du stock restant
+    message = f'{produit.nom}'
+    if taille:
+        message += f' (taille {taille.nom})'
+    message += ' ajouté au panier'
     if stock_restant <= 5 and stock_restant > 0:
         message += f' (Plus que {stock_restant} disponible{"s" if stock_restant > 1 else ""})'
     
@@ -805,38 +940,77 @@ def calcul_livraison(distance_km):
     return int((distance_km - 5) * 500)
 
 # --- View du panier ---
-@login_required
 def voir_panier(request):
-    """Affichage du contenu du panier avec calcul du total et livraison"""
-    items_qs = PanierItem.objects.select_related('produit').filter(user=request.user)
+    """Affichage du contenu du panier avec calcul du total et livraison (accessible à tous)"""
     items = []
     total = 0
+    adresse_defaut = None
+    adresses = []
+    
+    # Si l'utilisateur est connecté, récupérer le panier de la base de données
+    if request.user.is_authenticated:
+        items_qs = PanierItem.objects.select_related('produit', 'taille').filter(user=request.user)
+        for it in items_qs:
+            # Prix unitaire (promo si existante)
+            pu = it.produit.prix_promo if it.produit.prix_promo else it.produit.prix
+            sous_total = pu * it.quantite
+            total += sous_total
+            it.prix_total = sous_total
+            items.append(it)
+        
+        # Récupérer les adresses de l'utilisateur
+        adresses = Adresse.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+        adresse_defaut = adresses.filter(is_default=True).first()
+        if not adresse_defaut and adresses.exists():
+            adresse_defaut = adresses.first()
+    else:
+        # Pour les visiteurs non connectés, utiliser le panier de session
+        cart = request.session.get('panier', {})
+        for cart_key, data in cart.items():
+            try:
+                # Gérer les deux formats possibles: dict avec 'quantite' ou int direct
+                if isinstance(data, dict):
+                    qty = data.get('quantite', 1)
+                    taille_id = data.get('taille_id')
+                    taille_nom = data.get('taille_nom')
+                else:
+                    qty = int(data)
+                    taille_id = None
+                    taille_nom = None
+                
+                # Extraire l'ID du produit de la clé (format: "produit_id" ou "produit_id_taille_id")
+                produit_id = cart_key.split('_')[0] if '_' in cart_key else cart_key
+                
+                produit = Produit.objects.get(id=produit_id)
+                pu = produit.prix_promo if produit.prix_promo else produit.prix
+                sous_total = pu * qty
+                total += sous_total
+                
+                # Créer un objet similaire à PanierItem pour l'affichage
+                class SessionCartItem:
+                    def __init__(self, produit, quantite, prix_total, taille_id=None, taille_nom=None, cart_key=None):
+                        self.id = produit.id
+                        self.produit = produit
+                        self.quantite = quantite
+                        self.prix_total = prix_total
+                        self.taille = None
+                        self.taille_id = taille_id
+                        self.taille_nom = taille_nom
+                        self.cart_key = cart_key  # Pour identifier l'item unique dans la session
+                items.append(SessionCartItem(produit, qty, sous_total, taille_id, taille_nom, cart_key))
+            except (Produit.DoesNotExist, ValueError, TypeError):
+                continue
 
-    for it in items_qs:
-        # Prix unitaire (promo si existante)
-        pu = it.produit.prix_promo if it.produit.prix_promo else it.produit.prix
-        sous_total = pu * it.quantite
-        total += sous_total
-        it.prix_total = sous_total
-        items.append(it)
-
-    # Exemple : distance fictive (à remplacer par vrai calcul GPS)
-    distance_km = request.session.get('distance_km', 10)  # tu peux stocker la distance réelle en session après géolocalisation
-    shipping = calcul_livraison(distance_km)
-
-    # Récupérer la position GPS de l'adresse par défaut du client
-    adresse_defaut = Adresse.objects.filter(user=request.user, is_default=True).first()
-    latitude = adresse_defaut.latitude if adresse_defaut else None
-    longitude = adresse_defaut.longitude if adresse_defaut else None
+    # Frais de livraison fixes
+    shipping = 2000  # 2000 FCFA de frais de livraison fixes
 
     context = {
         'items': items,
         'total': total,
         'shipping': shipping,
-        'distance_km': distance_km,
         'cart_count': sum(i.quantite for i in items),
-        'adresse_latitude': latitude,
-        'adresse_longitude': longitude,
+        'adresse_defaut': adresse_defaut,
+        'adresses': adresses,
     }
 
     return render(request, 'boutique/panier.html', context)
@@ -844,6 +1018,7 @@ def voir_panier(request):
 
 @login_required
 def retirer_du_panier(request, item_id):
+    """Retirer un produit du panier (utilisateurs connectés uniquement)"""
     item = get_object_or_404(PanierItem, id=item_id, user=request.user)
     nom_produit = item.produit.nom
     item.delete()
@@ -851,9 +1026,44 @@ def retirer_du_panier(request, item_id):
     return redirect('panier')
 
 
+def retirer_du_panier_session(request, produit_id):
+    """Retirer un produit du panier de session (visiteurs non connectés)"""
+    cart = request.session.get('panier', {})
+    produit_id_str = str(produit_id)
+    
+    # Chercher la clé dans le panier (peut être produit_id ou produit_id_taille_id)
+    found_key = None
+    if produit_id_str in cart:
+        found_key = produit_id_str
+    else:
+        # Chercher une clé qui commence par produit_id
+        for key in list(cart.keys()):
+            if key.startswith(f"{produit_id_str}_") or key == produit_id_str:
+                found_key = key
+                break
+    
+    if found_key:
+        try:
+            produit = Produit.objects.get(id=produit_id)
+            del cart[found_key]
+            request.session['panier'] = cart
+            request.session.modified = True
+            messages.success(request, f'{produit.nom} retiré du panier.')
+        except Produit.DoesNotExist:
+            del cart[found_key]
+            request.session['panier'] = cart
+            request.session.modified = True
+            messages.error(request, 'Produit introuvable.')
+    else:
+        messages.error(request, 'Produit non trouvé dans le panier.')
+    
+    return redirect('panier')
+
+
 @login_required
 @require_POST
 def modifier_quantite(request):
+    """Modifier la quantité d'un produit dans le panier (utilisateurs connectés)"""
     try:
         item_id = int(request.POST.get('item_id'))
         nouvelle_quantite = int(request.POST.get('qty'))
@@ -876,6 +1086,60 @@ def modifier_quantite(request):
     return redirect('panier')
 
 
+@require_POST
+def modifier_quantite_session(request):
+    """Modifier la quantité d'un produit dans le panier de session (visiteurs non connectés)"""
+    try:
+        produit_id = str(request.POST.get('produit_id'))
+        taille_id = request.POST.get('taille_id')
+        nouvelle_quantite = int(request.POST.get('qty'))
+        
+        cart = request.session.get('panier', {})
+        
+        # Construire la clé du panier (format: produit_id ou produit_id_taille_id)
+        cart_key = f"{produit_id}_{taille_id}" if taille_id else produit_id
+        
+        # Chercher la clé dans le panier
+        found_key = None
+        if cart_key in cart:
+            found_key = cart_key
+        elif produit_id in cart:
+            found_key = produit_id
+        else:
+            # Chercher une clé qui commence par produit_id
+            for key in cart.keys():
+                if key.startswith(f"{produit_id}_") or key == produit_id:
+                    found_key = key
+                    break
+        
+        if found_key:
+            if nouvelle_quantite <= 0:
+                try:
+                    produit = Produit.objects.get(id=produit_id)
+                    del cart[found_key]
+                    messages.info(request, f'{produit.nom} retiré du panier.')
+                except Produit.DoesNotExist:
+                    del cart[found_key]
+            else:
+                # Conserver les données existantes et mettre à jour la quantité
+                existing_data = cart[found_key] if isinstance(cart[found_key], dict) else {}
+                existing_data['quantite'] = nouvelle_quantite
+                cart[found_key] = existing_data
+                messages.success(request, 'Quantité mise à jour.')
+            
+            request.session['panier'] = cart
+            request.session.modified = True
+        else:
+            messages.error(request, 'Produit non trouvé dans le panier.')
+
+    except (ValueError, TypeError):
+        messages.error(request, 'Quantité invalide.')
+    except Exception as e:
+        messages.error(request, 'Erreur lors de la modification.')
+
+    return redirect('panier')
+
+
 # ===================================================================
 # CONFIRMATION DE COMMANDE
 # ===================================================================
@@ -884,20 +1148,251 @@ def modifier_quantite(request):
 @require_POST
 @transaction.atomic
 def confirmer_commande(request):
-    items = list(PanierItem.objects.select_related('produit').filter(user=request.user))
-    if not items:
-        messages.error(request, "Votre panier est vide.")
+    """Confirmer une commande pour un utilisateur connecté"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        items = list(PanierItem.objects.select_related('produit', 'taille').filter(user=request.user))
+        if not items:
+            messages.error(request, "Votre panier est vide.")
+            return redirect('panier')
+
+        # Vérification du stock AVANT de créer la commande
+        produits_insuffisants = []
+        for it in items:
+            # Vérifier le stock selon la taille ou le stock total
+            if it.taille:
+                try:
+                    produit_taille = ProduitTaille.objects.get(produit=it.produit, taille=it.taille)
+                    stock_disponible = produit_taille.stock
+                except ProduitTaille.DoesNotExist:
+                    stock_disponible = 0
+            else:
+                stock_disponible = it.produit.stock_total
+            
+            if stock_disponible < it.quantite:
+                nom_complet = it.produit.nom
+                if it.taille:
+                    nom_complet += f" (taille {it.taille.nom})"
+                produits_insuffisants.append({
+                    'nom': nom_complet,
+                    'demande': it.quantite,
+                    'disponible': stock_disponible
+                })
+        
+        if produits_insuffisants:
+            # Construire le message d'erreur
+            msg_parts = ["Stock insuffisant pour les produits suivants :"]
+            for p in produits_insuffisants:
+                if p['disponible'] == 0:
+                    msg_parts.append(f"• {p['nom']}: en rupture de stock")
+                else:
+                    msg_parts.append(f"• {p['nom']}: demandé {p['demande']}, disponible {p['disponible']}")
+            messages.error(request, " ".join(msg_parts))
+            return redirect('panier')
+
+        # Calcul du total
+        total = sum(_unit_price(it.produit) * it.quantite for it in items)
+        
+        logger.info(f"Commande en cours pour {request.user.username}, total: {total}, items: {len(items)}")
+
+        # Récupération de l'adresse (choix de l'utilisateur ou par défaut)
+        adresse_id = request.POST.get('adresse_id')
+        adresse = None
+        if adresse_id:
+            adresse = Adresse.objects.filter(user=request.user, id=adresse_id).first()
+            logger.info(f"Adresse sélectionnée ID: {adresse_id}, trouvée: {adresse is not None}")
+        else:
+            adresse = Adresse.objects.filter(user=request.user, is_default=True).first()
+            if not adresse:
+                adresse = Adresse.objects.filter(user=request.user).first()
+            logger.info(f"Adresse par défaut trouvée: {adresse is not None}")
+        
+        # L'adresse n'est plus obligatoire - on peut utiliser les coordonnées GPS
+        # Récupération des données GPS du client
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+        adresse_gps = request.POST.get('adresse_gps')
+        
+        logger.info(f"Données GPS - Lat: {latitude}, Long: {longitude}, Adresse GPS: {adresse_gps}")
+
+        # Création de la commande
+        cmd_kwargs = {'user': request.user, 'total': total}
+        if hasattr(Commande, 'statut'):
+            cmd_kwargs['statut'] = _pending_choice_for_statut()
+        elif hasattr(Commande, 'status'):
+            cmd_kwargs['status'] = 'pending'
+
+        # Ajouter l'adresse si disponible
+        if hasattr(Commande, 'adresse') and adresse:
+            cmd_kwargs['adresse'] = adresse
+        if hasattr(Commande, 'adresse_livraison') and adresse:
+            cmd_kwargs['adresse_livraison'] = adresse
+        
+        # Ajouter les coordonnées GPS si disponibles
+        if hasattr(Commande, 'latitude') and latitude:
+            try:
+                cmd_kwargs['latitude'] = float(latitude)
+            except (ValueError, TypeError):
+                logger.warning(f"Latitude invalide: {latitude}")
+        
+        if hasattr(Commande, 'longitude') and longitude:
+            try:
+                cmd_kwargs['longitude'] = float(longitude)
+            except (ValueError, TypeError):
+                logger.warning(f"Longitude invalide: {longitude}")
+        
+        if hasattr(Commande, 'adresse_gps') and adresse_gps:
+            cmd_kwargs['adresse_gps'] = adresse_gps
+
+        # Utiliser une transaction pour garantir la cohérence
+        with transaction.atomic():
+            logger.info(f"Création de la commande avec les paramètres: {cmd_kwargs.keys()}")
+            commande = Commande.objects.create(**cmd_kwargs)
+            logger.info(f"Commande créée: #{commande.id}")
+            
+            # Création des lignes de commande et décrémenter le stock
+            for it in items:
+                pu = _unit_price(it.produit)
+                ci_kwargs = {'commande': commande, 'produit': it.produit, 'quantite': it.quantite}
+                if hasattr(CommandeItem, 'prix_unitaire'):
+                    ci_kwargs['prix_unitaire'] = pu
+                elif hasattr(CommandeItem, 'prix'):
+                    ci_kwargs['prix'] = pu
+                
+                # Ajouter la taille si disponible
+                if hasattr(CommandeItem, 'taille') and it.taille:
+                    ci_kwargs['taille'] = it.taille
+                
+                CommandeItem.objects.create(**ci_kwargs)
+                
+                # Décrémenter le stock selon la taille
+                if it.taille:
+                    try:
+                        produit_taille = ProduitTaille.objects.get(produit=it.produit, taille=it.taille)
+                        produit_taille.stock -= it.quantite
+                        produit_taille.save(update_fields=['stock'])
+                    except ProduitTaille.DoesNotExist:
+                        pass
+                else:
+                    # Fallback: décrémenter le stock du premier ProduitTaille disponible
+                    produit_tailles = ProduitTaille.objects.filter(produit=it.produit, stock__gt=0).order_by('-stock')
+                    reste = it.quantite
+                    for pt in produit_tailles:
+                        if reste <= 0:
+                            break
+                        decrement = min(pt.stock, reste)
+                        pt.stock -= decrement
+                        pt.save(update_fields=['stock'])
+                        reste -= decrement
+            
+            # Vider le panier
+        PanierItem.objects.filter(user=request.user).delete()
+        logger.info(f"Panier vidé pour l'utilisateur {request.user.username}")
+    
+        # Envoyer l'email après la transaction
+        try:
+            envoyer_mail_statut_commande(commande)
+            logger.info(f"Email de confirmation envoyé pour la commande #{commande.id}")
+        except Exception as e:
+            logger.error(f"Erreur lors de l'envoi de l'email pour la commande #{commande.id}: {str(e)}")
+            # Ne pas bloquer la commande si l'email échoue
+        
+        if 'panier' in request.session:
+            request.session['panier'] = {}
+            request.session.modified = True
+
+        messages.success(request, "Commande confirmée ! Merci pour votre achat !")
+        logger.info(f"Commande #{commande.id} confirmée avec succès pour {request.user.username}")
+        return redirect('mes_commandes')
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la confirmation de commande pour {request.user.username}: {str(e)}", exc_info=True)
+        messages.error(request, f"Une erreur est survenue lors de la confirmation de votre commande. Veuillez réessayer ou contacter le support. Erreur: {str(e)}")
         return redirect('panier')
 
-    # Vérification du stock AVANT de créer la commande
+
+# ===================================================================
+# COMMANDE INVITÉ (SANS COMPTE)
+# ===================================================================
+
+@require_POST
+@transaction.atomic
+def commande_invite(request):
+    """Permet aux visiteurs non connectés de commander directement sans créer de compte"""
+    from .forms import CommandeInviteForm
+    from .models import CommandeInvite, CommandeInviteItem
+    
+    # Récupérer le panier de session
+    cart = request.session.get('panier', {})
+    if not cart:
+        messages.error(request, "Votre panier est vide.")
+        return redirect('panier')
+    
+    # Validation du formulaire
+    form = CommandeInviteForm(request.POST)
+    if not form.is_valid():
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{field}: {error}")
+        return redirect('panier')
+    
+    # Récupération des produits et calcul du total
+    produits_data = []
+    total = 0
     produits_insuffisants = []
-    for it in items:
-        if it.produit.stock < it.quantite:
-            produits_insuffisants.append({
-                'nom': it.produit.nom,
-                'demande': it.quantite,
-                'disponible': it.produit.stock
+    
+    for cart_key, data in cart.items():
+        try:
+            # Gérer les deux formats possibles: dict avec 'quantite' ou int direct
+            if isinstance(data, dict):
+                qty = data.get('quantite', 1)
+                taille_id = data.get('taille_id')
+            else:
+                qty = int(data)
+                taille_id = None
+            
+            # Extraire l'ID du produit de la clé (format: "produit_id" ou "produit_id_taille_id")
+            produit_id = cart_key.split('_')[0] if '_' in cart_key else cart_key
+            
+            produit = Produit.objects.get(id=produit_id)
+            
+            # Vérification du stock selon la taille
+            taille = None
+            if taille_id:
+                try:
+                    taille = Taille.objects.get(id=taille_id)
+                    produit_taille = ProduitTaille.objects.get(produit=produit, taille=taille)
+                    stock_disponible = produit_taille.stock
+                except (Taille.DoesNotExist, ProduitTaille.DoesNotExist):
+                    stock_disponible = 0
+            else:
+                stock_disponible = produit.stock_total
+            
+            if stock_disponible < qty:
+                nom_complet = produit.nom
+                if taille:
+                    nom_complet += f" (taille {taille.nom})"
+                produits_insuffisants.append({
+                    'nom': nom_complet,
+                    'demande': qty,
+                    'disponible': stock_disponible
+                })
+                continue
+            
+            prix_unitaire = produit.prix_promo if produit.prix_promo else produit.prix
+            sous_total = prix_unitaire * qty
+            total += sous_total
+            
+            produits_data.append({
+                'produit': produit,
+                'quantite': qty,
+                'prix_unitaire': prix_unitaire,
+                'taille': taille
             })
+        except Produit.DoesNotExist:
+            continue
     
     if produits_insuffisants:
         # Construire le message d'erreur
@@ -909,73 +1404,62 @@ def confirmer_commande(request):
                 msg_parts.append(f"• {p['nom']}: demandé {p['demande']}, disponible {p['disponible']}")
         messages.error(request, " ".join(msg_parts))
         return redirect('panier')
-
-    # Calcul du total
-    total = sum(_unit_price(it.produit) * it.quantite for it in items)
-
-    # Récupération de l'adresse
-    adresse_defaut = Adresse.objects.filter(user=request.user, is_default=True).first()
-
-    # Récupération des données GPS du client
-    latitude = request.POST.get('latitude')
-    longitude = request.POST.get('longitude')
-    adresse_gps = request.POST.get('adresse_gps')
-
-    # Création de la commande
-    cmd_kwargs = {'user': request.user, 'total': total}
-    if hasattr(Commande, 'statut'):
-        cmd_kwargs['statut'] = _pending_choice_for_statut()
-    elif hasattr(Commande, 'status'):
-        cmd_kwargs['status'] = 'pending'
-
-    if adresse_defaut:
-        # Met à jour l'adresse avec la position GPS si fournie
-        if latitude and longitude:
+    
+    if not produits_data:
+        messages.error(request, "Aucun produit valide dans le panier.")
+        return redirect('panier')
+    
+    # Création de la commande invité
+    commande = form.save(commit=False)
+    commande.total = total
+    commande.save()
+    
+    # Création des lignes de commande et mise à jour du stock
+    for data in produits_data:
+        item_kwargs = {
+            'commande': commande,
+            'produit': data['produit'],
+            'quantite': data['quantite'],
+            'prix_unitaire': data['prix_unitaire']
+        }
+        
+        # Ajouter la taille si disponible
+        if hasattr(CommandeInviteItem, 'taille') and data.get('taille'):
+            item_kwargs['taille'] = data['taille']
+        
+        CommandeInviteItem.objects.create(**item_kwargs)
+        
+        # Décrémenter le stock selon la taille
+        if data.get('taille'):
             try:
-                adresse_defaut.latitude = latitude
-                adresse_defaut.longitude = longitude
-                adresse_defaut.save(update_fields=['latitude', 'longitude'])
-            except Exception:
+                produit_taille = ProduitTaille.objects.get(produit=data['produit'], taille=data['taille'])
+                produit_taille.stock -= data['quantite']
+                produit_taille.save(update_fields=['stock'])
+            except ProduitTaille.DoesNotExist:
                 pass
-        if hasattr(Commande, 'adresse'):
-            cmd_kwargs['adresse'] = adresse_defaut
-        if hasattr(Commande, 'adresse_livraison'):
-            cmd_kwargs['adresse_livraison'] = adresse_defaut
-
-    # Ajout des coordonnées GPS à la commande
-    if latitude:
-        cmd_kwargs['latitude'] = latitude
-    if longitude:
-        cmd_kwargs['longitude'] = longitude
-    if adresse_gps:
-        cmd_kwargs['adresse_gps'] = adresse_gps
-
-    # Utiliser une transaction pour garantir la cohérence
-    with transaction.atomic():
-        commande = Commande.objects.create(**cmd_kwargs)
-        
-        # Création des lignes de commande
-        for it in items:
-            pu = _unit_price(it.produit)
-            ci_kwargs = {'commande': commande, 'produit': it.produit, 'quantite': it.quantite}
-            if hasattr(CommandeItem, 'prix_unitaire'):
-                ci_kwargs['prix_unitaire'] = pu
-            elif hasattr(CommandeItem, 'prix'):
-                ci_kwargs['prix'] = pu
-            CommandeItem.objects.create(**ci_kwargs)
-        
-        # Vider le panier
-        PanierItem.objects.filter(user=request.user).delete()
+        else:
+            # Fallback: décrémenter le stock du premier ProduitTaille disponible
+            produit_tailles = ProduitTaille.objects.filter(produit=data['produit'], stock__gt=0).order_by('-stock')
+            reste = data['quantite']
+            for pt in produit_tailles:
+                if reste <= 0:
+                    break
+                decrement = min(pt.stock, reste)
+                pt.stock -= decrement
+                pt.save(update_fields=['stock'])
+                reste -= decrement
     
-    # Envoyer l'email après la transaction
-    envoyer_mail_statut_commande(commande)
+    # Vider le panier de session
+    request.session['panier'] = {}
+    request.session.modified = True
     
-    if 'panier' in request.session:
-        request.session['panier'] = {}
-        request.session.modified = True
+    # Envoyer l'email de confirmation pour la commande invité
+    from .utils import envoyer_mail_statut_commande
+    envoyer_mail_statut_commande(commande, is_guest=True)
+    
+    messages.success(request, f"Commande {commande.numero_commande} confirmée ! Vous recevrez un email de confirmation à {commande.email}.")
+    return redirect('boutique')
 
-    messages.success(request, "Commande confirmée avec localisation. Merci pour votre achat !")
-    return redirect('mes_commandes')
 
 # ===================================================================
 # GESTION DES ADRESSES
@@ -1092,8 +1576,8 @@ def livreur_profile(request):
                 return redirect('livreur_profile')
     
     # Calculer les stats pour l'affichage
-    total_livraisons = orders.count()
-    livraisons_reussies = orders.filter(statut='LIVREE').count()
+    total_livraisons = len(orders)
+    livraisons_reussies = len([o for o in orders if o.statut == 'LIVREE'])
     taux_reussite = round((livraisons_reussies / total_livraisons * 100) if total_livraisons > 0 else 0)
     revenus_generes = livraisons_reussies * 1000  # 1000 FCFA par livraison
     
@@ -1133,7 +1617,7 @@ def livreur_orders(request):
     # Filtrage par statut si nécessaire
     status_filter = request.GET.get('status')
     if status_filter:
-        orders = orders.filter(statut=status_filter)
+        orders = [o for o in orders if o.statut == status_filter]
     
     context = {
         'orders': orders,
@@ -1147,40 +1631,42 @@ def livreur_orders(request):
 def livreur_stats(request):
     """Statistiques détaillées du livreur"""
     from django.utils import timezone
+    from decimal import Decimal
     
     orders = _livreur_orders_queryset(request.user)
     stats = _livreur_stats(orders)
     
-    # Statistiques par mois avec revenus
-    from django.db.models import Count
-    from django.db.models.functions import TruncMonth
-    from decimal import Decimal
+    FRAIS_LIVRAISON = Decimal('2000')  # Frais de livraison fixes
     
-    FRAIS_LIVRAISON = Decimal('1000')
+    # Calculer les statistiques mensuelles manuellement (liste au lieu de QuerySet)
+    from collections import defaultdict
+    monthly_data = defaultdict(int)
     
-    monthly_stats = (
-        orders.filter(statut='LIVREE')  # Seulement les commandes livrées
-        .annotate(month=TruncMonth('date_commande'))
-        .values('month')
-        .annotate(
-            count=Count('id'),
-        )
-        .order_by('month')
-    )
+    for order in orders:
+        if order.statut == 'LIVREE':
+            month_key = order.date_commande.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            monthly_data[month_key] += 1
     
-    # Ajouter les revenus mensuels
-    for month_data in monthly_stats:
-        month_data['revenue'] = month_data['count'] * FRAIS_LIVRAISON
+    # Convertir en liste de dictionnaires
+    monthly_stats = [
+        {
+            'month': month,
+            'count': count,
+            'revenue': count * FRAIS_LIVRAISON
+        }
+        for month, count in sorted(monthly_data.items())
+    ]
     
     # Commandes à encaisser (EN_COURS et LIVREE)
-    orders_to_collect = orders.filter(
-        statut__in=['EN_COURS', 'LIVREE']
-    ).select_related('user', 'user__userprofile').order_by('-date_commande')[:10]
+    orders_to_collect = [
+        o for o in orders 
+        if o.statut in ['EN_COURS', 'LIVREE']
+    ][:10]
     
     context = {
         'stats': stats,
         'monthly_stats': monthly_stats,
-        'orders_count': orders.count(),
+        'orders_count': len(orders),
         'orders_to_collect': orders_to_collect,
         'today': timezone.now(),
         'active_tab': 'stats'
@@ -1188,60 +1674,80 @@ def livreur_stats(request):
     return render(request, 'livreur/stats.html', context)
 
 @login_required
-def livreur_map(request):
-    """Carte des livraisons"""
-    # Récupérer toutes les commandes avec user pour le nom du client
-    orders = _livreur_orders_queryset(request.user).select_related('user', 'user__userprofile')
-
-    # Liste des commandes ayant des coordonnées GPS (latitude ET longitude)
-    orders_with_coords = [
-        o for o in orders
-        if o.latitude is not None and o.longitude is not None
-    ]
-
-    stats = _livreur_stats(orders)
-    
-    context = {
-        'orders': orders,
-        'orders_with_coords': orders_with_coords,
-        'stats': stats,
-        'active_tab': 'map'
-    }
-    return render(request, 'livreur/map.html', context)
-
-@login_required
 @user_passes_test(is_livreur)
 def livreur_order_detail(request, pk):
-    """Détail d'une commande pour le livreur"""
-    order = get_object_or_404(Commande.objects.select_related('user'), pk=pk)
-    items = list(CommandeItem.objects.select_related('produit').filter(commande=order))
+    """Détail d'une commande pour le livreur (gère les deux types)"""
+    order = None
+    items = []
+    is_guest_order = False
+    
+    # Vérifier le paramètre type dans l'URL
+    order_type = request.GET.get('type', 'user')
+    
+    if order_type == 'guest':
+        # Commande invité UNIQUEMENT
+        try:
+            order = CommandeInvite.objects.get(pk=pk)
+            items = list(CommandeInviteItem.objects.select_related('produit').filter(commande=order))
+            is_guest_order = True
+        except CommandeInvite.DoesNotExist:
+            from django.http import Http404
+            raise Http404(f"Commande invité #{pk} introuvable")
+    else:
+        # Commande normale UNIQUEMENT
+        try:
+            order = Commande.objects.select_related('user').get(pk=pk)
+            items = list(CommandeItem.objects.select_related('produit').filter(commande=order))
+        except Commande.DoesNotExist:
+            from django.http import Http404
+            raise Http404(f"Commande #{pk} introuvable")
+    
+    # Calculer les totaux pour chaque item
     for it in items:
         unit = getattr(it, 'prix_unitaire', None) or getattr(it, 'prix', None) or 0
         qty = getattr(it, 'quantite', 0) or 0
         it.unit_price = unit
         it.line_total = unit * qty
 
-    return render(request, 'livreur/order_detail.html', {'order': order, 'items': items})
+    return render(request, 'livreur/order_detail.html', {
+        'order': order, 
+        'items': items,
+        'is_guest_order': is_guest_order
+    })
 
 @login_required
 @user_passes_test(is_livreur)
 @require_POST
 def livreur_order_accept(request, pk):
-    """Accepter une commande"""
-    order = get_object_or_404(Commande, pk=pk)
+    """Accepter une commande (supporte les deux types)"""
+    # Déterminer le type de commande
+    order_type = request.POST.get('type') or request.GET.get('type') or 'user'
+    
+    if order_type == 'guest':
+        order = get_object_or_404(CommandeInvite, pk=pk)
+        is_guest = True
+    else:
+        order = get_object_or_404(Commande, pk=pk)
+        is_guest = False
 
     if hasattr(order, 'livreur') and not getattr(order, 'livreur', None):
         order.livreur = request.user
 
     if getattr(order, 'statut', None) == 'EN_ATTENTE':
+        statut_precedent = order.statut
         order.statut = 'EN_COURS'
         update_fields = ['statut']
         if hasattr(order, 'livreur'):
             update_fields.append('livreur')
         order.save(update_fields=update_fields)
-        messages.success(request, f"Commande #{order.id} acceptée.")
+        
+        # Envoyer l'email de notification EN_COURS
+        from .utils import envoyer_mail_statut_commande
+        envoyer_mail_statut_commande(order, statut_precedent=statut_precedent, is_guest=is_guest)
+        
+        messages.success(request, f"Commande {order.numero_commande} acceptée.")
     else:
-        messages.info(request, f"Commande #{order.id} déjà {order.statut or 'traitée'}.")
+        messages.info(request, f"Commande {order.numero_commande} déjà {order.statut or 'traitée'}.")
 
     return redirect(request.POST.get('next') or 'livreur_orders')
 
@@ -1249,25 +1755,59 @@ def livreur_order_accept(request, pk):
 @user_passes_test(is_livreur)
 @require_POST
 def livreur_order_update_status(request, pk):
-    """Mettre à jour le statut d'une commande"""
+    """Mettre à jour le statut d'une commande (gère les deux types)"""
     from .utils import send_delivery_email_with_receipt
     
-    order = get_object_or_404(Commande, pk=pk)
-    action = request.POST.get('action', '')
+    # Chercher dans les deux types de commandes
+    order = None
+    is_guest = False
     
+    # Vérifier le type de commande - priorité au POST, puis GET
+    order_type = request.POST.get('type') or request.GET.get('type') or 'user'
+    
+    # Debug
+    print(f"[DEBUG] livreur_order_update_status: pk={pk}, order_type={order_type}")
+    
+    if order_type == 'guest':
+        # Commande invité UNIQUEMENT
+        try:
+            order = CommandeInvite.objects.get(pk=pk)
+            is_guest = True
+            print(f"[DEBUG] Trouvé CommandeInvite: {order.numero_commande}, statut={order.statut}")
+        except CommandeInvite.DoesNotExist:
+            messages.error(request, f"Commande invité #{pk} introuvable.")
+            return redirect(request.POST.get('next') or 'livreur_orders')
+    else:
+        # Commande normale UNIQUEMENT
+        try:
+            order = Commande.objects.get(pk=pk)
+            print(f"[DEBUG] Trouvé Commande: {order.numero_commande}, statut={order.statut}")
+        except Commande.DoesNotExist:
+            messages.error(request, f"Commande #{pk} introuvable.")
+            return redirect(request.POST.get('next') or 'livreur_orders')
+    
+    action = request.POST.get('action', '')
     current_status = getattr(order, 'statut', None)
+    
+    print(f"[DEBUG] Action={action}, current_status={current_status}")
     
     if action == 'accept' and current_status == 'EN_ATTENTE':
         # Accepter la commande
         if hasattr(order, 'livreur') and not getattr(order, 'livreur', None):
             order.livreur = request.user
         
+        statut_precedent = order.statut
         order.statut = 'EN_COURS'
         update_fields = ['statut']
         if hasattr(order, 'livreur'):
             update_fields.append('livreur')
         
         order.save(update_fields=update_fields)
+        
+        # Envoyer l'email de notification EN_COURS
+        from .utils import envoyer_mail_statut_commande
+        envoyer_mail_statut_commande(order, statut_precedent=statut_precedent, is_guest=is_guest)
+        
         messages.success(request, f"Commande #{order.id} acceptée.")
         
     elif action == 'complete' and current_status == 'EN_COURS':
@@ -1281,18 +1821,23 @@ def livreur_order_update_status(request, pk):
             update_fields.append('date_livraison')
         
         order.save(update_fields=update_fields)
+        
+        # Envoyer l'email de notification LIVREE
+        from .utils import envoyer_mail_statut_commande
+        envoyer_mail_statut_commande(order, statut_precedent='EN_COURS', is_guest=is_guest)
+        
         messages.success(request, f"Commande #{order.id} marquée comme livrée.")
         
-        # ✨ NOUVEAU : Envoyer l'email avec le reçu PDF au client
+        # ✨ Envoyer l'email avec le reçu PDF au client
         try:
-            email_sent = send_delivery_email_with_receipt(order)
+            email_sent = send_delivery_email_with_receipt(order, is_guest=is_guest)
             if email_sent:
-                messages.success(request, f"📧 Email de confirmation envoyé au client avec le reçu PDF.")
+                messages.success(request, f"📧 Reçu PDF envoyé au client par email.")
             else:
-                messages.warning(request, f"⚠️ Commande livrée mais l'email n'a pas pu être envoyé.")
+                messages.warning(request, f"⚠️ Le reçu PDF n'a pas pu être envoyé.")
         except Exception as e:
-            messages.warning(request, f"⚠️ Commande livrée mais erreur lors de l'envoi de l'email: {str(e)}")
-            print(f"Erreur envoi email: {e}")
+            messages.warning(request, f"⚠️ Erreur lors de l'envoi du reçu PDF: {str(e)}")
+            print(f"Erreur envoi reçu PDF: {e}")
             import traceback
             traceback.print_exc()
         
@@ -1309,30 +1854,79 @@ def livreur_order_update_status(request, pk):
 def admin_dashboard(request):
     """Tableau de bord administrateur"""
     total_products = Produit.objects.count()
-    total_orders = Commande.objects.count()
+    # Compter toutes les commandes (clients + invités)
+    total_orders = Commande.objects.count() + CommandeInvite.objects.count()
     total_users = User.objects.count()
-    revenue = Commande.objects.aggregate(total=Sum('total'))['total'] or 0
+    # Revenus de toutes les commandes
+    revenue_clients = Commande.objects.aggregate(total=Sum('total'))['total'] or 0
+    revenue_invites = CommandeInvite.objects.aggregate(total=Sum('total'))['total'] or 0
+    revenue = revenue_clients + revenue_invites
 
-    per_day = (
+    # Commandes par jour (clients)
+    per_day_clients = (
         Commande.objects
         .annotate(day=TruncDate('date_commande'))
         .values('day')
         .annotate(c=Count('id'))
         .order_by('day')
     )
+    
+    # Commandes par jour (invités)
+    per_day_invites = (
+        CommandeInvite.objects
+        .annotate(day=TruncDate('date_commande'))
+        .values('day')
+        .annotate(c=Count('id'))
+        .order_by('day')
+    )
+    
+    # Fusionner les données par jour
+    daily_counts = {}
+    for d in per_day_clients:
+        if d['day']:
+            daily_counts[d['day']] = daily_counts.get(d['day'], 0) + d['c']
+    for d in per_day_invites:
+        if d['day']:
+            daily_counts[d['day']] = daily_counts.get(d['day'], 0) + d['c']
+    
+    # Trier par date
+    sorted_days = sorted(daily_counts.keys())
+    chart_days = [d.strftime('%d/%m') for d in sorted_days]
+    chart_counts = [daily_counts[d] for d in sorted_days]
+    
+    # Top produits (clients + invités)
+    top_clients = (
+        CommandeItem.objects
+        .values('produit__nom')
+        .annotate(qty=Sum('quantite'))
+    )
+    top_invites = (
+        CommandeInviteItem.objects
+        .values('produit__nom')
+        .annotate(qty=Sum('quantite'))
+    )
+    
+    # Fusionner les top produits
+    product_totals = {}
+    for item in top_clients:
+        if item['produit__nom']:
+            product_totals[item['produit__nom']] = product_totals.get(item['produit__nom'], 0) + item['qty']
+    for item in top_invites:
+        if item['produit__nom']:
+            product_totals[item['produit__nom']] = product_totals.get(item['produit__nom'], 0) + item['qty']
+    
+    # Trier et prendre les 5 premiers
+    top_products = sorted(product_totals.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_products = [{'produit__nom': name, 'qty': qty} for name, qty in top_products]
+    
     context = {
         'total_products': total_products,
         'total_orders': total_orders,
         'total_users': total_users,
         'revenue': revenue,
-        'chart_days': json.dumps([d['day'].strftime('%d/%m') for d in per_day]),
-        'chart_counts': json.dumps([d['c'] for d in per_day]),
-        'top_products': (
-            CommandeItem.objects
-            .values('produit__nom')
-            .annotate(qty=Sum('quantite'))
-            .order_by('-qty')[:5]
-        ),
+        'chart_days': json.dumps(chart_days),
+        'chart_counts': json.dumps(chart_counts),
+        'top_products': top_products,
         'recent_orders': Commande.objects.order_by('-date_commande')[:10],
     }
     return render(request, 'adminpanel/dashboard.html', context)
@@ -1374,12 +1968,19 @@ def admin_products(request):
     # Récupérer toutes les catégories pour les filtres
     categories = Categorie.objects.all().order_by('nom')
     
-    # Calculer les statistiques de stock
+    # Calculer les statistiques de stock en tenant compte des tailles
     all_products = Produit.objects.all()
     total_products = all_products.count()
-    products_in_stock = all_products.filter(stock__gt=0).count()
-    products_low_stock = all_products.filter(stock__gt=0, stock__lt=5).count()
-    products_out_of_stock = all_products.filter(stock=0).count()
+    
+    # Compter les tailles par niveau de stock
+    tailles_out_of_stock = ProduitTaille.objects.filter(stock=0).count()
+    tailles_low_stock = ProduitTaille.objects.filter(stock__gt=0, stock__lt=5).count()
+    
+    # Produits en stock = tous les produits avec au moins une taille en stock
+    products_in_stock = 0
+    for p in all_products:
+        if p.stock_total > 0:
+            products_in_stock += 1
     
     return render(request, 'adminpanel/products.html', {
         'produits': page_obj.object_list,
@@ -1388,8 +1989,9 @@ def admin_products(request):
         'categories': categories,
         'total_products': total_products,
         'products_in_stock': products_in_stock,
-        'products_low_stock': products_low_stock,
-        'products_out_of_stock': products_out_of_stock,
+        'products_low_stock': tailles_low_stock,  # Nombre de tailles avec stock bas
+        'products_out_of_stock': tailles_out_of_stock,  # Nombre de tailles en rupture
+        'tailles_out_of_stock': tailles_out_of_stock,
     })
 
 @admin_required
@@ -1403,22 +2005,111 @@ def admin_categories(request):
 def admin_product_create(request):
     """Création d'un produit"""
     form = ProduitForm(request.POST or None, request.FILES or None)
+    all_tailles = Taille.objects.all().order_by('ordre')
+    
+    # Préparer les tailles avec stock 0 pour l'affichage
+    tailles_avec_stock = []
+    for taille in all_tailles:
+        tailles_avec_stock.append({
+            'taille': taille,
+            'stock': 0
+        })
+    
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        produit = form.save(commit=False)
+        # Forcer a_tailles à True (toujours activé)
+        produit.a_tailles = True
+        produit.save()
+        form.save_m2m()  # Sauvegarder les relations many-to-many (catégories)
+        
+        # Sauvegarder les stocks par taille (toujours)
+        for taille in all_tailles:
+            stock_key = f'taille_stock_{taille.id}'
+            stock_value = request.POST.get(stock_key, 0)
+            try:
+                stock_value = int(stock_value)
+            except ValueError:
+                stock_value = 0
+            
+            ProduitTaille.objects.update_or_create(
+                produit=produit,
+                taille=taille,
+                defaults={'stock': stock_value}
+            )
+        
         messages.success(request, "Produit créé avec succès.")
+        
+        # Vérifier si on doit continuer l'édition
+        if 'save_continue' in request.POST:
+            return redirect('admin_product_update', pk=produit.pk)
         return redirect('admin_products')
-    return render(request, 'adminpanel/product_form.html', {'form': form, 'mode': 'create'})
+    
+    # Préparer les tailles avec un stock initial de 0 (utiliser TailleStock pour le template)
+    tailles_avec_stock = [TailleStock(taille, 0) for taille in all_tailles]
+    
+    return render(request, 'adminpanel/product_form.html', {
+        'form': form, 
+        'mode': 'create',
+        'all_tailles': all_tailles,
+        'tailles': tailles_avec_stock,
+    })
 
 @staff_required
 def admin_product_update(request, pk):
     """Modification d'un produit"""
     produit = get_object_or_404(Produit, pk=pk)
     form = ProduitForm(request.POST or None, request.FILES or None, instance=produit)
+    all_tailles = Taille.objects.all().order_by('ordre')
+    
+    # Récupérer les tailles existantes pour ce produit
+    tailles_produit = ProduitTaille.objects.filter(produit=produit).select_related('taille').order_by('taille__ordre')
+    
+    # Créer un dictionnaire des stocks existants
+    stocks_existants = {pt.taille.id: pt.stock for pt in tailles_produit}
+    
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        produit = form.save(commit=False)
+        # Forcer a_tailles à True (toujours activé)
+        produit.a_tailles = True
+        produit.save()
+        form.save_m2m()  # Sauvegarder les relations many-to-many (catégories)
+        
+        # Sauvegarder les stocks par taille (toujours)
+        for taille in all_tailles:
+            stock_key = f'taille_stock_{taille.id}'
+            stock_value = request.POST.get(stock_key, 0)
+            try:
+                stock_value = int(stock_value)
+            except ValueError:
+                stock_value = 0
+            
+            # Mettre à jour ou créer l'entrée ProduitTaille
+            ProduitTaille.objects.update_or_create(
+                produit=produit,
+                taille=taille,
+                defaults={'stock': stock_value}
+            )
+        
         messages.success(request, "Produit modifié avec succès.")
+        
+        # Vérifier si on doit continuer l'édition
+        if 'save_continue' in request.POST:
+            return redirect('admin_product_update', pk=produit.pk)
         return redirect('admin_products')
-    return render(request, 'adminpanel/product_form.html', {'form': form, 'mode': 'update', 'produit': produit})
+    
+    # Préparer les tailles avec leurs stocks pour l'affichage (utiliser TailleStock pour le template)
+    tailles_avec_stock = [
+        TailleStock(taille, stocks_existants.get(taille.id, 0)) 
+        for taille in all_tailles
+    ]
+    
+    return render(request, 'adminpanel/product_form.html', {
+        'form': form, 
+        'mode': 'update', 
+        'produit': produit,
+        'all_tailles': all_tailles,
+        'tailles': tailles_avec_stock,
+    })
 
 @staff_required
 def admin_product_delete(request, pk):
@@ -1434,23 +2125,35 @@ def admin_product_delete(request, pk):
 @staff_required
 def admin_category_create(request):
     """Création d'une catégorie"""
-    form = CategorieForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, "Catégorie créée avec succès.")
-        return redirect('admin_categories')
+    if request.method == 'POST':
+        form = CategorieForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Catégorie créée avec succès.")
+            return redirect('admin_categories')
+    else:
+        form = CategorieForm()
     return render(request, 'adminpanel/category_form.html', {'form': form, 'mode': 'create'})
 
 @staff_required
 def admin_category_update(request, pk):
     """Modification d'une catégorie"""
     categorie = get_object_or_404(Categorie, pk=pk)
-    form = CategorieForm(request.POST or None, instance=categorie)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, "Catégorie modifiée avec succès.")
-        return redirect('admin_categories')
-    return render(request, 'adminpanel/category_form.html', {'form': form, 'mode': 'update', 'categorie': categorie})
+    if request.method == 'POST':
+        form = CategorieForm(request.POST, request.FILES, instance=categorie)
+        # Gestion de la suppression d'image
+        if request.POST.get('remove_image') == '1':
+            if categorie.image:
+                categorie.image.delete(save=False)
+                categorie.image = None
+                categorie.save()
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Catégorie modifiée avec succès.")
+            return redirect('admin_categories')
+    else:
+        form = CategorieForm(instance=categorie)
+    return render(request, 'adminpanel/category_form.html', {'form': form, 'mode': 'update', 'category': categorie})
 
 @staff_required
 def admin_category_delete(request, pk):
@@ -1461,6 +2164,20 @@ def admin_category_delete(request, pk):
         messages.success(request, "Catégorie supprimée.")
         return redirect('admin_categories')
     return render(request, 'adminpanel/category_confirm_delete.html', {'categorie': categorie})
+
+@staff_required
+def admin_category_delete_image(request, pk):
+    """Suppression de l'image d'une catégorie via AJAX"""
+    from django.http import JsonResponse
+    if request.method == 'POST':
+        categorie = get_object_or_404(Categorie, pk=pk)
+        if categorie.image:
+            categorie.image.delete(save=False)
+            categorie.image = None
+            categorie.save()
+            return JsonResponse({'success': True, 'message': 'Image supprimée avec succès'})
+        return JsonResponse({'success': False, 'message': 'Aucune image à supprimer'})
+    return JsonResponse({'success': False, 'message': 'Méthode non autorisée'}, status=405)
 
 # Gestion des livreurs
 @admin_required
@@ -1644,14 +2361,388 @@ def admin_client_detail(request, user_id):
     }
     return render(request, 'adminpanel/client_detail.html', context)
 
+@admin_required
+def admin_send_email_client(request, user_id):
+    """Envoyer un email à un client depuis le panneau admin"""
+    from django.core.mail import EmailMultiAlternatives
+    from django.conf import settings
+    import json
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Méthode non autorisée'}, status=405)
+    
+    try:
+        client = get_object_or_404(User, id=user_id, is_staff=False)
+        
+        if not client.email:
+            return JsonResponse({'success': False, 'message': 'Ce client n\'a pas d\'adresse email'})
+        
+        # Récupérer les données du formulaire
+        data = json.loads(request.body)
+        subject = data.get('subject', '').strip()
+        message = data.get('message', '').strip()
+        
+        if not subject:
+            return JsonResponse({'success': False, 'message': 'Le sujet est requis'})
+        if not message:
+            return JsonResponse({'success': False, 'message': 'Le message est requis'})
+        
+        client_name = client.first_name or client.username
+        
+        # Message texte brut (important pour éviter le spam)
+        text_message = f"""Bonjour {client_name},
+
+{message}
+
+---
+Cordialement,
+L'équipe SadibouShop
+
+Cet email vous a été envoyé par SadibouShop.
+Si vous avez des questions, n'hésitez pas à nous contacter à {settings.DEFAULT_FROM_EMAIL}
+"""
+        
+        # Construire le message HTML avec logo SadibouShop
+        html_message = f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <!-- Header avec Logo SadibouShop -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 25px 30px; text-align: center;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                            <tr>
+                                                <td style="padding-right: 12px; vertical-align: middle;">
+                                                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); border-radius: 10px; text-align: center; line-height: 45px;">
+                                                        <span style="font-size: 24px;">👔</span>
+                                                    </div>
+                                                </td>
+                                                <td style="vertical-align: middle;">
+                                                    <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;">
+                                                        SADIBOU<span style="color: #ffc107;">SHOP</span>
+                                                    </h1>
+                                                    <p style="color: #888888; margin: 2px 0 0 0; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                                        Mode & Tendances
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 35px 30px;">
+                            <p style="color: #333333; font-size: 16px; line-height: 1.5; margin: 0 0 20px 0;">
+                                Bonjour <strong>{client_name}</strong>,
+                            </p>
+                            <div style="color: #555555; font-size: 15px; line-height: 1.7; white-space: pre-wrap;">{message}</div>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1a1a1a; padding: 25px 30px; text-align: center;">
+                            <p style="color: #ffc107; font-size: 16px; font-weight: 700; margin: 0 0 5px 0;">
+                                SADIBOU<span style="color: #ffffff;">SHOP</span>
+                            </p>
+                            <p style="color: #888888; font-size: 11px; margin: 0 0 15px 0; letter-spacing: 1px;">
+                                MODE & TENDANCES
+                            </p>
+                            <p style="color: #666666; font-size: 12px; line-height: 1.6; margin: 0;">
+                                Cordialement,<br>
+                                <strong style="color: #888;">L'équipe SadibouShop</strong>
+                            </p>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                                <p style="color: #555555; font-size: 11px; margin: 0;">
+                                    Pour toute question : {settings.DEFAULT_FROM_EMAIL}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
+        
+        # Utiliser EmailMultiAlternatives pour un meilleur contrôle des headers
+        email = EmailMultiAlternatives(
+            subject=subject,  # Sans préfixe pour éviter le look "spam"
+            body=text_message,
+            from_email=f"SadibouShop <{settings.DEFAULT_FROM_EMAIL}>",
+            to=[client.email],
+            reply_to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        
+        # Ajouter la version HTML
+        email.attach_alternative(html_message, "text/html")
+        
+        # Headers supplémentaires pour améliorer la délivrabilité
+        email.extra_headers = {
+            'X-Priority': '3',  # Priorité normale
+            'X-Mailer': 'SadibouShop Mailer',
+        }
+        
+        # Envoyer l'email
+        email.send(fail_silently=False)
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'Email envoyé avec succès à {client.email}'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Données invalides'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Erreur lors de l\'envoi: {str(e)}'})
+
+
+@admin_required
+def admin_send_mass_email(request):
+    """Envoyer un email promotionnel à tous les clients avec possibilité d'ajouter une image"""
+    from django.core.mail import EmailMultiAlternatives
+    from django.conf import settings
+    from email.mime.image import MIMEImage
+    import base64
+    import uuid
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Méthode non autorisée'}, status=405)
+    
+    try:
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
+        image = request.FILES.get('image')
+        
+        if not subject:
+            return JsonResponse({'success': False, 'message': 'Le sujet est requis'})
+        if not message:
+            return JsonResponse({'success': False, 'message': 'Le message est requis'})
+        
+        # Récupérer tous les clients actifs avec email
+        clients = User.objects.filter(is_staff=False, is_active=True).exclude(email='').exclude(email__isnull=True)
+        
+        if not clients.exists():
+            return JsonResponse({'success': False, 'message': 'Aucun client avec email trouvé'})
+        
+        # Préparer l'image si fournie
+        image_cid = None
+        image_data = None
+        if image:
+            image_cid = f"product_image_{uuid.uuid4().hex[:8]}"
+            image_data = image.read()
+            image_content_type = image.content_type
+        
+        success_count = 0
+        error_count = 0
+        
+        for client in clients:
+            try:
+                client_name = client.first_name or client.username
+                
+                # Message texte brut
+                text_message = f"""Bonjour {client_name},
+
+{message}
+
+Visitez notre boutique : https://sadiboushop.com
+
+---
+Cordialement,
+L'equipe SadibouShop
+
+SadibouShop - Votre boutique de confiance
+Email: {settings.DEFAULT_FROM_EMAIL}
+
+Vous recevez cet email car vous etes client chez SadibouShop.
+Pour ne plus recevoir nos emails, repondez a ce message avec "STOP".
+"""
+                
+                # Construire le message HTML avec image - VERSION ANTI-SPAM
+                image_html = ""
+                if image_cid:
+                    image_html = f'''
+                    <tr>
+                        <td style="padding: 20px 30px; text-align: center;">
+                            <img src="cid:{image_cid}" alt="Nouveau produit SadibouShop" style="max-width: 100%; height: auto; border-radius: 8px;">
+                        </td>
+                    </tr>
+                    '''
+                
+                html_message = f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 30px 20px;">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <!-- Header avec Logo SadibouShop -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 25px 30px; text-align: center;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                            <tr>
+                                                <td style="padding-right: 12px; vertical-align: middle;">
+                                                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); border-radius: 10px; text-align: center; line-height: 45px;">
+                                                        <span style="font-size: 24px;">👔</span>
+                                                    </div>
+                                                </td>
+                                                <td style="vertical-align: middle;">
+                                                    <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;">
+                                                        SADIBOU<span style="color: #ffc107;">SHOP</span>
+                                                    </h1>
+                                                    <p style="color: #888888; margin: 2px 0 0 0; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                                        Mode & Tendances
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="color: #333333; font-size: 16px; line-height: 1.5; margin: 0 0 20px 0;">
+                                Bonjour {client_name},
+                            </p>
+                            <div style="color: #444444; font-size: 15px; line-height: 1.7; white-space: pre-wrap;">{message}</div>
+                        </td>
+                    </tr>
+                    <!-- Image -->
+                    {image_html}
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 20px 30px 30px 30px; text-align: center;">
+                            <a href="https://sadiboushop.com" style="display: inline-block; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); color: #1a1a1a; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 15px rgba(255,193,7,0.3);">
+                                Visiter notre boutique
+                            </a>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1a1a1a; padding: 25px 30px; text-align: center;">
+                            <p style="color: #ffc107; font-size: 16px; font-weight: 700; margin: 0 0 5px 0;">
+                                SADIBOU<span style="color: #ffffff;">SHOP</span>
+                            </p>
+                            <p style="color: #888888; font-size: 11px; margin: 0 0 15px 0; letter-spacing: 1px;">
+                                MODE & TENDANCES
+                            </p>
+                            <p style="color: #666666; font-size: 12px; line-height: 1.6; margin: 0;">
+                                Cordialement,<br>
+                                <strong style="color: #888;">L'équipe SadibouShop</strong>
+                            </p>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                                <p style="color: #555555; font-size: 10px; margin: 0;">
+                                    SadibouShop - Votre boutique de confiance<br>
+                                    Contact: {settings.DEFAULT_FROM_EMAIL}<br><br>
+                                    Vous recevez cet email car vous etes inscrit sur SadibouShop.<br>
+                                    Pour vous desabonner, repondez "STOP" a cet email.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
+                
+                # Créer l'email
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_message,
+                    from_email=f"SadibouShop <{settings.DEFAULT_FROM_EMAIL}>",
+                    to=[client.email],
+                    reply_to=[settings.DEFAULT_FROM_EMAIL],
+                )
+                
+                # Ajouter la version HTML
+                email.attach_alternative(html_message, "text/html")
+                email.mixed_subtype = 'related'
+                
+                # Attacher l'image si présente
+                if image_data:
+                    mime_image = MIMEImage(image_data)
+                    mime_image.add_header('Content-ID', f'<{image_cid}>')
+                    mime_image.add_header('Content-Disposition', 'inline', filename='produit.jpg')
+                    email.attach(mime_image)
+                
+                # Headers
+                email.extra_headers = {
+                    'X-Priority': '3',
+                    'X-Mailer': 'SadibouShop Newsletter',
+                    'List-Unsubscribe': f'<mailto:{settings.DEFAULT_FROM_EMAIL}?subject=Unsubscribe>',
+                }
+                
+                email.send(fail_silently=False)
+                success_count += 1
+                
+            except Exception as e:
+                error_count += 1
+                print(f"Erreur envoi à {client.email}: {str(e)}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Email envoyé à {success_count} client(s) avec succès!',
+            'details': {
+                'success': success_count,
+                'errors': error_count,
+                'total': clients.count()
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Erreur: {str(e)}'})
+
+
 # Gestion des commandes
 @staff_required
 def admin_orders_list(request):
-    """Liste des commandes pour l'admin"""
+    """Liste des commandes pour l'admin (avec et sans compte)"""
+    from itertools import chain
+    from boutique.models import NotificationAdminVue
+    
     q = request.GET.get('q', '')
-    status = request.GET.get('status')
+    status = request.GET.get('status', '')
 
-    orders = Commande.objects.select_related('user').order_by('-id')
+    # Récupérer les IDs des commandes déjà vues par cet admin
+    commandes_vues_ids = set(NotificationAdminVue.objects.filter(
+        admin=request.user,
+        type_notification='NOUVELLE_COMMANDE'
+    ).values_list('objet_id', flat=True))
+    
+    commandes_invites_vues_ids = set(NotificationAdminVue.objects.filter(
+        admin=request.user,
+        type_notification='NOUVELLE_COMMANDE_INVITE'
+    ).values_list('objet_id', flat=True))
+
+    # Récupérer les commandes classiques
+    orders = Commande.objects.select_related('user').all()
     if q:
         orders = orders.filter(
             Q(id__icontains=q) |
@@ -1659,23 +2750,125 @@ def admin_orders_list(request):
             Q(user__first_name__icontains=q) |
             Q(user__last_name__icontains=q)
         )
-    if status:
+    if status and status != '':
         orders = orders.filter(statut=status)
+    
+    # Récupérer les commandes invités
+    orders_invite = CommandeInvite.objects.all()
+    if q:
+        orders_invite = orders_invite.filter(
+            Q(id__icontains=q) |
+            Q(prenom__icontains=q) |
+            Q(nom__icontains=q) |
+            Q(email__icontains=q)
+        )
+    if status and status != '':
+        orders_invite = orders_invite.filter(statut=status)
+    
+    # Marquer chaque commande si elle est "nouvelle" (non vue et en attente/en cours)
+    orders_list = list(orders)
+    for order in orders_list:
+        order.is_new = (
+            order.id not in commandes_vues_ids and 
+            order.statut in ['EN_ATTENTE', 'EN_COURS']
+        )
+    
+    orders_invite_list = list(orders_invite)
+    for order in orders_invite_list:
+        order.is_new = (
+            order.id not in commandes_invites_vues_ids and 
+            order.statut in ['EN_ATTENTE', 'EN_COURS']
+        )
+    
+    # Combiner et trier par date décroissante
+    all_orders = sorted(
+        chain(orders_list, orders_invite_list),
+        key=lambda x: x.date_commande,
+        reverse=True
+    )
+
+    # Calculer les stats sur les deux types de commandes
+    total_commandes = Commande.objects.count() + CommandeInvite.objects.count()
+    total_pending = Commande.objects.filter(statut='EN_ATTENTE').count() + CommandeInvite.objects.filter(statut='EN_ATTENTE').count()
+    total_in_progress = Commande.objects.filter(statut='EN_COURS').count() + CommandeInvite.objects.filter(statut='EN_COURS').count()
+    total_completed = Commande.objects.filter(statut='LIVREE').count() + CommandeInvite.objects.filter(statut='LIVREE').count()
+    
+    revenue_user = Commande.objects.filter(statut='LIVREE').aggregate(Sum('total'))['total__sum'] or 0
+    revenue_guest = CommandeInvite.objects.filter(statut='LIVREE').aggregate(Sum('total'))['total__sum'] or 0
+    total_revenue = revenue_user + revenue_guest
 
     stats = {
-        'all': Commande.objects.count(),
-        'pending': Commande.objects.filter(statut='EN_ATTENTE').count(),
-        'in_progress': Commande.objects.filter(statut='EN_COURS').count(),
-        'completed': Commande.objects.filter(statut='LIVREE').count(),
-        'revenue': Commande.objects.filter(statut='LIVREE').aggregate(Sum('total'))['total__sum'] or 0,
+        'all': total_commandes,
+        'pending': total_pending,
+        'in_progress': total_in_progress,
+        'completed': total_completed,
+        'revenue': total_revenue,
     }
-    return render(request, 'adminpanel/orders_list.html', {'orders': orders, 'stats': stats, 'q': q})
+    
+    return render(request, 'adminpanel/orders_list.html', {'orders': all_orders, 'stats': stats, 'q': q, 'status_filter': status})
 
 @staff_required
 def admin_order_detail(request, pk):
-    """Détail d'une commande pour l'admin"""
-    order = get_object_or_404(Commande.objects.select_related('user'), pk=pk)
-    items = list(CommandeItem.objects.select_related('produit').filter(commande=order))
+    """Détail d'une commande pour l'admin (gère les deux types)"""
+    from boutique.models import NotificationAdminVue
+    
+    order = None
+    items = []
+    is_guest_order = False
+    
+    # Vérifier le type de commande
+    order_type = request.GET.get('type', 'user')
+    
+    if order_type == 'guest':
+        try:
+            order = CommandeInvite.objects.get(pk=pk)
+            items = list(CommandeInviteItem.objects.select_related('produit').filter(commande=order))
+            is_guest_order = True
+            
+            # Marquer comme vue si pas encore fait
+            NotificationAdminVue.objects.get_or_create(
+                admin=request.user,
+                type_notification='NOUVELLE_COMMANDE_INVITE',
+                objet_id=pk
+            )
+        except CommandeInvite.DoesNotExist:
+            try:
+                order = Commande.objects.select_related('user').get(pk=pk)
+                items = list(CommandeItem.objects.select_related('produit').filter(commande=order))
+                
+                # Marquer comme vue
+                NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='NOUVELLE_COMMANDE',
+                    objet_id=pk
+                )
+            except Commande.DoesNotExist:
+                raise Http404("Commande introuvable")
+    else:
+        try:
+            order = Commande.objects.select_related('user').get(pk=pk)
+            items = list(CommandeItem.objects.select_related('produit').filter(commande=order))
+            
+            # Marquer comme vue
+            NotificationAdminVue.objects.get_or_create(
+                admin=request.user,
+                type_notification='NOUVELLE_COMMANDE',
+                objet_id=pk
+            )
+        except Commande.DoesNotExist:
+            try:
+                order = CommandeInvite.objects.get(pk=pk)
+                items = list(CommandeInviteItem.objects.select_related('produit').filter(commande=order))
+                is_guest_order = True
+                
+                # Marquer comme vue
+                NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='NOUVELLE_COMMANDE_INVITE',
+                    objet_id=pk
+                )
+            except CommandeInvite.DoesNotExist:
+                raise Http404("Commande introuvable")
 
     for it in items:
         unit = getattr(it, 'prix_unitaire', None)
@@ -1686,31 +2879,56 @@ def admin_order_detail(request, pk):
         it.unit_price = unit
         it.line_total = unit * (getattr(it, 'quantite', 0) or 0)
 
-    return render(request, 'adminpanel/order_detail.html', {'order': order, 'items': items})
+    return render(request, 'adminpanel/order_detail.html', {
+        'order': order, 
+        'items': items,
+        'is_guest_order': is_guest_order
+    })
 
 @staff_required
 def admin_cancel_order(request, pk):
-    """Annuler une commande (uniquement si elle n'est pas livrée)"""
-    order = get_object_or_404(Commande, pk=pk)
+    """Annuler une commande (clients ou invités) et envoyer un email de notification"""
+    order_type = request.GET.get('type', 'user')
+    
+    # Déterminer le type de commande
+    if order_type == 'guest':
+        order = get_object_or_404(CommandeInvite, pk=pk)
+        is_guest = True
+        redirect_url = 'admin_orders'
+    else:
+        order = get_object_or_404(Commande, pk=pk)
+        is_guest = False
+        redirect_url = 'admin_orders'
     
     # Vérifier que la commande n'est pas déjà livrée
     if order.statut == 'LIVREE':
         messages.error(request, 'Impossible d\'annuler une commande déjà livrée.')
-        return redirect('admin_order_detail', pk=pk)
+        return redirect(redirect_url)
     
     # Vérifier que la commande n'est pas déjà annulée
     if order.statut == 'ANNULEE':
         messages.warning(request, 'Cette commande est déjà annulée.')
-        return redirect('admin_order_detail', pk=pk)
+        return redirect(redirect_url)
     
     if request.method == 'POST':
+        # Sauvegarder l'ancien statut
+        ancien_statut = order.statut
+        
         # Annuler la commande
         order.statut = 'ANNULEE'
         order.save()
-        messages.success(request, f'La commande #{order.id} a été annulée avec succès.')
-        return redirect('admin_orders')
+        
+        # Envoyer l'email d'annulation
+        try:
+            envoyer_mail_statut_commande(order, statut_precedent=ancien_statut, is_guest=is_guest)
+            messages.success(request, f'La commande {order.numero_commande} a été annulée et un email a été envoyé au client.')
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email d'annulation: {e}")
+            messages.success(request, f'La commande {order.numero_commande} a été annulée. (Email non envoyé)')
+        
+        return redirect(redirect_url)
     
-    return redirect('admin_order_detail', pk=pk)
+    return redirect(redirect_url)
 
 @login_required
 def livreur_change_password(request):
@@ -2052,30 +3270,46 @@ def admin_avis_marquer_tous_examines(request):
 # VUES - MESSAGERIE SUPPORT CLIENT
 # ========================================================================
 
-@login_required
 def contact_support(request):
-    """Formulaire de contact pour les clients"""
+    """Formulaire de contact pour les clients et visiteurs"""
     if request.method == 'POST':
         sujet = request.POST.get('sujet')
         message_texte = request.POST.get('message')
         priorite = request.POST.get('priorite', 'NORMALE')
-        email_contact = request.POST.get('email_contact', request.user.email)
+        nom_visiteur = request.POST.get('nom_visiteur', '')
+        email_contact = request.POST.get('email_contact', '')
         telephone_contact = request.POST.get('telephone_contact', '')
+        
+        # Si l'utilisateur est connecté, utiliser ses infos
+        if request.user.is_authenticated:
+            email_contact = request.POST.get('email_contact', request.user.email) or request.user.email
         
         if not sujet or not message_texte:
             messages.error(request, "Veuillez remplir tous les champs obligatoires.")
             return redirect('contact_support')
         
+        # Valider l'email pour les visiteurs
+        if not request.user.is_authenticated and not email_contact:
+            messages.error(request, "Veuillez fournir une adresse email pour que nous puissions vous répondre.")
+            return redirect('contact_support')
+        
         # Créer le message
         from boutique.models import MessageSupport
         message_support = MessageSupport.objects.create(
-            client=request.user,
+            client=request.user if request.user.is_authenticated else None,
+            nom_visiteur=nom_visiteur if not request.user.is_authenticated else None,
             sujet=sujet,
             message=message_texte,
             priorite=priorite,
             email_contact=email_contact,
             telephone_contact=telephone_contact
         )
+        
+        # Déterminer le nom pour l'email
+        if request.user.is_authenticated:
+            client_nom = request.user.get_full_name() or request.user.username
+        else:
+            client_nom = nom_visiteur or 'Visiteur'
         
         # Envoyer un email de confirmation au client
         try:
@@ -2085,27 +3319,42 @@ def contact_support(request):
             <html>
             <head>
                 <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    body {{ font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 0; }}
+                    .header {{ background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: white; padding: 25px 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .logo-container {{ display: inline-block; }}
+                    .logo-icon {{ display: inline-block; width: 40px; height: 40px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); border-radius: 10px; text-align: center; line-height: 40px; vertical-align: middle; margin-right: 10px; }}
+                    .logo-text {{ display: inline-block; vertical-align: middle; }}
+                    .logo-text h2 {{ color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; }}
+                    .logo-text h2 span {{ color: #ffc107; }}
+                    .logo-tagline {{ color: #888888; margin: 0; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }}
                     .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
-                    .message-box {{ background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 5px; }}
-                    .info-box {{ background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }}
-                    .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }}
+                    .message-box {{ background: white; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 5px; }}
+                    .info-box {{ background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107; }}
+                    .footer {{ text-align: center; margin-top: 30px; padding: 25px 30px; background: #1a1a1a; color: #666; font-size: 12px; border-radius: 0 0 10px 10px; }}
+                    .footer-logo {{ color: #ffc107; font-weight: 700; font-size: 14px; margin: 0 0 15px 0; }}
+                    .footer-logo span {{ color: #ffffff; }}
                 </style>
             </head>
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>✅ Votre demande a été reçue</h1>
+                        <div class="logo-container">
+                            <span class="logo-icon">👔</span>
+                            <div class="logo-text">
+                                <h2>SADIBOU<span>SHOP</span></h2>
+                                <p class="logo-tagline">Mode & Tendances</p>
+                            </div>
+                        </div>
+                        <h1 style="margin: 15px 0 0 0; font-size: 18px;">✅ Votre demande a été reçue</h1>
                     </div>
                     <div class="content">
-                        <p>Bonjour <strong>{request.user.get_full_name() or request.user.username}</strong>,</p>
+                        <p>Bonjour <strong>{client_nom}</strong>,</p>
                         
                         <p>Nous avons bien reçu votre demande de support. Notre équipe va l'examiner et vous répondra dans les plus brefs délais.</p>
                         
                         <div class="message-box">
-                            <h3 style="color: #667eea; margin-top: 0;">📋 Récapitulatif de votre demande :</h3>
+                            <h3 style="color: #1a1a1a; margin-top: 0;">📋 Récapitulatif de votre demande :</h3>
                             <p><strong>Numéro de ticket :</strong> #{message_support.id}</p>
                             <p><strong>Sujet :</strong> {sujet}</p>
                             <p><strong>Priorité :</strong> {message_support.get_priorite_display()}</p>
@@ -2121,10 +3370,11 @@ def contact_support(request):
                         
                         <p style="margin-top: 30px;">
                             Cordialement,<br>
-                            <strong>L'équipe Support</strong>
+                            <strong>L'équipe Support SadibouShop</strong>
                         </p>
                     </div>
                     <div class="footer">
+                        <p class="footer-logo">SADIBOU<span>SHOP</span></p>
                         <p>Référence du ticket : #{message_support.id}</p>
                         <p>Cet email a été envoyé automatiquement suite à votre demande de support.</p>
                     </div>
@@ -2134,7 +3384,7 @@ def contact_support(request):
             """
             
             text_message = f"""
-Bonjour {request.user.get_full_name() or request.user.username},
+Bonjour {client_nom},
 
 Nous avons bien reçu votre demande de support. Notre équipe va l'examiner et vous répondra dans les plus brefs délais.
 
@@ -2156,19 +3406,25 @@ L'équipe Support
 Référence du ticket : #{message_support.id}
             """
             
+            from django.conf import settings
             send_mail(
                 subject=f"Confirmation de votre demande de support - Ticket #{message_support.id}",
                 message=text_message,
-                from_email='support@innovatech.sn',
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email_contact],
                 html_message=html_message,
-                fail_silently=True,
+                fail_silently=False,
             )
         except Exception as e:
             print(f"Erreur lors de l'envoi de l'email de confirmation : {e}")
         
         messages.success(request, "Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.")
-        return redirect('mes_commandes')
+        
+        # Rediriger selon le type d'utilisateur
+        if request.user.is_authenticated:
+            return redirect('mes_commandes')
+        else:
+            return redirect('home')
     
     return render(request, 'boutique/contact_support.html')
 
@@ -2265,13 +3521,20 @@ def admin_message_detail(request, message_id):
                 from django.core.mail import send_mail
                 from django.template.loader import render_to_string
                 from django.utils.html import strip_tags
+                from django.conf import settings
                 
-                email_destinataire = message_support.email_contact or message_support.client.email
+                # Déterminer l'email du destinataire
+                if message_support.email_contact:
+                    email_destinataire = message_support.email_contact
+                elif message_support.client:
+                    email_destinataire = message_support.client.email
+                else:
+                    email_destinataire = None
                 
                 if email_destinataire:
                     # Contexte pour le template email
                     context_email = {
-                        'client_nom': message_support.client.get_full_name() or message_support.client.username,
+                        'client_nom': message_support.get_client_name(),
                         'sujet': message_support.sujet,
                         'reponse': contenu,
                         'message_original': message_support.message,
@@ -2279,25 +3542,40 @@ def admin_message_detail(request, message_id):
                         'site_url': request.build_absolute_uri('/'),
                     }
                     
-                    # Créer le contenu HTML de l'email
+                    # Créer le contenu HTML de l'email avec logo SadibouShop
                     html_message = f"""
                     <html>
                     <head>
                         <style>
-                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                            body {{ font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }}
+                            .container {{ max-width: 600px; margin: 0 auto; padding: 0; }}
+                            .header {{ background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: white; padding: 25px 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                            .logo-container {{ display: inline-block; }}
+                            .logo-icon {{ display: inline-block; width: 40px; height: 40px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); border-radius: 10px; text-align: center; line-height: 40px; vertical-align: middle; margin-right: 10px; }}
+                            .logo-text {{ display: inline-block; vertical-align: middle; }}
+                            .logo-text h2 {{ color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; }}
+                            .logo-text h2 span {{ color: #ffc107; }}
+                            .logo-tagline {{ color: #888888; margin: 0; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }}
                             .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
-                            .response-box {{ background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 5px; }}
+                            .response-box {{ background: white; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 5px; }}
                             .original-message {{ background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 5px; font-size: 14px; }}
-                            .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }}
-                            .button {{ display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                            .footer {{ text-align: center; padding: 25px 30px; background: #1a1a1a; color: #666; font-size: 12px; border-radius: 0 0 10px 10px; }}
+                            .footer-logo {{ color: #ffc107; font-weight: 700; font-size: 14px; margin: 0 0 15px 0; }}
+                            .footer-logo span {{ color: #ffffff; }}
+                            .button {{ display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); color: #1a1a1a; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }}
                         </style>
                     </head>
                     <body>
                         <div class="container">
                             <div class="header">
-                                <h1>📧 Nouvelle réponse à votre demande de support</h1>
+                                <div class="logo-container">
+                                    <span class="logo-icon">👔</span>
+                                    <div class="logo-text">
+                                        <h2>SADIBOU<span>SHOP</span></h2>
+                                        <p class="logo-tagline">Mode & Tendances</p>
+                                    </div>
+                                </div>
+                                <h1 style="margin: 15px 0 0 0; font-size: 18px;">📧 Nouvelle réponse à votre demande</h1>
                             </div>
                             <div class="content">
                                 <p>Bonjour <strong>{context_email['client_nom']}</strong>,</p>
@@ -2305,7 +3583,7 @@ def admin_message_detail(request, message_id):
                                 <p>Notre équipe support vient de répondre à votre demande concernant : <strong>{context_email['sujet']}</strong></p>
                                 
                                 <div class="response-box">
-                                    <h3 style="color: #667eea; margin-top: 0;">💬 Réponse de notre équipe :</h3>
+                                    <h3 style="color: #1a1a1a; margin-top: 0;">💬 Réponse de notre équipe :</h3>
                                     <p style="white-space: pre-wrap;">{context_email['reponse']}</p>
                                 </div>
                                 
@@ -2324,10 +3602,11 @@ def admin_message_detail(request, message_id):
                                 
                                 <p style="margin-top: 20px;">
                                     Cordialement,<br>
-                                    <strong>L'équipe Support</strong>
+                                    <strong>L'équipe Support SadibouShop</strong>
                                 </p>
                             </div>
                             <div class="footer">
+                                <p class="footer-logo">SADIBOU<span>SHOP</span></p>
                                 <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.</p>
                                 <p>Pour toute question, contactez-nous via votre espace client.</p>
                             </div>
@@ -2357,10 +3636,10 @@ L'équipe Support
                     send_mail(
                         subject=f"Réponse à votre demande : {message_support.sujet}",
                         message=text_message,
-                        from_email='support@innovatech.sn',
+                        from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[email_destinataire],
                         html_message=html_message,
-                        fail_silently=True,
+                        fail_silently=False,
                     )
                     
                     messages.success(request, "Votre réponse a été envoyée et un email a été envoyé au client.")
@@ -2451,6 +3730,117 @@ def admin_marquer_notification_vue(request):
             'success': True,
             'created': created,
             'message': 'Notification marquée comme vue'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def admin_marquer_toutes_notifications_vues(request):
+    """
+    Marquer toutes les notifications d'un type comme vues (AJAX)
+    """
+    from boutique.models import NotificationAdminVue, Commande, MessageSupport, AvisProduit, AvisLivreur, Produit
+    from django.contrib.auth.models import User
+    from django.utils import timezone
+    from datetime import timedelta
+    import json
+    
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Non autorisé'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        type_notification = data.get('type')
+        
+        if not type_notification:
+            return JsonResponse({'success': False, 'error': 'Type manquant'}, status=400)
+        
+        count = 0
+        
+        if type_notification == 'NOUVELLE_COMMANDE':
+            # Marquer toutes les commandes EN_ATTENTE et EN_COURS comme vues
+            commandes = Commande.objects.filter(statut__in=['EN_ATTENTE', 'EN_COURS'])
+            for cmd in commandes:
+                obj, created = NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='NOUVELLE_COMMANDE',
+                    objet_id=cmd.id
+                )
+                if created:
+                    count += 1
+                    
+        elif type_notification == 'NOUVEAU_MESSAGE':
+            # Marquer tous les messages non lus comme vus
+            messages = MessageSupport.objects.filter(lu=False)
+            for msg in messages:
+                obj, created = NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='NOUVEAU_MESSAGE',
+                    objet_id=msg.id
+                )
+                if created:
+                    count += 1
+                    
+        elif type_notification == 'AVIS_PRODUIT':
+            # Marquer tous les avis produits non examinés comme vus
+            avis = AvisProduit.objects.filter(examine=False)
+            for a in avis:
+                obj, created = NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='AVIS_PRODUIT',
+                    objet_id=a.id
+                )
+                if created:
+                    count += 1
+                    
+        elif type_notification == 'AVIS_LIVREUR':
+            # Marquer tous les avis livreurs non examinés comme vus
+            avis = AvisLivreur.objects.filter(examine=False)
+            for a in avis:
+                obj, created = NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='AVIS_LIVREUR',
+                    objet_id=a.id
+                )
+                if created:
+                    count += 1
+                    
+        elif type_notification == 'NOUVEAU_CLIENT':
+            # Marquer tous les nouveaux clients (dernières 24h) comme vus
+            date_limite = timezone.now() - timedelta(hours=24)
+            clients = User.objects.filter(
+                date_joined__gte=date_limite,
+                is_staff=False,
+                is_superuser=False
+            )
+            for client in clients:
+                obj, created = NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='NOUVEAU_CLIENT',
+                    objet_id=client.id
+                )
+                if created:
+                    count += 1
+                    
+        elif type_notification == 'RUPTURE_STOCK':
+            # Marquer tous les produits en rupture comme vus
+            produits = Produit.objects.filter(stock=0)
+            for prod in produits:
+                obj, created = NotificationAdminVue.objects.get_or_create(
+                    admin=request.user,
+                    type_notification='RUPTURE_STOCK',
+                    objet_id=prod.id
+                )
+                if created:
+                    count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'count': count,
+            'message': f'{count} notifications marquées comme vues'
         })
         
     except Exception as e:

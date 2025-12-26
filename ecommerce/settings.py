@@ -29,6 +29,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '.loca.lt',  # autorise tous les sous-domaines LocalTunnel
+    'sadiboushop.com',
+    'www.sadiboushop.com',
 ]
 
 
@@ -112,11 +114,12 @@ DATABASES = {
     }
 }
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sarrb975@gmail.com'
-EMAIL_HOST_PASSWORD = 'lsgivgogxtoimpgr'  # ← le mot de passe d'application généré
+EMAIL_HOST = 'i2sn.com'  # Serveur SMTP cPanel
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'info@i2sn.com'
+EMAIL_HOST_PASSWORD = 'h5frCu[blxwP'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Password validation
@@ -154,6 +157,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Dossier pour collectstatic
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
@@ -222,4 +226,41 @@ SOCIALACCOUNT_PROVIDERS = {
             'key': ''
         }
     }
+}
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_errors.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'boutique': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
 }
