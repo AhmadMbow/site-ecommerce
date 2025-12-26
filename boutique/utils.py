@@ -107,13 +107,9 @@ L'equipe SadibouShop
                 'Reply-To': settings.DEFAULT_FROM_EMAIL,
             }
         )
-                'Reply-To': settings.DEFAULT_FROM_EMAIL,
-            }
-        )
         email.send(fail_silently=False)
-        print(f"[OK] Email envoye pour {commande.numero_commande} a {email_client}")
     except Exception as e:
-        print(f"[ERREUR] Erreur email {commande.numero_commande}: {e}")
+        pass
 
 
 def generate_receipt_pdf(commande, is_guest=False):
