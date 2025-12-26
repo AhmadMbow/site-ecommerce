@@ -152,11 +152,11 @@ else:
     }
 
 # =============================================================================
-# EMAIL - Configuration pour sadiboushop.com
+# EMAIL - Configuration pour i2sn.com
 # =============================================================================
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.sadiboushop.com'  # ou le serveur SMTP de Namecheap
+EMAIL_HOST = 'i2sn.com'  # Serveur SMTP de i2sn.com
 EMAIL_PORT = 465
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
