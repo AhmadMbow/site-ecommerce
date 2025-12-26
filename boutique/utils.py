@@ -47,16 +47,16 @@ def envoyer_mail_statut_commande(commande, statut_precedent=None, is_guest=False
         sujet = f"❌ Annulation de votre commande {commande.numero_commande}"
         message_statut = "Votre commande a été annulée.\n\nSi vous avez des questions, n'hésitez pas à nous contacter."
     elif statut_precedent is None or commande.statut == 'EN_ATTENTE':
-        # Première confirmation de commande
-        sujet = f"✅ Confirmation de votre commande {commande.numero_commande}"
+        # Premiere confirmation de commande
+        sujet = f"Confirmation de votre commande {commande.numero_commande}"
         message_statut = f"""
-🎉 Merci pour votre commande !
+Merci pour votre commande !
 
-✓ Votre commande a bien été enregistrée et est actuellement en cours de vérification.
-✓ Notre équipe va traiter votre commande dans les plus brefs délais.
-✓ Vous recevrez un nouvel email dès que votre commande sera prise en charge par notre livreur.
+Votre commande a bien ete enregistree et est actuellement en cours de verification.
+Notre equipe va traiter votre commande dans les plus brefs delais.
+Vous recevrez un nouvel email des que votre commande sera prise en charge par notre livreur.
 
-📧 Vous pouvez conserver cet email comme confirmation de votre achat.
+Vous pouvez conserver cet email comme confirmation de votre achat.
 """
     else:
         # Aucun changement ou statut non géré
@@ -68,15 +68,15 @@ Bonjour {nom_client},
 
 {message_statut}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 DÉTAILS DE VOTRE COMMANDE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+==========================================
+DETAILS DE VOTRE COMMANDE
+==========================================
 
-Numéro de commande : {commande.numero_commande}
+Numero de commande : {commande.numero_commande}
 Statut actuel : {commande.get_statut_display()}
-Date de commande : {commande.date_commande.strftime('%d/%m/%Y à %H:%M')}
+Date de commande : {commande.date_commande.strftime('%d/%m/%Y a %H:%M')}
 
-🛒 Articles commandés :
+Articles commandes :
 """
     # Ajout de la liste des articles
     items_list = ""
@@ -84,14 +84,14 @@ Date de commande : {commande.date_commande.strftime('%d/%m/%Y à %H:%M')}
         items_list += f"  • {item.quantite}x {item.produit.nom} - {item.prix_unitaire} FCFA/unité\n"
         
     message_final = f"""{message_base}{items_list}
-💰 Montant total : {int(commande.total)} FCFA
+Montant total : {int(commande.total)} FCFA
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+==========================================
 
-Pour toute question, contactez-nous à {settings.DEFAULT_FROM_EMAIL}
+Pour toute question, contactez-nous a {settings.DEFAULT_FROM_EMAIL}
 
-Merci de votre confiance ! 🙏
-L'équipe SadibouShop
+Merci de votre confiance !
+L'equipe SadibouShop
 """
 
     # 3. Envoi de l'email
@@ -378,7 +378,7 @@ def send_delivery_email_with_receipt(commande, is_guest=False):
         html_message = render_to_string('emails/commande_livree.html', context)
         
         # Créer l'email
-        subject = f'✅ Commande {commande.numero_commande} livrée - Votre reçu'
+        subject = f'Commande {commande.numero_commande} livree - Votre recu'
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [email_client]
         
