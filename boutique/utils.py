@@ -3,62 +3,95 @@
 from django.core.mail import send_mail
 from django.conf import settings
 
-def envoyer_mail_statut_commande(commande, statut_precedent=None):
+def envoyer_mail_statut_commande(commande, statut_precedent=None, is_guest=False):
     """
     Envoie un email au client concernant le statut de sa commande.
+    Gère les commandes utilisateurs ET invités.
     """
-    # Assurez-vous que l'utilisateur a un email pour l'envoi
-    if not commande.user.email:
-        print(f"Erreur: L'utilisateur {commande.user.username} n'a pas d'email.")
-        return
+    # Récupérer l'email et le nom du client
+    if is_guest:
+        email_client = commande.email
+        nom_client = f"{commande.prenom} {commande.nom}"
+        if not email_client:
+            print(f"Erreur: La commande invité #{commande.id} n'a pas d'email.")
+            return
+    else:
+        if not commande.user.email:
+            print(f"Erreur: L'utilisateur {commande.user.username} n'a pas d'email.")
+            return
+        email_client = commande.user.email
+        nom_client = commande.user.get_full_name() or commande.user.username
 
     # 1. Définition du contenu spécifique au statut
     if commande.statut == 'EN_COURS':
-        sujet = f"Mise à jour : Votre commande #{commande.id} est en cours de livraison !"
+        sujet = f"🚚 Votre commande {commande.numero_commande} est en cours de livraison !"
         message_statut = f"""
-**Votre commande est en cours !**
-Vous serez contacté pour la livraison qui se fera dans les **prochains 2 jours**.
-Le livreur est en route. Vous pouvez suivre sa position en temps réel (si l'interface le permet).
+✅ Bonne nouvelle ! Votre commande est maintenant en cours de livraison.
+
+📦 Notre livreur a pris en charge votre commande et vous contactera très bientôt.
+⏰ Livraison prévue sous 24-48h.
+📞 Vous serez contacté par téléphone pour confirmer l'adresse de livraison.
 """
     elif commande.statut == 'LIVREE':
-        sujet = f"Commande #{commande.id} livrée avec succès"
-        message_statut = "Votre commande a été **livrée** ! Nous espérons que tout vous plaît."
+        sujet = f"✅ Commande {commande.numero_commande} livrée avec succès"
+        message_statut = """
+🎉 Félicitations ! Votre commande a été livrée avec succès !
+
+✅ Votre colis a bien été remis.
+✅ Nous espérons que vous êtes satisfait(e) de votre achat.
+
+💬 N'hésitez pas à nous laisser un avis pour nous aider à améliorer nos services.
+🙏 Merci de votre confiance et à très bientôt !
+"""
     elif commande.statut == 'ANNULEE':
-        sujet = f"Annulation de votre commande #{commande.id}"
-        message_statut = "Votre commande a été **annulée** à votre demande ou par nos services."
+        sujet = f"❌ Annulation de votre commande {commande.numero_commande}"
+        message_statut = "Votre commande a été annulée.\n\nSi vous avez des questions, n'hésitez pas à nous contacter."
     elif statut_precedent is None or commande.statut == 'EN_ATTENTE':
-        # C'est probablement la première fois que la commande est enregistrée
-        sujet = f"Confirmation de votre commande #{commande.id}"
-        message_statut = "Nous vous remercions pour votre achat. Votre commande est actuellement en **attente** de traitement."
+        # Première confirmation de commande
+        sujet = f"✅ Confirmation de votre commande {commande.numero_commande}"
+        message_statut = f"""
+🎉 Merci pour votre commande !
+
+✓ Votre commande a bien été enregistrée et est actuellement en cours de vérification.
+✓ Notre équipe va traiter votre commande dans les plus brefs délais.
+✓ Vous recevrez un nouvel email dès que votre commande sera prise en charge par notre livreur.
+
+📧 Vous pouvez conserver cet email comme confirmation de votre achat.
+"""
     else:
         # Aucun changement ou statut non géré
         return
 
     # 2. Construction du message complet
     message_base = f"""
-Bonjour {commande.user.username},
+Bonjour {nom_client},
 
 {message_statut}
 
----
-Détails de votre commande :
-Numéro de commande : #{commande.id}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 DÉTAILS DE VOTRE COMMANDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Numéro de commande : {commande.numero_commande}
 Statut actuel : {commande.get_statut_display()}
 Date de commande : {commande.date_commande.strftime('%d/%m/%Y à %H:%M')}
-Montant total : {commande.total} F CFA
 
-Articles :
+🛒 Articles commandés :
 """
     # Ajout de la liste des articles
     items_list = ""
     for item in commande.items.all():
-        # Assurez-vous que votre modèle Produit a bien un champ 'nom'
-        items_list += f"- {item.quantite}x {item.produit.nom} ({item.prix_unitaire} F CFA / unité)\n"
+        items_list += f"  • {item.quantite}x {item.produit.nom} - {item.prix_unitaire} FCFA/unité\n"
         
     message_final = f"""{message_base}{items_list}
----
-Merci de votre confiance.
-L'équipe de [Votre Boutique/Site].
+💰 Montant total : {int(commande.total)} FCFA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pour toute question, contactez-nous à {settings.DEFAULT_FROM_EMAIL}
+
+Merci de votre confiance ! 🙏
+L'équipe SadibouShop
 """
 
     # 3. Envoi de l'email
@@ -66,19 +99,19 @@ L'équipe de [Votre Boutique/Site].
         send_mail(
             sujet,
             message_final,
-            settings.EMAIL_HOST_USER,
-            [commande.user.email], # Destinataire
+            settings.DEFAULT_FROM_EMAIL,
+            [email_client],
             fail_silently=False,
         )
-        print(f"Email de statut envoyé pour la commande #{commande.id} à {commande.user.email}")
+        print(f"[OK] Email envoye pour {commande.numero_commande} a {email_client}")
     except Exception as e:
-        # Gérer les erreurs d'envoi (ex: mauvaise configuration SMTP)
-        print(f"Erreur lors de l'envoi de l'email pour la commande #{commande.id} : {e}")
+        print(f"[ERREUR] Erreur email {commande.numero_commande}: {e}")
 
 
-def generate_receipt_pdf(commande):
+def generate_receipt_pdf(commande, is_guest=False):
     """
     Génère un PDF de reçu professionnel pour une commande livrée.
+    Supporte les commandes utilisateurs ET invités.
     Retourne le contenu du PDF en bytes.
     """
     from io import BytesIO
@@ -145,7 +178,7 @@ def generate_receipt_pdf(commande):
     
     # Informations de la boutique
     shop_info = f"""
-    <b>Maryama Shop</b><br/>
+    <b>SadibouShop</b><br/>
     Boutique E-commerce<br/>
     Email: {settings.DEFAULT_FROM_EMAIL}<br/>
     Téléphone: +221 XX XXX XX XX
@@ -156,21 +189,35 @@ def generate_receipt_pdf(commande):
     # Ligne de séparation
     elements.append(Spacer(1, 0.3*cm))
     
+    # Informations du client
+    if is_guest:
+        nom_client = f"{commande.prenom} {commande.nom}"
+        email_client = commande.email
+        telephone_client = commande.telephone
+    else:
+        nom_client = commande.user.get_full_name() or commande.user.username
+        email_client = commande.user.email
+        telephone_client = getattr(commande, 'telephone', 'N/A')
+    
     # Informations de la commande
     commande_info_data = [
-        ['N° Commande:', f'#{commande.id}'],
+        ['N° Commande:', commande.numero_commande],
         ['Date commande:', commande.date_commande.strftime('%d/%m/%Y à %H:%M')],
         ['Statut:', 'LIVRÉE ✓'],
         ['', ''],
-        ['<b>CLIENT</b>', ''],
-        ['Nom:', commande.user.get_full_name() or commande.user.username],
-        ['Email:', commande.user.email],
+        ['CLIENT', ''],
+        ['Nom:', nom_client],
+        ['Email:', email_client],
     ]
     
+    # Ajouter le téléphone
+    if telephone_client and telephone_client != 'N/A':
+        commande_info_data.append(['Téléphone:', telephone_client])
+    
     # Ajouter l'adresse si disponible
-    if commande.adresse_gps:
+    if hasattr(commande, 'adresse_gps') and commande.adresse_gps:
         commande_info_data.append(['Adresse:', commande.adresse_gps])
-        if commande.latitude and commande.longitude:
+        if hasattr(commande, 'latitude') and commande.latitude and hasattr(commande, 'longitude') and commande.longitude:
             commande_info_data.append(
                 ['Coordonnées GPS:', f"{commande.latitude}, {commande.longitude}"]
             )
@@ -241,7 +288,7 @@ def generate_receipt_pdf(commande):
         ['Sous-total:', f"{subtotal:,.0f} F CFA"],
         ['Frais de livraison:', f"{getattr(commande, 'frais_livraison', 0):,.0f} F CFA"],
         ['', ''],
-        ['<b>TOTAL:</b>', f"<b>{commande.total:,.0f} F CFA</b>"],
+        ['TOTAL:', f"{commande.total:,.0f} F CFA"],
     ]
     
     totals_table = Table(totals_data, colWidths=[13*cm, 3.5*cm])
@@ -292,36 +339,48 @@ def generate_receipt_pdf(commande):
     return pdf_content
 
 
-def send_delivery_email_with_receipt(commande):
+def send_delivery_email_with_receipt(commande, is_guest=False):
     """
     Envoie un email au client avec le reçu PDF en pièce jointe.
+    Supporte les commandes utilisateurs ET invités.
     """
     from django.core.mail import EmailMessage
     from django.template.loader import render_to_string
     from django.conf import settings
     
-    if not commande.user.email:
-        print(f"Erreur: L'utilisateur {commande.user.username} n'a pas d'email.")
-        return False
+    # Récupérer l'email et les informations du client
+    if is_guest:
+        email_client = commande.email
+        nom_client = f"{commande.prenom} {commande.nom}"
+        if not email_client:
+            print(f"Erreur: La commande invité #{commande.id} n'a pas d'email.")
+            return False
+    else:
+        if not commande.user.email:
+            print(f"Erreur: L'utilisateur {commande.user.username} n'a pas d'email.")
+            return False
+        email_client = commande.user.email
+        nom_client = commande.user.get_full_name() or commande.user.username
     
     try:
         # Générer le PDF
-        pdf_content = generate_receipt_pdf(commande)
+        pdf_content = generate_receipt_pdf(commande, is_guest=is_guest)
         
         # Préparer le contexte pour le template email
         context = {
             'commande': commande,
-            'client': commande.user,
+            'client': {'name': nom_client, 'email': email_client},
             'items': commande.items.all(),
+            'is_guest': is_guest,
         }
         
         # Rendu du template HTML
         html_message = render_to_string('emails/commande_livree.html', context)
         
         # Créer l'email
-        subject = f'✅ Commande #{commande.id} livrée - Votre reçu'
+        subject = f'✅ Commande {commande.numero_commande} livrée - Votre reçu'
         from_email = settings.DEFAULT_FROM_EMAIL
-        recipient_list = [commande.user.email]
+        recipient_list = [email_client]
         
         email = EmailMessage(
             subject=subject,
@@ -335,7 +394,7 @@ def send_delivery_email_with_receipt(commande):
         
         # Attacher le PDF
         email.attach(
-            f'Recu_Commande_{commande.id}.pdf',
+            f'Recu_{commande.numero_commande}.pdf',
             pdf_content,
             'application/pdf'
         )
@@ -343,11 +402,11 @@ def send_delivery_email_with_receipt(commande):
         # Envoyer l'email
         email.send(fail_silently=False)
         
-        print(f"✅ Email de livraison avec reçu PDF envoyé pour la commande #{commande.id}")
+        print(f"✅ Email de livraison avec reçu PDF envoyé pour {commande.numero_commande} à {email_client}")
         return True
         
     except Exception as e:
-        print(f"❌ Erreur lors de l'envoi de l'email pour la commande #{commande.id} : {e}")
+        print(f"❌ Erreur lors de l'envoi de l'email pour {commande.numero_commande} : {e}")
         import traceback
         traceback.print_exc()
         return False
