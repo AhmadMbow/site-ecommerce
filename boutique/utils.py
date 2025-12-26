@@ -402,11 +402,11 @@ def send_delivery_email_with_receipt(commande, is_guest=False):
         # Envoyer l'email
         email.send(fail_silently=False)
         
-        print(f"✅ Email de livraison avec reçu PDF envoyé pour {commande.numero_commande} à {email_client}")
+        print(f"[OK] Email de livraison avec recu PDF envoye pour {commande.numero_commande} a {email_client}")
         return True
         
     except Exception as e:
-        print(f"❌ Erreur lors de l'envoi de l'email pour {commande.numero_commande} : {e}")
+        print(f"[ERREUR] Erreur lors de l'envoi de l'email pour {commande.numero_commande} : {e}")
         import traceback
         traceback.print_exc()
         return False
