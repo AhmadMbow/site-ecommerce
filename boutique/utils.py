@@ -44,8 +44,8 @@ def envoyer_mail_statut_commande(commande, statut_precedent=None, is_guest=False
 🙏 Merci de votre confiance et à très bientôt !
 """
     elif commande.statut == 'ANNULEE':
-        sujet = f"❌ Annulation de votre commande {commande.numero_commande}"
-        message_statut = "Votre commande a été annulée.\n\nSi vous avez des questions, n'hésitez pas à nous contacter."
+        sujet = f"Annulation de votre commande {commande.numero_commande}"
+        message_statut = "Votre commande a ete annulee.\n\nSi vous avez des questions, n'hesitez pas a nous contacter."
     elif statut_precedent is None or commande.statut == 'EN_ATTENTE':
         # Premiere confirmation de commande
         sujet = f"Confirmation de votre commande {commande.numero_commande}"
@@ -104,10 +104,9 @@ L'equipe SadibouShop
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[email_client],
             headers={
-                'X-Priority': '1',
-                'X-MSMail-Priority': 'High',
-                'Importance': 'High',
-                'X-Mailer': 'SadibouShop',
+                'Reply-To': settings.DEFAULT_FROM_EMAIL,
+            }
+        )
                 'Reply-To': settings.DEFAULT_FROM_EMAIL,
             }
         )
@@ -397,10 +396,6 @@ def send_delivery_email_with_receipt(commande, is_guest=False):
             from_email=from_email,
             to=recipient_list,
             headers={
-                'X-Priority': '1',
-                'X-MSMail-Priority': 'High',
-                'Importance': 'High',
-                'X-Mailer': 'SadibouShop',
                 'Reply-To': from_email,
             }
         )
