@@ -1773,7 +1773,7 @@ def livreur_order_update_status(request, pk):
         try:
             order = CommandeInvite.objects.get(pk=pk)
             is_guest = True
-            print(f"[DEBUG] Trouvé CommandeInvite: {order.numero_commande}, statut={order.statut}")
+            print(f"[DEBUG] Trouve CommandeInvite: {order.numero_commande}, statut={order.statut}")
         except CommandeInvite.DoesNotExist:
             messages.error(request, f"Commande invité #{pk} introuvable.")
             return redirect(request.POST.get('next') or 'livreur_orders')
@@ -1781,7 +1781,7 @@ def livreur_order_update_status(request, pk):
         # Commande normale UNIQUEMENT
         try:
             order = Commande.objects.get(pk=pk)
-            print(f"[DEBUG] Trouvé Commande: {order.numero_commande}, statut={order.statut}")
+            print(f"[DEBUG] Trouve Commande: {order.numero_commande}, statut={order.statut}")
         except Commande.DoesNotExist:
             messages.error(request, f"Commande #{pk} introuvable.")
             return redirect(request.POST.get('next') or 'livreur_orders')
@@ -1837,7 +1837,7 @@ def livreur_order_update_status(request, pk):
                 messages.warning(request, f"⚠️ Le reçu PDF n'a pas pu être envoyé.")
         except Exception as e:
             messages.warning(request, f"⚠️ Erreur lors de l'envoi du reçu PDF: {str(e)}")
-            print(f"Erreur envoi reçu PDF: {e}")
+            print(f"Erreur envoi recu PDF: {e}")
             import traceback
             traceback.print_exc()
         
@@ -2704,7 +2704,7 @@ Pour ne plus recevoir nos emails, repondez a ce message avec "STOP".
                 
             except Exception as e:
                 error_count += 1
-                print(f"Erreur envoi à {client.email}: {str(e)}")
+                print(f"Erreur envoi a {client.email}: {str(e)}")
         
         return JsonResponse({
             'success': True,
