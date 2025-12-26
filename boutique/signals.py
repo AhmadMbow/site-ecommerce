@@ -2,6 +2,9 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import Commande, CommandeItem
 from django.db import transaction
+import logging
+
+logger = logging.getLogger('boutique')
 
 
 @receiver(pre_save, sender=Commande)
@@ -34,9 +37,9 @@ def gerer_stock_commande(sender, instance, **kwargs):
                     if produit.stock >= quantite:
                         produit.stock -= quantite
                         produit.save(update_fields=['stock'])
-                        print(f"[OK] Stock decremente: {produit.nom} - {quantite} unites (Nouveau stock: {produit.stock})")
+                        logger.info(f"Stock decremente: {produit.nom} - {quantite} unites (Nouveau stock: {produit.stock})")
                     else:
-                        print(f"[ALERTE] Stock insuffisant pour {produit.nom}: demande {quantite}, disponible {produit.stock}")
+                        logger.warning(f"Stock insuffisant pour {produit.nom}: demande {quantite}, disponible {produit.stock}")
                         # On décrémente quand même jusqu'à 0
                         produit.stock = 0
                         produit.save(update_fields=['stock'])
@@ -52,7 +55,7 @@ def gerer_stock_commande(sender, instance, **kwargs):
                     # Restituer le stock
                     produit.stock += quantite
                     produit.save(update_fields=['stock'])
-                    print(f"[RETOUR] Stock restitue: {produit.nom} + {quantite} unites (Nouveau stock: {produit.stock})")
+                    logger.info(f"Stock restitue: {produit.nom} + {quantite} unites (Nouveau stock: {produit.stock})")
         
         # Si une commande EN_ATTENTE ou EN_COURS est annulée, on ne touche pas au stock
         # car le stock n'a pas encore été décrémenté
@@ -71,6 +74,6 @@ def notifier_changement_stock(sender, instance, created, **kwargs):
         items = instance.items.select_related('produit').all()
         for item in items:
             if item.produit.stock == 0:
-                print(f"[ALERTE] {item.produit.nom} est maintenant en rupture de stock!")
+                logger.warning(f"ALERTE: {item.produit.nom} est maintenant en rupture de stock!")
             elif item.produit.stock < 5:
-                print(f"[ATTENTION] Stock faible pour {item.produit.nom} ({item.produit.stock} restants)")
+                logger.warning(f"ATTENTION: Stock faible pour {item.produit.nom} ({item.produit.stock} restants)")
