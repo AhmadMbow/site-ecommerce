@@ -2425,7 +2425,7 @@ Si vous avez des questions, n'hésitez pas à nous contacter à {settings.DEFAUL
                                             <tr>
                                                 <td style="padding-right: 12px; vertical-align: middle;">
                                                     <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); border-radius: 10px; text-align: center; line-height: 45px;">
-                                                        <span style="font-size: 24px;">👔</span>
+                                                        <span style="font-size: 24px; color: #1a1a1a; font-weight: bold;">S</span>
                                                     </div>
                                                 </td>
                                                 <td style="vertical-align: middle;">
@@ -2605,7 +2605,7 @@ Pour ne plus recevoir nos emails, repondez a ce message avec "STOP".
                                             <tr>
                                                 <td style="padding-right: 12px; vertical-align: middle;">
                                                     <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%); border-radius: 10px; text-align: center; line-height: 45px;">
-                                                        <span style="font-size: 24px;">👔</span>
+                                                        <span style="font-size: 24px; color: #1a1a1a; font-weight: bold;">S</span>
                                                     </div>
                                                 </td>
                                                 <td style="vertical-align: middle;">
@@ -3340,13 +3340,13 @@ def contact_support(request):
                 <div class="container">
                     <div class="header">
                         <div class="logo-container">
-                            <span class="logo-icon">👔</span>
+                            <span class="logo-icon" style="font-weight: bold; color: #ffc107;">S</span>
                             <div class="logo-text">
                                 <h2>SADIBOU<span>SHOP</span></h2>
                                 <p class="logo-tagline">Mode & Tendances</p>
                             </div>
                         </div>
-                        <h1 style="margin: 15px 0 0 0; font-size: 18px;">✅ Votre demande a été reçue</h1>
+                        <h1 style="margin: 15px 0 0 0; font-size: 18px;">Votre demande a ete recue</h1>
                     </div>
                     <div class="content">
                         <p>Bonjour <strong>{client_nom}</strong>,</p>
@@ -3569,13 +3569,13 @@ def admin_message_detail(request, message_id):
                         <div class="container">
                             <div class="header">
                                 <div class="logo-container">
-                                    <span class="logo-icon">👔</span>
+                                    <span class="logo-icon" style="font-weight: bold; color: #ffc107;">S</span>
                                     <div class="logo-text">
                                         <h2>SADIBOU<span>SHOP</span></h2>
                                         <p class="logo-tagline">Mode & Tendances</p>
                                     </div>
                                 </div>
-                                <h1 style="margin: 15px 0 0 0; font-size: 18px;">📧 Nouvelle réponse à votre demande</h1>
+                                <h1 style="margin: 15px 0 0 0; font-size: 18px;">Nouvelle reponse a votre demande</h1>
                             </div>
                             <div class="content">
                                 <p>Bonjour <strong>{context_email['client_nom']}</strong>,</p>
