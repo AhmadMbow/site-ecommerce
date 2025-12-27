@@ -1765,15 +1765,11 @@ def livreur_order_update_status(request, pk):
     # Vérifier le type de commande - priorité au POST, puis GET
     order_type = request.POST.get('type') or request.GET.get('type') or 'user'
     
-    # Debug
-    print(f"[DEBUG] livreur_order_update_status: pk={pk}, order_type={order_type}")
-    
     if order_type == 'guest':
         # Commande invité UNIQUEMENT
         try:
             order = CommandeInvite.objects.get(pk=pk)
             is_guest = True
-            print(f"[DEBUG] Trouve CommandeInvite: {order.numero_commande}, statut={order.statut}")
         except CommandeInvite.DoesNotExist:
             messages.error(request, f"Commande invité #{pk} introuvable.")
             return redirect(request.POST.get('next') or 'livreur_orders')
@@ -1781,15 +1777,12 @@ def livreur_order_update_status(request, pk):
         # Commande normale UNIQUEMENT
         try:
             order = Commande.objects.get(pk=pk)
-            print(f"[DEBUG] Trouve Commande: {order.numero_commande}, statut={order.statut}")
         except Commande.DoesNotExist:
             messages.error(request, f"Commande #{pk} introuvable.")
             return redirect(request.POST.get('next') or 'livreur_orders')
     
     action = request.POST.get('action', '')
     current_status = getattr(order, 'statut', None)
-    
-    print(f"[DEBUG] Action={action}, current_status={current_status}")
     
     if action == 'accept' and current_status == 'EN_ATTENTE':
         # Accepter la commande
@@ -1836,10 +1829,7 @@ def livreur_order_update_status(request, pk):
             else:
                 messages.warning(request, f"⚠️ Le reçu PDF n'a pas pu être envoyé.")
         except Exception as e:
-            messages.warning(request, f"⚠️ Erreur lors de l'envoi du reçu PDF: {str(e)}")
-            print(f"Erreur envoi recu PDF: {e}")
-            import traceback
-            traceback.print_exc()
+            messages.warning(request, f"Erreur lors de l'envoi du recu PDF: {str(e)}")
         
     else:
         messages.warning(request, f"Action '{action}' non autorisée pour la commande #{order.id} (statut: {current_status})")
@@ -2676,7 +2666,7 @@ Pour ne plus recevoir nos emails, repondez a ce message avec "STOP".
                 email = EmailMultiAlternatives(
                     subject=subject,
                     body=text_message,
-                    from_email=f"SadibouShop <{settings.DEFAULT_FROM_EMAIL}>",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[client.email],
                     reply_to=[settings.DEFAULT_FROM_EMAIL],
                 )
@@ -2921,10 +2911,9 @@ def admin_cancel_order(request, pk):
         # Envoyer l'email d'annulation
         try:
             envoyer_mail_statut_commande(order, statut_precedent=ancien_statut, is_guest=is_guest)
-            messages.success(request, f'La commande {order.numero_commande} a été annulée et un email a été envoyé au client.')
+            messages.success(request, f'La commande {order.numero_commande} a ete annulee et un email a ete envoye au client.')
         except Exception as e:
-            print(f"Erreur lors de l'envoi de l'email d'annulation: {e}")
-            messages.success(request, f'La commande {order.numero_commande} a été annulée. (Email non envoyé)')
+            messages.success(request, f'La commande {order.numero_commande} a ete annulee. (Email non envoye)')
         
         return redirect(redirect_url)
     
@@ -3416,7 +3405,7 @@ Référence du ticket : #{message_support.id}
                 fail_silently=False,
             )
         except Exception as e:
-            print(f"Erreur lors de l'envoi de l'email de confirmation : {e}")
+            pass  # Erreur ignoree silencieusement
         
         messages.success(request, "Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.")
         
